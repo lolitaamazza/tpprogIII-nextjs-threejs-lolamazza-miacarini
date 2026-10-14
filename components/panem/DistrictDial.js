@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { DISTRICTS } from '@/data/districts';
 import { canEnterCapitol } from '@/lib/progress';
 import { usePanem } from './PanemProvider';
@@ -28,7 +29,7 @@ export default function DistrictDial() {
           );
         })}
       </ol>
-      <div className="dial-core" aria-hidden="true">EXPLORAR<br />DISTRITOS</div>
+      <div className="dial-core" aria-hidden="true"><Image src="/assets/brand/panem-seal.png" alt="" width={96} height={96} /></div>
     </nav>
   );
 }

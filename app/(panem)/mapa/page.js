@@ -3,8 +3,8 @@ import MapIntro from '@/components/panem/MapIntro';
 import DistrictDial from '@/components/panem/DistrictDial';
 
 export const metadata = {
-  title: 'Mapa de Panem',
-  description: 'Panem está a oscuras. Elegí un distrito y encendé la chispa.',
+  title: 'Mapa de los distritos',
+  description: 'Panem está a oscuras. Elegí un distrito y encendelo.',
 };
 
 export default function MapPage() {

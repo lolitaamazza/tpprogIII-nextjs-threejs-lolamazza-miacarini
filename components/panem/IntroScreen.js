@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { usePanem } from './PanemProvider';
 
@@ -18,6 +19,7 @@ export default function IntroScreen() {
   return (
     <section className={`intro crt${leaving ? ' leaving' : ''}`}>
       <div className="crt-inner">
+        <Image className="intro-seal" src="/assets/brand/panem-seal.png" alt="Sello de Panem" width={104} height={104} priority />
         <p className="eyebrow">TRANSMISIÓN OFICIAL DEL CAPITOLIO · CANAL OBLIGATORIO</p>
         <h1>Panem vive en paz.</h1>
         <p>Los distritos trabajan. El Capitolio cuida. Toda señal no autorizada será eliminada.</p>

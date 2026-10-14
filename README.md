@@ -1,4 +1,4 @@
-# Panem · La chispa
+# Panem
 
 > Panem está a oscuras: llevá la chispa de distrito en distrito hasta que el Capitolio no pueda apagarla.
 
@@ -91,12 +91,13 @@ Modelo de datos:
   finalMessage: null | 'rebelion' | 'memoria', completedAt: null | number, updatedAt }
 ```
 
-## Regenerar el mapa
+## Regenerar el mapa y el sello
 
 ```bash
 python3 -m venv .venv-tools
 .venv-tools/bin/pip install "numpy==1.26.4" "opencv-python-headless==4.10.0.84"
-.venv-tools/bin/python scripts/extract_map.py
+.venv-tools/bin/python scripts/extract_map.py     # public/assets/panem.svg y los sellos de los distritos
+.venv-tools/bin/python scripts/extract_brand.py   # sello de Panem (public/assets/brand) y el ícono de la pestaña
 ```
 
 Para ajustarlo en Figma: importar `public/assets/panem.svg`, no renombrar las capas `district-*` y exportar como SVG con "Include 'id' attribute".
@@ -121,6 +122,7 @@ npm run build   # build de producción
 
 - *The Hunger Games* (Los juegos del hambre) © Suzanne Collins / Scholastic. Películas © Lionsgate. Proyecto de fans **con fines exclusivamente académicos y sin fines comerciales**. Los textos de la experiencia son originales.
 - Mapa e íconos de distritos: basados en una ilustración de fans del mapa de Panem (`docs/reference/panem-map.webp`), aportada por el equipo como referencia. _Pendiente: completar la autoría y la fuente original de la imagen._
+- Marca: el sello dorado de Panem y el rojo/dorado de la interfaz salen de una imagen de la bandera de Panem aportada por el equipo (`docs/reference/panem-flag.webp`). _Pendiente: completar autoría y fuente._
 - Referencias visuales: Hunger Games: The Exhibition (Nueva York), "Antique map to 3D model" (awwwards) y el board "interactive web" del equipo.
 - Tipografías: Oswald (Vernon Adams) e Inter (Rasmus Andersson), SIL Open Font License, vía Google Fonts.
 - Música y efectos: sintetizados por código con Web Audio API.

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import AuthPanel from '@/components/AuthPanel';
 import EmblemsDialog from './EmblemsDialog';
@@ -16,7 +17,10 @@ export default function SiteHeader() {
   const user = progress.authUser;
   return (
     <header className="site-header">
-      <Link href="/mapa" className="brand">PANEM<small>LA CHISPA</small></Link>
+      <Link href="/mapa" className="brand" aria-label="Panem, mapa de distritos">
+        <Image src="/assets/brand/panem-seal.png" alt="" width={38} height={38} priority />
+        <span>PANEM</span>
+      </Link>
       <div className="header-actions">
         <span className="sync" title={progress.syncState === 'cloud' ? 'Progreso guardado en Firestore' : 'Progreso guardado en este navegador'}>
           {SYNC_LABEL[progress.syncState] ?? SYNC_LABEL.local}
