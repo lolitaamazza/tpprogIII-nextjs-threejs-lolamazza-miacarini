@@ -48,8 +48,18 @@ export default function PanemProvider({ children }) {
     return () => query.removeEventListener('change', sync);
   }, []);
 
-  const sfx = useMemo(() => ({ play: (name) => audioRef.current?.playSfx(name) }), []);
+  // Una pantalla puede pedir un volumen fijo para la música (la intro la baja mientras suena el clip);
+  // mientras esté pedido, el efecto de capas de abajo no lo pisa.
+  const duckRef = useRef(null);
+  const sfx = useMemo(() => ({
+    play: (name) => audioRef.current?.playSfx(name),
+    duck: (ducked, level) => {
+      duckRef.current = ducked ? (level ?? 0.45) : null;
+      audioRef.current?.setDucked(ducked, level);
+    },
+  }), []);
 
+  // Devuelve el estado resultante ('on' | 'muted' | 'unsupported') para quien lo necesite en el mismo clic.
   const startAudio = useCallback(async () => {
     try {
       if (!audioRef.current) audioRef.current = new AudioEngine();
@@ -57,10 +67,13 @@ export default function PanemProvider({ children }) {
       let preference = 'on';
       try { preference = window.localStorage.getItem(SOUND_KEY) || 'on'; } catch { /* sin storage */ }
       audioRef.current.setMuted(preference === 'off');
-      setAudioState(preference === 'off' ? 'muted' : 'on');
+      const state = preference === 'off' ? 'muted' : 'on';
+      setAudioState(state);
+      return state;
     } catch {
       setAudioState('unsupported');
       notify('El sonido no está disponible en este navegador. La experiencia sigue en silencio.');
+      return 'unsupported';
     }
   }, [notify]);
 
@@ -86,7 +99,8 @@ export default function PanemProvider({ children }) {
       previewDistrict: route.scene === 'distrito' ? route.districtId : null,
       finale: completed || finalePlaying ? progress.finalMessage : null,
     });
-    audio.setDucked(route.scene === 'distrito');
+    if (duckRef.current !== null) audio.setDucked(true, duckRef.current);
+    else audio.setDucked(route.scene === 'distrito');
   }, [audioState, progress.litDistricts, progress.finalMessage, completed, finalePlaying, route]);
 
   const selectDistrict = useCallback((id) => {

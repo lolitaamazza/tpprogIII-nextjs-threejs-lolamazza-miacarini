@@ -49,17 +49,13 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .chip-accent b { color: var(--gold); }
 .sync { font-family: var(--font-display); font-size: 11px; letter-spacing: 0.15em; color: var(--muted); }
 
-/* Intro CRT */
+/* Pantalla CRT del final (la intro tiene sus estilos en components/panem/tv-intro.css) */
 .crt { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at center, #3a0d0dee, #0b0b0cfa 70%); overflow: hidden; }
 .crt::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, #00000055 0 2px, transparent 2px 4px); animation: scan 8s linear infinite; }
 .crt::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 160px #000; }
 .crt-inner { position: relative; max-width: 640px; padding: 24px; text-align: center; }
 .crt h1 { color: #fff; text-shadow: 2px 0 var(--capitol), -2px 0 #3bd6ff88; }
-.crt .ignite { margin-top: 18px; font-size: 18px; padding: 14px 28px; }
-.fineprint { font-size: 12px; color: var(--muted); margin-top: 22px; }
-.intro.leaving { animation: glitch-out 0.7s steps(6) forwards; }
 @keyframes scan { to { background-position: 0 100vh; } }
-@keyframes glitch-out { 0% { opacity: 1; } 40% { transform: translateX(-8px) skewX(4deg); clip-path: inset(20% 0 30% 0); } 70% { transform: translateX(6px); clip-path: inset(50% 0 10% 0); } 100% { opacity: 0; } }
 
 /* Mapa */
 .map-intro { position: absolute; top: 72px; left: 24px; max-width: 360px; }
@@ -159,6 +155,3 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 /* Aviso de mapa caído */
 .map-error { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); z-index: 4; display: flex; gap: 12px; align-items: center; max-width: min(560px, calc(100vw - 32px)); padding: 10px 14px; background: #200c0c; border: 1px solid var(--capitol); font-size: 14px; }
 .map-error button { white-space: nowrap; }
-
-/* Marca en la intro */
-.intro-seal { display: block; width: 104px; height: auto; margin: 0 auto 8px; filter: drop-shadow(0 0 18px #d4af3766); }

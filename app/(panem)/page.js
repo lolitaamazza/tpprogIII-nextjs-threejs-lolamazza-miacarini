@@ -1,7 +1,7 @@
-import IntroScreen from '@/components/panem/IntroScreen';
+import TvIntro from '@/components/panem/TvIntro';
 
 export const metadata = { title: 'Transmisión oficial' };
 
 export default function IntroPage() {
-  return <IntroScreen />;
+  return <TvIntro />;
 }

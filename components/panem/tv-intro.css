@@ -1,0 +1,99 @@
+/* Intro: la sala de transmisión del Capitolio. Una tele retro (referencia: la foto de la sala de teles que aportó el equipo)
+   emite el anuncio; la señal se corta y la pantalla se abre al mapa.
+   Las medidas van en --u, que se calcula en .tv-zoom: la tele se achica con la pantalla y nunca se corta.
+   El color de la sala lo pinta la sombra gigante de .tv-win: el interior de la ventana queda transparente
+   y deja ver el mapa 3D que está detrás. Los aros de bronce van aparte (.tv-rings) para quedar sobre el ambiente. */
+.tv-room { --room: #0b0806; --brass: #b39446; --tube: #9fd0e6;
+  position: fixed; inset: 0; z-index: 3; container-type: size; overflow: hidden; }
+/* --u es el tamaño de la tele: se limita por el ancho (celulares), por el alto y por lo que ocupa el pie de abajo.
+   --cy es la altura del centro del conjunto, un poco más arriba para dejarle lugar al pie. */
+.tv-zoom { --foot: clamp(120px, 40cqw, 170px); --u: min(1.95cqw, 1.75cqh, (100cqh - var(--foot) - 16px) / 41); --cy: calc((100cqh - var(--foot)) / 2);
+  position: absolute; inset: 0; }
+.tv-group { position: absolute; width: calc(var(--u) * 40); height: calc(var(--u) * 41); left: calc(50% - var(--u) * 20); top: calc(var(--cy) - var(--u) * 20.5); }
+
+.tv-win, .tv-rings { position: absolute; left: calc(var(--u) * 5); top: calc(var(--u) * 4.15); width: calc(var(--u) * 30); height: calc(var(--u) * 22.5); border-radius: calc(var(--u) * 2.6); }
+.tv-win { z-index: 1; box-shadow: 0 0 0 max(110cqw, 110cqh) var(--room); }
+.tv-amb { position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background:
+    radial-gradient(calc(var(--u) * 60) calc(var(--u) * 40) at 50% calc(var(--cy) - var(--u) * 5.1), transparent 18%, rgba(11, 8, 6, .85) 80%),
+    linear-gradient(transparent 0 70%, rgba(122, 50, 24, .38) 100%); }
+.tv-amb::before { content: ""; position: absolute; inset: 0;
+  background: repeating-conic-gradient(from -90deg at 50% calc(var(--cy) - var(--u) * 5.1), rgba(212, 175, 55, .17) 0 2.2deg, transparent 2.2deg 7deg);
+  -webkit-mask-image: radial-gradient(calc(var(--u) * 58) calc(var(--u) * 40) at 50% calc(var(--cy) - var(--u) * 5.1), #000 24%, transparent 100%);
+  mask-image: radial-gradient(calc(var(--u) * 58) calc(var(--u) * 40) at 50% calc(var(--cy) - var(--u) * 5.1), #000 24%, transparent 100%); }
+.tv-rings { z-index: 3; pointer-events: none;
+  box-shadow: 0 0 0 calc(var(--u) * .45) #070504, 0 0 0 calc(var(--u) * 1.5) #1d160c, 0 0 0 calc(var(--u) * 1.9) var(--brass), 0 0 0 calc(var(--u) * 3.7) #6d5a2b, 0 0 0 calc(var(--u) * 4.15) #2e2411,
+    0 calc(var(--u) * 1.4) calc(var(--u) * 3.4) calc(var(--u) * 4.1) rgba(0, 0, 0, .55); }
+.tv-room[data-phase="enter"] .tv-amb { opacity: 0; transition: opacity .4s; }
+.tv-lamp { position: absolute; z-index: 3; top: calc(var(--u) * 27.25); width: calc(var(--u) * 5.2); height: calc(var(--u) * 5.2); border-radius: 50%;
+  background: radial-gradient(circle at 45% 40%, #ffe3a6 0 18%, #ff9b2a 52%, rgba(255, 140, 30, 0) 72%); }
+.tv-lamp.l { left: calc(var(--u) * -4.4); } .tv-lamp.r { left: calc(var(--u) * 39.2); }
+/* En vertical (celulares) las lámparas se meten sobre la consola y la tele puede ocupar casi todo el ancho. */
+@container (max-aspect-ratio: 4/5) {
+  .tv-zoom { --u: min(2.3cqw, 1.75cqh, (100cqh - var(--foot) - 16px) / 41); }
+  .tv-lamp.l { left: calc(var(--u) * -1.4); }
+  .tv-lamp.r { left: calc(var(--u) * 36.2); }
+}
+
+.tv-console { position: absolute; z-index: 3; left: 0; top: calc(var(--u) * 30.95); width: calc(var(--u) * 40); height: calc(var(--u) * 7.4); border-radius: calc(var(--u) * 1.2) calc(var(--u) * 1.2) calc(var(--u) * 2) calc(var(--u) * 2);
+  background: linear-gradient(#66512a, #2a2010); box-shadow: inset 0 calc(var(--u) * .2) calc(var(--u) * .3) rgba(255, 230, 160, .35), 0 calc(var(--u) * 1.2) calc(var(--u) * 2.4) rgba(0, 0, 0, .55);
+  display: flex; align-items: center; justify-content: space-between; padding-inline: calc(var(--u) * 2.4); }
+.tv-console::before, .tv-console::after { content: ""; position: absolute; bottom: calc(var(--u) * -2.6); width: calc(var(--u) * 1.6); height: calc(var(--u) * 2.6); background: #1c150b; }
+.tv-console::before { left: calc(var(--u) * 4); } .tv-console::after { right: calc(var(--u) * 4); }
+.tv-grille { width: calc(var(--u) * 14); height: calc(var(--u) * 3.4); background: repeating-linear-gradient(90deg, #130e07 0 calc(var(--u) * .28), transparent calc(var(--u) * .28) calc(var(--u) * .7)); border-radius: calc(var(--u) * .5); opacity: .85; }
+.tv-label { font: 500 calc(var(--u) * 1.35)/1 var(--font-display), sans-serif; letter-spacing: .2em; color: #e8d398; text-transform: uppercase; }
+.tv-knob { width: calc(var(--u) * 4.8); height: calc(var(--u) * 4.8); padding: 0; border-radius: 50%; border: 0; cursor: pointer;
+  background: radial-gradient(circle at 38% 32%, #f3dd8f, var(--gold) 45%, #6e5714 100%); box-shadow: 0 0 0 calc(var(--u) * .35) #2a2010, 0 calc(var(--u) * .5) calc(var(--u) * 1) rgba(0, 0, 0, .6); }
+.tv-knob:hover { filter: brightness(1.12); }
+.tv-room:not([data-phase="off"]) .tv-knob { filter: grayscale(.6) brightness(.7); cursor: default; }
+
+.tv-screen { position: absolute; z-index: 4; left: calc(var(--u) * 5); top: calc(var(--u) * 4.15); width: calc(var(--u) * 30); height: calc(var(--u) * 22.5); border-radius: calc(var(--u) * 2.6); overflow: hidden; background: #020304; --roll: 0%; --skew: 0deg; --n: 0; }
+.tv-v { position: absolute; inset: 0; opacity: 0; transform-origin: 50% 52%; }
+.tv-screen[data-v="logo"] .tv-logo, .tv-screen[data-v="address"] .tv-address, .tv-screen[data-v="pirate"] .tv-pirate, .tv-screen[data-v="clip"] .tv-clip { opacity: 1; }
+.tv-logo { display: grid; place-items: center; align-content: center; gap: calc(var(--u) * 1); background: radial-gradient(ellipse at 50% 45%, #2a2008 0, #050403 70%); }
+.tv-seal { width: calc(var(--u) * 9.5); height: calc(var(--u) * 9.5); background: var(--gold); -webkit-mask: url(/assets/brand/panem-seal.png) center / contain no-repeat; mask: url(/assets/brand/panem-seal.png) center / contain no-repeat; filter: drop-shadow(0 0 calc(var(--u) * 1.2) rgba(212, 175, 55, .55)); }
+.tv-logo-t { font: 500 calc(var(--u) * 2.1)/1 var(--font-display), sans-serif; letter-spacing: .34em; text-indent: .34em; color: #e8d398; }
+.tv-address { background: radial-gradient(ellipse at 50% 38%, #f7f2e4 0, #dcd5bd 68%, #b7ad90 100%); color: #2a1810; }
+.tv-content { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: calc(var(--u) * .6); text-align: center; padding: calc(var(--u) * 1.2) calc(var(--u) * 2) calc(var(--u) * 4.2); transform: translateY(var(--roll)) skewX(var(--skew)); }
+.tv-content .tv-seal { width: calc(var(--u) * 4.6); height: calc(var(--u) * 4.6); background: #8a6a14; filter: none; }
+.tv-eb { font: 500 calc(var(--u) * 1)/1 var(--font-display), sans-serif; letter-spacing: .26em; color: var(--red); }
+.tv-hd { margin: 0; white-space: nowrap; font: 600 calc(var(--u) * 2.4)/1.05 var(--font-display), sans-serif; letter-spacing: .06em; color: #2a1810; }
+.tv-tx { margin: 0; max-width: calc(var(--u) * 25); text-wrap: balance; font: 500 calc(var(--u) * 1.12)/1.45 var(--font-body), sans-serif; text-transform: none; color: #3b2a20; }
+.tv-ticker { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--u) * 3.2); background: var(--red); color: #f3e8c9; overflow: hidden; display: flex; align-items: center; }
+.tv-ticker span { white-space: nowrap; padding-left: 100%; font: 500 calc(var(--u) * 1.05)/1 var(--font-display), sans-serif; letter-spacing: .22em; animation: tv-tick 14s linear infinite; }
+.tv-pirate { background: radial-gradient(ellipse at 50% 108%, #2a2210 0, #030504 62%); }
+.tv-map { position: absolute; left: 50%; top: 50%; width: 82%; height: auto; transform: translate(-50%, -52%); opacity: .45; filter: sepia(1) saturate(2.4) brightness(.8); }
+.tv-tag { position: absolute; left: calc(var(--u) * 1.6); top: calc(var(--u) * 1.3); font: 500 calc(var(--u) * .95)/1 ui-monospace, Menlo, monospace; letter-spacing: .18em; color: var(--tube); opacity: .8; }
+.tv-rec { position: absolute; right: calc(var(--u) * 1.6); top: calc(var(--u) * 1.3); width: calc(var(--u) * .9); height: calc(var(--u) * .9); border-radius: 50%; background: #d8302f; animation: tv-blink .8s steps(2) infinite; }
+.tv-clip { background: #000; overflow: hidden; }
+.tv-clip-frame { position: absolute; left: 50%; top: 50%; width: 133.4%; height: auto; aspect-ratio: 16 / 9; border: 0; transform: translate(-50%, -50%) scale(1.1); pointer-events: none; }
+.tv-screen[data-v="address"].squeeze .tv-address { transform: scaleY(.34); box-shadow: 0 calc(var(--u) * .45) 0 rgba(40, 214, 190, .85); }
+.tv-screen.chroma .tv-content { filter: drop-shadow(calc(var(--u) * .32) 0 0 rgba(255, 40, 70, .8)) drop-shadow(calc(var(--u) * -.32) 0 0 rgba(40, 230, 255, .8)); }
+.tv-screen.chroma .tv-map { filter: sepia(1) saturate(2.4) brightness(.8) drop-shadow(calc(var(--u) * .32) 0 0 rgba(255, 40, 70, .8)) drop-shadow(calc(var(--u) * -.32) 0 0 rgba(40, 230, 255, .8)); }
+.tv-noise { position: absolute; inset: 0; background-image: var(--tv-noise); background-size: calc(var(--u) * 9); opacity: var(--n); mix-blend-mode: screen; pointer-events: none; animation: tv-jitter .22s steps(4) infinite; }
+.tv-scan { position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .22) 0 calc(var(--u) * .14), transparent calc(var(--u) * .14) calc(var(--u) * .42)); }
+.tv-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0, 0, 0, .55) 100%); }
+.tv-glare { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, rgba(255, 255, 255, .13) 0, transparent 34%); }
+.tv-line { position: absolute; left: 0; right: 0; top: 50%; height: calc(var(--u) * .35); background: #fff; opacity: 0; box-shadow: 0 0 calc(var(--u) * 2) calc(var(--u) * 1) rgba(190, 225, 255, .8); }
+.tv-room[data-phase="boot"] .tv-line { animation: tv-lineon .8s ease-out forwards; }
+.tv-sync { position: absolute; left: 0; right: 0; height: calc(var(--u) * 5.5); top: calc(var(--u) * -8); background: #000; box-shadow: 0 calc(var(--u) * -.2) 0 rgba(255, 255, 255, .35); opacity: 0; }
+.tv-screen.rolling .tv-sync { opacity: 1; animation: tv-syncdown .36s linear infinite; }
+.tv-tear { position: absolute; left: 0; right: 0; height: calc(var(--u) * .22); background: rgba(255, 255, 255, .85); mix-blend-mode: difference; opacity: 0; pointer-events: none; }
+
+.tv-foot { position: absolute; z-index: 5; left: 0; right: 0; bottom: max(2.2cqmin, env(safe-area-inset-bottom, 0px)); display: grid; justify-items: center; gap: 1.2cqmin; padding-inline: 16px; text-align: center; transition: opacity .4s; }
+.tv-power { font-size: clamp(14px, 2.4cqmin, 20px); padding: 12px 26px; }
+.tv-warn, .tv-credit { margin: 0; max-width: 62ch; font: 400 clamp(11px, 1.7cqmin, 13px)/1.45 var(--font-body), sans-serif; color: var(--muted); text-transform: none; letter-spacing: 0; }
+.tv-credit { opacity: .8; }
+.tv-room:not([data-phase="off"]) .tv-power, .tv-room:not([data-phase="off"]) .tv-warn { opacity: 0; pointer-events: none; }
+.tv-room[data-phase="enter"] .tv-foot { opacity: 0; }
+.tv-skip { position: absolute; z-index: 6; top: max(16px, env(safe-area-inset-top, 0px)); right: 16px; font-size: 13px; padding: 8px 14px; background: #0b0806aa; transition: opacity .3s; }
+.tv-room[data-phase="enter"] .tv-skip, .tv-room[data-phase="exit"] .tv-skip { opacity: 0; pointer-events: none; }
+.tv-flash { position: absolute; inset: 0; z-index: 7; background: #fff; opacity: 0; pointer-events: none; }
+.tv-room[data-phase="exit"] { opacity: 0; transition: opacity .6s; }
+
+@keyframes tv-tick { to { transform: translateX(-100%); } }
+@keyframes tv-blink { 50% { opacity: .15; } }
+@keyframes tv-jitter { 0% { background-position: 0 0; } 25% { background-position: calc(var(--u) * -3) calc(var(--u) * 4); } 50% { background-position: calc(var(--u) * 5) calc(var(--u) * -2); } 75% { background-position: calc(var(--u) * -4) calc(var(--u) * -5); } 100% { background-position: calc(var(--u) * 2) calc(var(--u) * 3); } }
+@keyframes tv-lineon { 0% { opacity: 1; transform: scaleX(.02); } 45% { opacity: 1; transform: scaleX(1); height: calc(var(--u) * .35); } 100% { opacity: 0; transform: scaleX(1); height: calc(var(--u) * 22.5); top: 0; } }
+@keyframes tv-syncdown { from { transform: translateY(0); } to { transform: translateY(calc(var(--u) * 40)); } }
+@media (prefers-reduced-motion: reduce) { .tv-ticker span, .tv-noise, .tv-rec, .tv-room[data-phase="boot"] .tv-line { animation: none; } }

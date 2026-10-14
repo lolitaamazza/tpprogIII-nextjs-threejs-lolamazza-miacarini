@@ -9,7 +9,7 @@ Next.js 16 + Three.js + Firebase · JavaScript · App Router.
 
 ## Sinopsis
 
-Una transmisión oficial del Capitolio anuncia que Panem vive en paz. Al "encender la señal", la persona baja a un mapa 3D de Panem, gris y apagado. Puede explorar los trece distritos; tres de ellos guardan una chispa:
+Una vieja tele del Capitolio emite el anuncio oficial: Panem vive en paz. Al "encender la señal" la transmisión se corta (se ve el fragmento del video oficial en el que se rompe la señal) y la pantalla se abre a un mapa 3D de Panem, gris y apagado. La persona puede explorar los trece distritos; tres de ellos guardan una chispa:
 
 - **Distrito 12 · Carbón:** picar la veta hasta liberar una brasa.
 - **Distrito 11 · Agricultura:** cosechar el trigo hasta que los sinsajos repiten un silbido.
@@ -20,8 +20,8 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
 ## Mapa de navegación
 
 ```text
-/  (Transmisión oficial)
- └─ "Encender la señal" → /mapa
+/  (Transmisión oficial: la tele del Capitolio)
+ └─ "Encender la señal" → anuncio → corte de señal → /mapa   ("Saltar la intro" o Esc → /mapa)
       ├─ /distrito/12  diorama jugable → emblema 1
       ├─ /distrito/11  diorama jugable → emblema 2
       ├─ /distrito/4   diorama jugable → emblema 3
@@ -34,7 +34,7 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
 
 | Requisito | Implementación |
 | --- | --- |
-| Premisa, inicio, progresión y cierre | Intro CRT → mapa → 3 dioramas → Capitolio |
+| Premisa, inicio, progresión y cierre | Intro de la tele → mapa → 3 dioramas → Capitolio |
 | ≥ 3 escenas | `/`, `/mapa`, `/distrito/[id]`, `/capitolio` + 3 dioramas |
 | ≥ 3 coleccionables | Emblemas de los distritos 12, 11 y 4 |
 | Desbloqueo | El Capitolio se abre con 3/3; cada distrito suma su capa musical |
@@ -44,7 +44,7 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
 | Metadata, carga y error | `generateMetadata` por distrito, `loading.js`, `error.js`, `not-found.js` |
 | Escena Three.js | `components/stage/panemScene.js`: escena, cámara, renderer, luces, RAF, raycasting, resize, pixel ratio ≤ 2, `dispose()` |
 | Recurso propio | Mapa extruido desde un SVG vectorizado a partir de la imagen de referencia y sistema de partículas de la chispa (`effects.js`) |
-| Alternativas accesibles | Dial de distritos con teclado; botón alternativo para cada interacción 3D; `prefers-reduced-motion` |
+| Alternativas accesibles | Dial de distritos con teclado; botón alternativo para cada interacción 3D; `prefers-reduced-motion` (la intro no corta la señal ni usa el clip); aviso de luces intermitentes y botón para saltar la intro |
 | Firebase | Auth anónima, Google y email; `progress/{uid}`; reglas por usuario; indicador NUBE/LOCAL |
 | Responsive | Cámara más alejada, dial horizontal y panel en hoja inferior en celular; touch en todos los dioramas |
 
@@ -53,12 +53,13 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
 - **Canvas persistente:** la escena y el audio viven en `app/(panem)/layout.js`. Los layouts no se re-renderizan al navegar, así que la cámara *vuela* entre rutas en lugar de recargar la escena. `usePathname()` traduce la URL a una pose de cámara (`lib/routes.js` + `components/stage/cameraPoses.js`).
 - **Mapa desde SVG:** `scripts/extract_map.py` extrae las piezas de la imagen de referencia (flood fill + contornos con OpenCV) y genera `public/assets/panem.svg`, ajustable en Figma. En el navegador, `SVGLoader` y `ExtrudeGeometry` convierten cada `path#district-{id}` en una pieza 3D seleccionable por raycasting.
 - **Audio procedural:** `lib/audio/` sintetiza todo con Web Audio: ambiente de viento y drone, un secuenciador a 80 BPM en re menor con tres capas (percusión, silbido y pad) sincronizadas por un único reloj, y los efectos. No hace falta ningún archivo de audio y no hay problemas de derechos. El motivo de 4 notas es original.
+- **Intro de la tele:** `components/panem/TvIntro.js` + `tv-intro.css` dibujan la tele y la sala con CSS puro (unidades `cq*`; solo el sello y el mapa son imágenes). Cada fase (logo, anuncio, corte, clip, negro, entrada al mapa) es un efecto de React con su propia limpieza, así que saltar o salir de la página en cualquier momento deja todo apagado. La tele es una "ventana": su interior es transparente y deja ver el mapa 3D que está detrás, y al final la ventana crece hasta ocupar toda la pantalla. El guion, el clip y la regla de destellos del corte propio (nunca más de 3 cuadros claros por segundo; el clip original lo emite YouTube, por eso hay aviso de luces intermitentes y botón para saltar) son lógica pura en `lib/introTimeline.js`; el reproductor de YouTube, en `lib/youtubeClip.js`. YouTube deja su título y el botón de pausa a la vista unos segundos después de empezar, así que el clip arranca 7 s antes del corte, oculto y con volumen 0 (no con *mute*: Chrome pausa los videos silenciados cuando la pestaña no se ve), y se muestra con sonido al llegar al segundo 29. Si el clip no carga o no arranca (bloqueador, sin conexión, autoplay bloqueado), una señal pirata propia ocupa su lugar y la intro sigue.
 - **Dioramas desmontables:** cada distrito jugable se construye al entrar y se libera al salir (`components/stage/dioramas/`), con un contrato común (`build → { update, pointer*, performAction, dispose }`).
 - **Lógica testeable:** datos, progreso, rutas, poses, partitura y reglas de los dioramas son módulos puros, probados con `node --test` (`npm test`).
 
 ## Puesta en marcha
 
-Requiere Node.js 20 o posterior.
+Requiere Node.js 22 o posterior (Next.js 16 pide 20.9+, y `npm test` usa el glob de `node --test`, que llegó con Node 21).
 
 ```bash
 npm install
@@ -122,6 +123,7 @@ npm run build   # build de producción
 
 - *The Hunger Games* (Los juegos del hambre) © Suzanne Collins / Scholastic. Películas © Lionsgate. Proyecto de fans **con fines exclusivamente académicos y sin fines comerciales**. Los textos de la experiencia son originales.
 - Mapa e íconos de distritos: basados en una ilustración de fans del mapa de Panem (`docs/reference/panem-map.webp`), aportada por el equipo como referencia. _Pendiente: completar la autoría y la fuente original de la imagen._
+- Intro: el fragmento (0:29 a 0:51) del video oficial *President Snow's Panem Address #2 – "Unity"* del canal de *The Hunger Games* (Lionsgate) se **incrusta desde YouTube** con su reproductor oficial; no se descarga, no se copia y no se modifica. La tele y la sala se inspiran en una captura de la sala de teles de los Juegos aportada por el equipo. _Pendiente: completar la fuente de la captura._
 - Marca: el sello dorado de Panem y el rojo/dorado de la interfaz salen de una imagen de la bandera de Panem aportada por el equipo (`docs/reference/panem-flag.webp`). _Pendiente: completar autoría y fuente._
 - Referencias visuales: Hunger Games: The Exhibition (Nueva York), "Antique map to 3D model" (awwwards) y el board "interactive web" del equipo.
 - Tipografías: Oswald (Vernon Adams) e Inter (Rasmus Andersson), SIL Open Font License, vía Google Fonts.
