@@ -1,4 +1,10 @@
 'use client';
 export default function Error({ reset }) {
-  return <main className="route-message"><h1>SEÑAL INTERRUMPIDA</h1><p>No se pudo recuperar el archivo.</p><button className="primary" onClick={reset}>Reintentar ↗</button></main>;
+  return (
+    <main className="route-message">
+      <p className="eyebrow">ERROR DE TRANSMISIÓN</p>
+      <h1>La señal se interrumpió.</h1>
+      <button type="button" className="primary" onClick={reset}>Reintentar</button>
+    </main>
+  );
 }

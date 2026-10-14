@@ -1,264 +1,127 @@
-# TP6 — Experiencia web transmedia
+# Panem · La chispa
 
-> **Boilerplate:** SEÑAL 88
-> Next.js + Three.js + Firebase · JavaScript · App Router
+> Panem está a oscuras: llevá la chispa de distrito en distrito hasta que el Capitolio no pueda apagarla.
 
-## Descripción
+Experiencia web transmedia (TP6 · Programación Multimedial III · UMAI) inspirada en *The Hunger Games*.
+Next.js 16 + Three.js + Firebase · JavaScript · App Router.
 
-Desarrollar una experiencia web transmedia inmersiva inspirada en una película de culto, un videojuego, una obra audiovisual, una producción musical, una leyenda urbana o un universo narrativo original.
+**Deploy:** _pendiente: completar con la URL pública (Vercel)_
 
-La experiencia debe proponer una navegación con hilo conductor. La persona usuaria deberá descubrir información, relacionar elementos o reconstruir una parte del relato mediante la exploración y la interacción.
+## Sinopsis
 
-El resultado no debe limitarse a una landing page temática. Tampoco se requiere desarrollar un videojuego. El objetivo es integrar narrativa, diseño de interacción, contenido multimedia, gráficos 3D y persistencia de datos en una aplicación web navegable.
+Una transmisión oficial del Capitolio anuncia que Panem vive en paz. Al "encender la señal", la persona baja a un mapa 3D de Panem, gris y apagado. Puede explorar los trece distritos; tres de ellos guardan una chispa:
 
-Si se utiliza una propiedad intelectual existente, el proyecto tendrá finalidad académica y deberá incluir las referencias y los créditos correspondientes.
+- **Distrito 12 · Carbón:** picar la veta hasta liberar una brasa.
+- **Distrito 11 · Agricultura:** cosechar el trigo hasta que los sinsajos repiten un silbido.
+- **Distrito 4 · Pesca:** lanzar la red y atrapar tres peces.
 
-## Referencia del boilerplate
+Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una capa a la música. Con los tres emblemas se desbloquea el Capitolio: allí se elige el mensaje (*Encender la rebelión* o *Recordar a los caídos*), se hackea la transmisión y Panem entero se enciende, incluido el Distrito 13, que el Capitolio declaraba inexistente.
 
-SEÑAL 88 presenta el archivo de una transmisión perdida. La experiencia está organizada en tres fragmentos. Cada fragmento contiene un artefacto 3D interactivo y una evidencia. La recuperación de las evidencias habilita la navegación y permite acceder al desenlace.
-
-La propuesta narrativa y la identidad visual funcionan como demostración técnica. Deben ser reemplazadas o reformuladas para el proyecto entregado.
-
-## Posibles enfoques
-
-- Archivo de una transmisión interrumpida.
-- Escritorio o sistema operativo de un personaje.
-- Museo virtual cuyos objetos modifican el relato.
-- Investigación compuesta por documentos, audios y escenas 3D.
-- Enciclopedia de un mundo ficticio.
-- Sitio institucional de una organización perteneciente al universo narrativo.
-- Relato paralelo a una película o videojuego, situado antes, después o desde otro punto de vista.
-
-## Referencias de narrativa web interactiva
-
-Estas referencias permiten analizar proyectos en los que la interfaz, la navegación y las condiciones de acceso forman parte del relato.
-
-### Requiem for a Dream — sitio web de la película (2000)
-
-El sitio desarrollado por Hi-ReS! para la película de Darren Aronofsky fue concebido como una extensión narrativa que podía recorrerse antes, después o de manera independiente al film. La persona visitante ocupaba un lugar dentro del relato y atravesaba una estructura no lineal vinculada con sus personajes.
-
-La interfaz se degradaba progresivamente durante la navegación: aparecían errores, pérdida de control, desorientación y rechazo del sistema. Esta transformación convertía al propio sitio en una metáfora de la adicción y el deterioro presentes en la película. Es una referencia relevante para estudiar cómo el comportamiento de una interfaz puede comunicar un tema y no limitarse a presentar información.
-
-- [Registro en video del sitio](https://www.youtube.com/watch?v=SNuZjwX7Xxk&t=28s)
-- [Caso de estudio de sus creadores](https://alexandrajugovic.com/requiem)
-
-### A Journal of Insomnia (2013)
-
-Documental interactivo producido por el National Film Board of Canada. El proyecto reunía testimonios, imágenes y videos enviados por personas con insomnio y organizaba la experiencia alrededor de cuatro protagonistas.
-
-La disponibilidad del contenido dependía del horario: durante el día el sitio ofrecía funciones limitadas y, entre las 22:00 y las 03:00, habilitaba la experiencia completa. También solicitaba reservar una cita nocturna. De esta manera, el tiempo, la espera y el contexto real de acceso se incorporaban como recursos narrativos.
-
-El proyecto funciona como referencia para estudiar narrativa documental, participación de usuarios, contenido colectivo y experiencias cuyo estado depende de condiciones externas.
-
-- [Ficha y descripción en MIT Docubase](https://docubase.mit.edu/project/a-journal-of-insomnia/)
-- [Registro de funcionamiento](https://www.youtube.com/watch?v=ihpJDpSVEtw)
-- [Entrevista con sus realizadores](https://vimeo.com/57935529)
-
-## Requisitos obligatorios
-
-### Narrativa y experiencia
-
-- Una premisa definida en una oración.
-- Un recorrido compuesto por un mínimo de tres escenas, capítulos o estados.
-- Un inicio, una progresión y un cierre identificables.
-- Un mínimo de tres elementos coleccionables: pistas, fragmentos, objetos, testimonios o símbolos.
-- Desbloqueo de contenido o modificación del estado a partir de acciones de la persona usuaria.
-- Feedback visual o sonoro para las interacciones principales.
-- Una interfaz coherente con el universo narrativo seleccionado.
-- Diseño responsive.
-- Alternativas accesibles para las interacciones 3D necesarias para avanzar.
-
-### Next.js
-
-- Uso de App Router.
-- Organización de la interfaz mediante componentes.
-- Uso de rutas para representar escenas, capítulos o documentos.
-- Una ruta dinámica como mínimo.
-- Uso justificado de Server Components y Client Components.
-- Metadata específica del proyecto.
-- Estados de carga y de error donde corresponda.
-
-### Three.js
-
-- Una escena 3D integrada a la narrativa y a la interacción.
-- Configuración de escena, cámara y renderer.
-- Uso de geometrías, materiales e iluminación.
-- Animación mediante `requestAnimationFrame`.
-- Interacción mediante raycasting, puntero o scroll.
-- Adaptación del canvas al tamaño disponible.
-- Límite de pixel ratio para controlar el costo de renderizado.
-- Liberación de recursos al desmontar el componente.
-- Incorporación de un recurso desarrollado o adaptado para el proyecto: modelo, textura, geometría procedural, sistema de partículas o shader.
-
-El uso de React Three Fiber es opcional. La implementación inicial se realizará con Three.js directo para identificar los elementos fundamentales de una escena 3D.
-
-### Firebase
-
-- Firebase Authentication anónima, con Google y con email/contraseña.
-- Cloud Firestore para persistir progreso, decisiones o contenido.
-- Asociación de los datos con el usuario autenticado.
-- Reglas de seguridad que impidan el acceso a información de otros usuarios.
-- Indicación del estado de persistencia: remoto, local u offline.
-
-### Documentación
-
-- Concepto y sinopsis.
-- Referencias visuales y narrativas.
-- Mapa del recorrido o diagrama de navegación.
-- Decisiones técnicas principales.
-- Créditos de imágenes, modelos, tipografías, audio y otros recursos.
-- Instrucciones de instalación y configuración.
-- Variables de entorno requeridas.
-- Enlace al deploy público.
-
-## Entregables
-
-1. Repositorio con historial de desarrollo.
-2. Deploy público funcional.
-3. README con la documentación del proyecto.
-4. Mapa de navegación.
-5. Presentación y demostración navegada.
-6. Explicación técnica del código implementado.
-
-## Arquitectura del boilerplate
+## Mapa de navegación
 
 ```text
-app/
-  archivo/[chapter]/
-    page.js             # ruta dinámica de cada capítulo
-  globals.css           # sistema visual y responsive
-  layout.js             # layout y metadata general
-  page.js               # portada
-components/
-  Experience.js         # navegación, estado narrativo e interfaz
-  ThreeArtifact.js      # escena Three.js
-data/
-  chapters.js           # contenido y configuración de capítulos
-hooks/
-  useProgress.js        # persistencia local y remota
-lib/
-  firebase.js           # inicialización de Firebase
-firestore.rules         # reglas de acceso por usuario
+/  (Transmisión oficial)
+ └─ "Encender la señal" → /mapa
+      ├─ /distrito/12  diorama jugable → emblema 1
+      ├─ /distrito/11  diorama jugable → emblema 2
+      ├─ /distrito/4   diorama jugable → emblema 3
+      ├─ /distrito/1…13 (resto)  ficha del distrito (el 13: archivo clasificado)
+      └─ C → /capitolio  (requiere 3/3; si no, aviso y vuelta al mapa)
+              └─ decisión → transmisión → Panem encendido → fin
 ```
 
-Las responsabilidades se distribuyen de la siguiente manera:
+## Requisitos de la consigna y dónde se cumplen
 
-- Next.js representa la estructura navegable y las rutas de la aplicación.
-- React administra la interfaz y el significado de las interacciones.
-- Three.js representa y anima el contenido tridimensional.
-- Firebase autentica al usuario y conserva el progreso.
-
-La explicación detallada de la escena se encuentra en [GUIA-THREEJS.md](./GUIA-THREEJS.md).
-
-## Rutas incluidas
-
-| Ruta | Contenido |
+| Requisito | Implementación |
 | --- | --- |
-| `/` | Presentación e ingreso a la experiencia |
-| `/archivo/carrier` | Fragmento 01: La portadora |
-| `/archivo/witness` | Fragmento 02: El testigo |
-| `/archivo/echo` | Fragmento 03: El eco |
+| Premisa, inicio, progresión y cierre | Intro CRT → mapa → 3 dioramas → Capitolio |
+| ≥ 3 escenas | `/`, `/mapa`, `/distrito/[id]`, `/capitolio` + 3 dioramas |
+| ≥ 3 coleccionables | Emblemas de los distritos 12, 11 y 4 |
+| Desbloqueo | El Capitolio se abre con 3/3; cada distrito suma su capa musical |
+| Feedback visual y sonoro | Elevación de las piezas, chispas, partículas, temblor, efectos y capas musicales |
+| Ruta dinámica | `app/(panem)/distrito/[id]/page.js` (`generateStaticParams` + `dynamicParams = false`) |
+| Server / Client Components | Las páginas (server) validan y generan metadata; el escenario, el audio y los overlays son client |
+| Metadata, carga y error | `generateMetadata` por distrito, `loading.js`, `error.js`, `not-found.js` |
+| Escena Three.js | `components/stage/panemScene.js`: escena, cámara, renderer, luces, RAF, raycasting, resize, pixel ratio ≤ 2, `dispose()` |
+| Recurso propio | Mapa extruido desde un SVG vectorizado a partir de la imagen de referencia y sistema de partículas de la chispa (`effects.js`) |
+| Alternativas accesibles | Dial de distritos con teclado; botón alternativo para cada interacción 3D; `prefers-reduced-motion` |
+| Firebase | Auth anónima, Google y email; `progress/{uid}`; reglas por usuario; indicador NUBE/LOCAL |
+| Responsive | Cámara más alejada, dial horizontal y panel en hoja inferior en celular; touch en todos los dioramas |
 
-La ruta dinámica se implementa en `app/archivo/[chapter]/page.js`. El parámetro `chapter` se utiliza para seleccionar el contenido y generar metadata específica.
+## Decisiones técnicas
+
+- **Canvas persistente:** la escena y el audio viven en `app/(panem)/layout.js`. Los layouts no se re-renderizan al navegar, así que la cámara *vuela* entre rutas en lugar de recargar la escena. `usePathname()` traduce la URL a una pose de cámara (`lib/routes.js` + `components/stage/cameraPoses.js`).
+- **Mapa desde SVG:** `scripts/extract_map.py` extrae las piezas de la imagen de referencia (flood fill + contornos con OpenCV) y genera `public/assets/panem.svg`, ajustable en Figma. En el navegador, `SVGLoader` y `ExtrudeGeometry` convierten cada `path#district-{id}` en una pieza 3D seleccionable por raycasting.
+- **Audio procedural:** `lib/audio/` sintetiza todo con Web Audio: ambiente de viento y drone, un secuenciador a 80 BPM en re menor con tres capas (percusión, silbido y pad) sincronizadas por un único reloj, y los efectos. No hace falta ningún archivo de audio y no hay problemas de derechos. El motivo de 4 notas es original.
+- **Dioramas desmontables:** cada distrito jugable se construye al entrar y se libera al salir (`components/stage/dioramas/`), con un contrato común (`build → { update, pointer*, performAction, dispose }`).
+- **Lógica testeable:** datos, progreso, rutas, poses, partitura y reglas de los dioramas son módulos puros, probados con `node --test` (`npm test`).
 
 ## Puesta en marcha
 
-Requiere Node.js 20 o una versión posterior compatible con Next.js 16.
+Requiere Node.js 20 o posterior.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Abrir [http://localhost:3000](http://localhost:3000).
+Abrir http://localhost:3000. Sin variables de entorno, el progreso se guarda en `localStorage` (indicador `LOCAL`).
 
-Sin variables de entorno, la experiencia utiliza `localStorage` y muestra el estado `LOCAL`.
-
-## Configuración de Firebase
+## Firebase
 
 1. Crear un proyecto y una Web App en Firebase Console.
 2. Habilitar en Authentication los proveedores **Anonymous**, **Google** y **Email/Password**.
-3. Crear una base **Cloud Firestore**.
-4. Copiar `.env.example` como `.env.local`.
-5. Completar las variables de entorno.
-6. Publicar las reglas incluidas en `firestore.rules`.
-7. Reiniciar el servidor de desarrollo.
+3. Crear una base **Cloud Firestore** y publicar `firestore.rules`.
+4. Copiar `.env.example` como `.env.local` y completar:
 
-El indicador superior cambia de `LOCAL` a `NUBE` cuando la autenticación y la conexión se realizan correctamente.
+| Variable | Valor |
+| --- | --- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | API key de la Web App |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `<proyecto>.firebaseapp.com` |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | id del proyecto |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | bucket |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | sender id |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | app id |
 
-Las variables con prefijo `NEXT_PUBLIC_` forman parte del bundle del cliente. La seguridad del acceso a los datos depende de Firebase Authentication y de las reglas de Firestore.
-
-## Colección de usuarios
-
-El boilerplate reutiliza la colección `users`. Cada documento utiliza el UID de Firebase Authentication como identificador:
-
-```js
-// users/{uid}
-{
-  userId: "uid-de-firebase-auth",
-  email: "persona@example.com",
-  displayName: "Nombre visible",
-  photoURL: null,
-  isAnonymous: false,
-  authProvider: "google.com",
-  createdAt: serverTimestamp(),
-  lastLoginAt: serverTimestamp()
-}
-```
-
-La escritura utiliza `{ merge: true }`, por lo que conserva los campos que ya existan en el documento. Para reutilizar perfiles anteriores, sus documentos deben estar identificados con el mismo UID utilizado por Firebase Authentication. Una colección `users` no crea credenciales: las cuentas también deben existir en Authentication.
-
-Si el proyecto ya posee reglas de Firestore, los bloques de `firestore.rules` deben integrarse con las reglas existentes. Publicar el archivo completo sin revisar podría reemplazar otras reglas del proyecto.
-
-## Modelo de datos inicial
+Modelo de datos:
 
 ```js
 // progress/{uid}
-{
-  userId: "uid-del-usuario-anonimo",
-  authProvider: "anonymous",
-  clues: ["tone", "coordinate", "message"],
-  updatedAt: serverTimestamp()
-}
+{ userId, authProvider, litDistricts: ['12','11','4'], visited: ['7','13'],
+  finalMessage: null | 'rebelion' | 'memoria', completedAt: null | number, updatedAt }
 ```
 
-El UID se utiliza dos veces de manera intencional:
+## Regenerar el mapa
 
-- como identificador del documento `progress/{uid}`;
-- como valor del campo `userId` para hacer visible la relación en Firestore.
-
-Las reglas verifican que ambos valores coincidan con `request.auth.uid`. El usuario anónimo correspondiente puede consultarse en Firebase Authentication.
-
-Una experiencia ramificada puede extender el documento:
-
-```js
-{
-  clues: [],
-  currentChapter: "carrier",
-  decisions: { answeredCall: true },
-  ending: null
-}
+```bash
+python3 -m venv .venv-tools
+.venv-tools/bin/pip install "numpy==1.26.4" "opencv-python-headless==4.10.0.84"
+.venv-tools/bin/python scripts/extract_map.py
 ```
 
-## Posibles extensiones
-
-- Carga de modelos `.glb` con `GLTFLoader`.
-- Audio espacial mediante Web Audio API.
-- Materiales personalizados mediante shaders GLSL.
-- Animaciones vinculadas al scroll.
-- Documentos narrativos mediante rutas dinámicas adicionales.
-- Finales alternativos basados en decisiones persistidas.
-- Contenido administrable desde Firestore.
+Para ajustarlo en Figma: importar `public/assets/panem.svg`, no renombrar las capas `district-*` y exportar como SVG con "Include 'id' attribute".
 
 ## Scripts
 
 ```bash
-npm run dev      # servidor de desarrollo
-npm run lint     # análisis estático
-npm run build    # build de producción
-npm run start    # ejecución del build
+npm run dev     # desarrollo
+npm test        # tests de lógica (node --test)
+npm run lint    # ESLint
+npm run build   # build de producción
 ```
 
----
+## Documentación del proceso
 
-**Cátedra Programación III — UMAI**
+- Consigna original del TP6: [`docs/consigna-tp6.md`](docs/consigna-tp6.md).
+- Diseño (concepto, rutas, escena, audio, datos): [`docs/superpowers/specs/panem-design.md`](docs/superpowers/specs/panem-design.md).
+- Plan de implementación por tareas: [`docs/superpowers/plans/panem-plan-implementacion.md`](docs/superpowers/plans/panem-plan-implementacion.md).
+- Imagen de referencia del mapa y su extracción: `docs/reference/`.
+
+## Créditos
+
+- *The Hunger Games* (Los juegos del hambre) © Suzanne Collins / Scholastic. Películas © Lionsgate. Proyecto de fans **con fines exclusivamente académicos y sin fines comerciales**. Los textos de la experiencia son originales.
+- Mapa e íconos de distritos: basados en una ilustración de fans del mapa de Panem (`docs/reference/panem-map.webp`), aportada por el equipo como referencia. _Pendiente: completar la autoría y la fuente original de la imagen._
+- Referencias visuales: Hunger Games: The Exhibition (Nueva York), "Antique map to 3D model" (awwwards) y el board "interactive web" del equipo.
+- Tipografías: Oswald (Vernon Adams) e Inter (Rasmus Andersson), SIL Open Font License, vía Google Fonts.
+- Música y efectos: sintetizados por código con Web Audio API.
+- Desarrollo: Mia y Lola · Programación Multimedial III · UMAI · 2026.

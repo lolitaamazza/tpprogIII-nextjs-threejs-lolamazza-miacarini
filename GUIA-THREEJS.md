@@ -2,6 +2,8 @@
 
 Esta guía explica la escena incluida en `components/ThreeArtifact.js`. No requiere conocimientos previos de Three.js. El objetivo es comprender qué función cumple cada parte, cómo se relacionan y cómo integrar una escena 3D con React y Next.js.
 
+> **Nota del proyecto:** los ejemplos de código de esta guía provienen del boilerplate original (`ThreeArtifact.js`, `Experience.js`, `data/chapters.js`), que en *Panem · La chispa* fue reemplazado. La escena de este proyecto está en `components/stage/panemScene.js` y aplica los mismos conceptos (escena, cámara, renderer, luces, loop, raycasting, resize y limpieza). La tabla de la sección 23 lista los archivos actuales.
+
 ## 1. Qué es Three.js
 
 El navegador puede dibujar gráficos acelerados por GPU mediante WebGL. WebGL es una API de bajo nivel: requiere administrar buffers, matrices, shaders y estados gráficos de forma explícita.
@@ -561,9 +563,13 @@ React Three Fiber reorganiza estos fundamentos, pero no los elimina.
 
 | Archivo | Función |
 | --- | --- |
-| `components/ThreeArtifact.js` | Construcción y ciclo de vida de la escena |
-| `components/Experience.js` | Estado narrativo y navegación |
-| `data/chapters.js` | Configuración visual y textual de cada escena |
-| `app/archivo/[chapter]/page.js` | Integración de cada capítulo con App Router |
-| `hooks/useProgress.js` | Persistencia de evidencias |
+| `components/stage/panemScene.js` | Renderer, escena, cámara, loop, puntero, ciclo de vida |
+| `components/stage/mapMesh.js` | SVG → piezas extruidas del mapa |
+| `components/stage/cameraRig.js` / `cameraPoses.js` | Transiciones y poses de cámara |
+| `components/stage/effects.js` | Partículas de la chispa |
+| `components/stage/dioramas/` | Escenas jugables de los distritos 12, 11 y 4 |
+| `components/panem/PanemStage.js` | Integración de la escena con React |
+| `components/panem/PanemProvider.js` | Estado narrativo, audio y progreso |
+| `app/(panem)/distrito/[id]/page.js` | Ruta dinámica de cada distrito |
+| `hooks/useProgress.js` | Persistencia del progreso |
 | `app/globals.css` | Tamaño del contenedor y composición visual |
