@@ -113,7 +113,7 @@ export default function CapitolFinale() {
         <summary>Créditos</summary>
         <p>
           Experiencia de fans sin fines comerciales, realizada para Programación Multimedial III (UMAI). <cite>The Hunger Games</cite> © Suzanne Collins / Scholastic; películas © Lionsgate.
-          Mapa basado en una ilustración de referencia de fans (ver README). Música y sonidos generados por código.
+          Mapa basado en una ilustración de referencia de fans (ver README). Música y sonidos generados por código; al juntar los tres emblemas puede sonar «The Hanging Tree» (James Newton Howard ft. Jennifer Lawrence, © Lionsgate / Universal Music), y la frase «If we burn, you burn with us» pertenece a la saga de Suzanne Collins.
           Tipografías Oswald e Inter (SIL Open Font License).
         </p>
       </details>

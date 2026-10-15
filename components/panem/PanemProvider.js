@@ -5,6 +5,7 @@ import { useProgress } from '@/hooks/useProgress';
 import { AudioEngine } from '@/lib/audio/AudioEngine';
 import { routeFromPathname } from '@/lib/routes';
 import { canEnterCapitol } from '@/lib/progress';
+import { BURN_LIT_IDS, completesEmblems } from '@/lib/burn';
 import { MAP_IDS, getDistrict } from '@/data/districts';
 
 const PanemContext = createContext(null);
@@ -30,6 +31,7 @@ export default function PanemProvider({ children }) {
   const [webglFailed, setWebglFailed] = useState(false);
   const [mapFailed, setMapFailed] = useState(false);
   const [finalePlaying, setFinalePlaying] = useState(false);
+  const [burning, setBurning] = useState(false); // secuencia "Panem arde": se dispara al juntar el tercer emblema
   const [toast, setToast] = useState('');
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -89,7 +91,7 @@ export default function PanemProvider({ children }) {
   useEffect(() => () => { audioRef.current?.dispose(); audioRef.current = null; }, []);
 
   const completed = progress.completedAt !== null;
-  const visibleLit = completed && !finalePlaying ? MAP_IDS : progress.litDistricts;
+  const visibleLit = burning ? BURN_LIT_IDS : completed && !finalePlaying ? MAP_IDS : progress.litDistricts;
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -101,7 +103,7 @@ export default function PanemProvider({ children }) {
     });
     if (duckRef.current !== null) audio.setDucked(true, duckRef.current);
     else audio.setDucked(route.scene === 'distrito');
-  }, [audioState, progress.litDistricts, progress.finalMessage, completed, finalePlaying, route]);
+  }, [audioState, progress.litDistricts, progress.finalMessage, completed, finalePlaying, route, burning]); // burning: al terminar el incendio se reaplica el volumen del ambiente
 
   const selectDistrict = useCallback((id) => {
     if (id === 'c') {
@@ -123,9 +125,11 @@ export default function PanemProvider({ children }) {
 
   const handleComplete = useCallback((districtId) => {
     if (progress.litDistricts.includes(districtId)) return;
+    const burn = completesEmblems(progress, districtId); // se evalúa antes de sumar: solo el emblema que completa el tercero
     progress.lightDistrict(districtId);
     setInteraction({ districtId, value: 1 });
     notify(`Emblema del Distrito ${districtId} · ${Math.min(progress.litDistricts.length + 1, 3)}/3`);
+    if (burn) setBurning(true);
   }, [progress, notify]);
 
   const performAction = useCallback(() => {
@@ -146,6 +150,7 @@ export default function PanemProvider({ children }) {
     catch { notify('No se pudo reiniciar en la nube; revisá tu conexión.'); }
     setFallbackCounts({});
     setInteraction({ districtId: null, value: 0 });
+    setBurning(false);
     router.push('/');
   }, [progress, notify, router]);
 
@@ -153,7 +158,7 @@ export default function PanemProvider({ children }) {
     route, progress, audioState, startAudio, toggleSound, sfx, hovered, setHovered,
     interaction, performAction, selectDistrict, handleProgress, handleComplete,
     stageApiRef, webglFailed, setWebglFailed, mapFailed, setMapFailed, finalePlaying, setFinalePlaying,
-    visibleLit, reducedMotion, notify, resetAll,
+    burning, setBurning, visibleLit, reducedMotion, notify, resetAll,
   };
 
   return (

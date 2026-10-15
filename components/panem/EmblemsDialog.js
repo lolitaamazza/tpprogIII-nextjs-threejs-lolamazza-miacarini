@@ -2,12 +2,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { PLAYABLE_IDS, getDistrict } from '@/data/districts';
+import { canEnterCapitol } from '@/lib/progress';
 import { usePanem } from './PanemProvider';
 
 const MESSAGE_LABELS = { rebelion: 'Encender la rebelión', memoria: 'Recordar a los caídos' };
 
 export default function EmblemsDialog({ onClose }) {
-  const { progress, resetAll } = usePanem();
+  const { progress, resetAll, setBurning } = usePanem();
   const [confirming, setConfirming] = useState(false);
   return (
     <div className="modal" role="dialog" aria-modal="true" aria-labelledby="emblems-title" onKeyDown={(e) => e.key === 'Escape' && onClose()}>
@@ -30,6 +31,9 @@ export default function EmblemsDialog({ onClose }) {
         </ul>
         {progress.finalMessage && <p>Mensaje transmitido: <strong>{MESSAGE_LABELS[progress.finalMessage]}</strong></p>}
         <p className="hint">Distritos explorados: {progress.visited.length}/13</p>
+        {canEnterCapitol(progress) && (
+          <p><button type="button" onClick={() => { onClose(); setBurning(true); }}>🔥 Ver Panem arder otra vez</button></p>
+        )}
         {confirming ? (
           <div className="confirm">
             <p>¿Apagar Panem y empezar de nuevo? Se borra tu progreso.</p>

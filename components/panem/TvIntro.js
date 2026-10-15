@@ -88,6 +88,7 @@ function startGlitch(screen, ms) {
 export default function TvIntro() {
   const router = useRouter();
   const { startAudio, sfx, progress, reducedMotion } = usePanem();
+  const litDistricts = progress?.litDistricts ?? [];
   const [phase, setPhase] = useState('off');
   const [plan, setPlan] = useState(null);
   const roomRef = useRef(null);
@@ -362,7 +363,7 @@ export default function TvIntro() {
       </div>
       <div className="tv-foot">
         <button type="button" className="primary tv-power" onClick={power} disabled={phase !== 'off'}>
-          {progress.litDistricts.length ? 'Retomar la señal' : 'Encender la señal'}
+          {litDistricts.length ? 'Retomar la señal' : 'Encender la señal'}
         </button>
         <p className="tv-warn">Con sonido · Contiene luces intermitentes</p>
         <p className="tv-credit">
