@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { easeInOutCubic, lerpPose, poseFor, viewShiftFor, fogRangeFor } from '../components/stage/cameraPoses.js';
+import { hallPoseFor } from '../lib/broadcastHall.js';
 
 const centers = { 12: { x: 2, z: 1 }, c: { x: -1, z: -0.5 } };
 
@@ -17,7 +18,7 @@ test('lerpPose interpola posición y objetivo', () => {
 });
 
 test('poses por escena', () => {
-  assert.deepEqual(poseFor({ scene: 'intro' }, centers, 1.6), { position: [0, 24, 3], target: [0, 0, 0] });
+  assert.deepEqual(poseFor({ scene: 'intro' }, centers, 1.6), hallPoseFor(1.6), 'la intro mira la sala de transmisión');
   const map = poseFor({ scene: 'mapa' }, centers, 1.6);
   assert.deepEqual(map.target, [0, 0, 0.6]);
   const d12 = poseFor({ scene: 'distrito', districtId: '12' }, centers, 1.6);

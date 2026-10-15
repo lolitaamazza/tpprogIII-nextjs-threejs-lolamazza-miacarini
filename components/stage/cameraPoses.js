@@ -1,4 +1,6 @@
 // Poses de cámara por escena. Puro: se prueba con `node --test`.
+import { hallPoseFor } from '../../lib/broadcastHall.js';
+
 export function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
 }
@@ -16,7 +18,7 @@ const fitFar = (aspect, minFar, needed) => Math.min(MAX_FAR, Math.max(minFar, ne
 export function poseFor(route, centers, aspect) {
   const close = aspect < 0.8 ? 1.7 : 1; // distritos y Capitolio: el contenido es chico
   const scene = route?.scene;
-  if (scene === 'intro') return { position: [0, 24, 3], target: [0, 0, 0] };
+  if (scene === 'intro') return hallPoseFor(aspect); // la sala de transmisión, lejos del mapa
   if (scene === 'finale') {
     const far = fitFar(aspect, 1.15, 2); // deja lugar al panel del final
     return { position: [0, 12 * far, 8.5 * far], target: [0, 0, 0.3] };

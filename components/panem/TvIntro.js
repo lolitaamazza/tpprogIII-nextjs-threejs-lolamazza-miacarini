@@ -5,11 +5,14 @@ import { useRouter } from 'next/navigation';
 import { usePanem } from './PanemProvider';
 import { AUDIO_START_GRACE_MS, CLIP, CLIP_LOAD_TIMEOUT_MS, CLIP_REVEAL_WAIT_MS, TIMING, clipDurationMs, introPlan, nextBreakFrame } from '@/lib/introTimeline';
 import { createClipPlayer } from '@/lib/youtubeClip';
+import { SCREEN_COPY } from '@/lib/broadcastHall';
 import './tv-intro.css';
 
-// Intro: una tele del Capitolio emite el anuncio, la señal se corta (clip del video oficial incrustado desde
-// YouTube) y la pantalla se abre al mapa. Cada fase es un efecto con su propia limpieza, así saltar o salir
-// de la página en cualquier momento deja todo apagado.
+// Intro: en la sala de transmisión del Capitolio la tele central emite el anuncio, la señal se corta (clip del
+// video oficial incrustado desde YouTube) y la cámara entra en la pantalla hasta el mapa. Cada fase es un efecto
+// con su propia limpieza, así saltar o salir de la página en cualquier momento deja todo apagado.
+// La sala es 3D (components/stage/broadcastHall.js); sin WebGL queda la tele dibujada con CSS. Las dos se manejan
+// con la misma interfaz de "pantalla" (domScreen / hallScreen), así el guion es uno solo.
 const ORDER = ['off', 'boot', 'logo', 'address', 'break', 'clip', 'black', 'enter', 'exit'];
 const forward = (next) => (current) => (ORDER.indexOf(next) > ORDER.indexOf(current) ? next : current);
 
@@ -54,10 +57,52 @@ function resetGlitch(screen) {
   screen.style.setProperty('--n', '0');
 }
 
+// Pantalla de la tele CSS (alternativa sin WebGL).
+function domScreen(el) {
+  const tears = el.querySelectorAll('.tv-tear');
+  return {
+    view(v) { el.dataset.v = v; },
+    power() {},
+    smallTvs() {},
+    glitch({ kind, squeeze, chroma, rolling, roll, skew, noise }) {
+      el.dataset.v = kind;
+      el.classList.toggle('squeeze', squeeze);
+      el.classList.toggle('chroma', chroma);
+      el.classList.toggle('rolling', rolling);
+      el.style.setProperty('--roll', `${roll.toFixed(1)}%`);
+      el.style.setProperty('--skew', `${skew.toFixed(1)}deg`);
+      el.style.setProperty('--n', noise.toFixed(2));
+      tears.forEach((tear) => {
+        tear.style.top = `${(Math.random() * 100).toFixed(0)}%`;
+        tear.style.opacity = Math.random() < 0.6 ? '1' : '0';
+      });
+    },
+    pirate() { el.dataset.v = 'pirate'; el.classList.add('chroma'); el.style.setProperty('--n', '0.28'); },
+    clean() { el.style.setProperty('--n', '0'); },
+    reset() { resetGlitch(el); },
+  };
+}
+
+// Pantalla de la sala 3D: la vista se pinta en la tele y el clip va en un iframe ubicado encima.
+function hallScreen(hall, overlay) {
+  const showClip = (on) => { if (overlay) overlay.dataset.show = on ? 'true' : 'false'; };
+  return {
+    view(v) { hall.setView(v === 'clip' ? 'none' : v); showClip(v === 'clip'); },
+    power(on) { hall.setPower(on); },
+    smallTvs(mode) { hall.setSmallTvs(mode); },
+    glitch({ kind, squeeze, chroma, rolling, roll, skew, noise }) {
+      hall.setView(kind);
+      hall.setGlitch({ roll: rolling ? roll / 100 : roll / 400, skew: skew * 0.02, chroma: chroma ? 0.006 : 0, noise, squeeze: squeeze ? 0.34 : 1 });
+    },
+    pirate() { hall.setView('pirate'); hall.setGlitch({ chroma: 0.004, noise: 0.12 }); showClip(false); },
+    clean() { hall.setGlitch({}); },
+    reset() { hall.setGlitch({}); },
+  };
+}
+
 // Corte propio de la señal: salta entre el anuncio, la señal pirata y negro. La regla de destellos vive en
 // nextBreakFrame (no más de 3 cuadros claros por segundo) y acá no hay saltos de brillo.
 function startGlitch(screen, ms) {
-  const tears = screen.querySelectorAll('.tv-tear');
   const startedAt = performance.now();
   let lastBrightAt = -Infinity;
   const frame = () => {
@@ -65,29 +110,27 @@ function startGlitch(screen, ms) {
     const progress = Math.min((now - startedAt) / ms, 1);
     const next = nextBreakFrame({ progress, roll: Math.random(), now, lastBrightAt });
     lastBrightAt = next.lastBrightAt;
-    screen.dataset.v = next.kind;
-    screen.classList.toggle('squeeze', next.kind === 'address' && progress > 0.16 && Math.random() < 0.65);
-    screen.classList.toggle('chroma', Math.random() < 0.5 + progress * 0.3);
-    screen.classList.toggle('rolling', progress > 0.08 && progress < 0.9 && Math.random() < 0.7);
-    screen.style.setProperty('--roll', `${(Math.random() * 56 - 28).toFixed(1)}%`);
-    screen.style.setProperty('--skew', `${(Math.random() * 10 - 5).toFixed(1)}deg`);
-    screen.style.setProperty('--n', (0.12 + progress * 0.55 + Math.random() * 0.2).toFixed(2));
-    tears.forEach((tear) => {
-      tear.style.top = `${(Math.random() * 100).toFixed(0)}%`;
-      tear.style.opacity = Math.random() < 0.6 ? '1' : '0';
+    screen.glitch({
+      kind: next.kind,
+      squeeze: next.kind === 'address' && progress > 0.16 && Math.random() < 0.65,
+      chroma: Math.random() < 0.5 + progress * 0.3,
+      rolling: progress > 0.08 && progress < 0.9 && Math.random() < 0.7,
+      roll: Math.random() * 56 - 28,
+      skew: Math.random() * 10 - 5,
+      noise: 0.12 + progress * 0.55 + Math.random() * 0.2,
     });
   };
   frame();
   const id = window.setInterval(frame, 90);
   return () => {
     window.clearInterval(id);
-    resetGlitch(screen);
+    screen.reset();
   };
 }
 
 export default function TvIntro() {
   const router = useRouter();
-  const { startAudio, sfx, progress, reducedMotion } = usePanem();
+  const { startAudio, sfx, progress, reducedMotion, stageApiRef, webglFailed } = usePanem();
   const litDistricts = progress?.litDistricts ?? [];
   const [phase, setPhase] = useState('off');
   const [plan, setPlan] = useState(null);
@@ -96,6 +139,9 @@ export default function TvIntro() {
   const screenRef = useRef(null);
   const clipBoxRef = useRef(null);
   const flashRef = useRef(null);
+  const overlayRef = useRef(null);
+  // '3d' cuando la escena tiene la sala; 'css' sin WebGL o si la sala no llega a armarse. null mientras se decide.
+  const [mode, setMode] = useState(null);
   const powered = useRef(false);
   const ended = useRef(false);
   const soundOn = useRef(false);
@@ -115,6 +161,31 @@ export default function TvIntro() {
       sfx.duck(false);
     };
   }, [sfx]);
+
+  useEffect(() => {
+    if (webglFailed || !stageApiRef.current?.hall) { setMode('css'); return undefined; }
+    if (stageApiRef.current.hall.ready()) { setMode('3d'); return undefined; }
+    const startedAt = performance.now();
+    const id = window.setInterval(() => {
+      const hall = stageApiRef.current?.hall;
+      if (hall?.ready()) { window.clearInterval(id); setMode('3d'); }
+      else if (!hall || performance.now() - startedAt > 4000) { window.clearInterval(id); setMode('css'); }
+    }, 100);
+    return () => window.clearInterval(id);
+  }, [stageApiRef, webglFailed]);
+
+  const getScreen = useCallback(() => {
+    if (mode === '3d') { const hall = stageApiRef.current?.hall; return hall ? hallScreen(hall, overlayRef.current) : null; }
+    return screenRef.current ? domScreen(screenRef.current) : null;
+  }, [mode, stageApiRef]);
+
+  // Ubica el iframe del clip justo encima de la pantalla 3D (la cámara está quieta mientras suena).
+  const placeOverlay = useCallback(() => {
+    const overlay = overlayRef.current;
+    const rect = mode === '3d' ? stageApiRef.current?.hall.screenRect() : null;
+    if (!overlay || !rect) return;
+    Object.assign(overlay.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+  }, [mode, stageApiRef]);
 
   const skip = useCallback(() => {
     ended.current = true;
@@ -146,7 +217,7 @@ export default function TvIntro() {
   }
 
   async function power() {
-    if (powered.current) return;
+    if (powered.current || !mode) return;
     powered.current = true;
     setPhase(forward('boot')); // respuesta inmediata: la línea de encendido arranca ya
     router.prefetch('/mapa');
@@ -157,7 +228,7 @@ export default function TvIntro() {
     if (clip.current.dead || ended.current) return;
     sfx.play('tvOn');
     const next = introPlan({ reducedMotion });
-    if (next.usesClip) preloadClip();
+    if (next.usesClip) { placeOverlay(); preloadClip(); }
     setPlan(next);
   }
 
@@ -169,29 +240,31 @@ export default function TvIntro() {
     return () => timers.forEach((id) => window.clearTimeout(id));
   }, [plan]);
 
-  // Logo y anuncio.
+  // Encendido, logo y anuncio.
   useEffect(() => {
-    const screen = screenRef.current;
+    const screen = getScreen();
     if (!screen) return;
-    if (phase === 'logo') { screen.dataset.v = 'logo'; sfx.play('fanfare'); }
-    if (phase === 'address') screen.dataset.v = 'address';
-  }, [phase, sfx]);
+    if (phase === 'boot') { screen.power(true); screen.smallTvs('on'); }
+    if (phase === 'logo') { screen.view('logo'); sfx.play('fanfare'); }
+    if (phase === 'address') screen.view('address');
+  }, [phase, sfx, getScreen]);
 
   // Corte propio: la señal se rompe y recién después entra el clip.
   useEffect(() => {
     if (phase !== 'break') return undefined;
-    const screen = screenRef.current;
+    const screen = getScreen();
     if (!screen) return undefined;
     sfx.play('cut');
+    screen.smallTvs('static');
     const stop = startGlitch(screen, TIMING.breakMs);
     const next = window.setTimeout(() => setPhase(forward('clip')), TIMING.breakMs);
     return () => { window.clearTimeout(next); stop(); };
-  }, [phase, sfx]);
+  }, [phase, sfx, getScreen]);
 
   // Clip del video oficial. Si no carga o no llega al corte, una señal pirata propia ocupa su lugar.
   useEffect(() => {
     if (phase !== 'clip') return undefined;
-    const screen = screenRef.current;
+    const screen = getScreen();
     const state = clip.current;
     if (!screen) return undefined;
     const timers = [];
@@ -207,9 +280,9 @@ export default function TvIntro() {
       setPhase(forward('black'));
     };
     // Mientras el clip llega al corte (o si no llega) se ve la señal pirata propia.
-    screen.dataset.v = 'pirate';
-    screen.classList.add('chroma');
-    screen.style.setProperty('--n', '0.28');
+    screen.pirate();
+    placeOverlay();
+    window.addEventListener('resize', placeOverlay);
     const giveUp = () => {
       state.ctl?.destroy(); // no tiene que seguir sonando ni reproduciéndose detrás
       state.ctl = null;
@@ -239,8 +312,8 @@ export default function TvIntro() {
       state.cb.ended = finish;
       state.cb.error = finish;
       loaded.setSound(soundOn.current ? 'on' : 'muted');
-      screen.dataset.v = 'clip';
-      screen.style.setProperty('--n', '0');
+      screen.clean();
+      screen.view('clip');
       if (soundOn.current) { sfx.duck(true, DUCK_LEVEL); ducked = true; }
       // Se corta justo antes del final para no mostrar la pantalla de recomendaciones de YouTube.
       polls.push(window.setInterval(() => { if (loaded.getTime() >= CLIP.end - 0.25) finish(); }, 120));
@@ -252,24 +325,35 @@ export default function TvIntro() {
       timers.forEach((id) => window.clearTimeout(id));
       polls.forEach((id) => window.clearInterval(id));
       state.cb = {};
-      resetGlitch(screen);
+      window.removeEventListener('resize', placeOverlay);
+      screen.reset();
+      screen.view('none');
       if (ducked) sfx.duck(false);
       state.ctl?.destroy();
       state.ctl = null;
     };
-  }, [phase, sfx]);
+  }, [phase, sfx, getScreen, placeOverlay]);
 
   // Negro entre el corte y la entrada al mapa.
   useEffect(() => {
     if (phase !== 'black') return undefined;
-    if (screenRef.current) screenRef.current.dataset.v = 'none';
+    const screen = getScreen();
+    screen?.view('none');
+    screen?.smallTvs('off');
     const id = window.setTimeout(() => setPhase(forward('enter')), TIMING.blackMs);
     return () => window.clearTimeout(id);
-  }, [phase]);
+  }, [phase, getScreen]);
 
   // La pantalla se apaga, la cámara se acerca a la ventana y se pasa al mapa 3D que hay detrás.
   useEffect(() => {
     if (phase !== 'enter') return undefined;
+    if (mode === '3d') {
+      // La cámara cruza el público y entra en la pantalla, que ya muestra el mapa: al llenar la vista se corta a él.
+      let cancelled = false;
+      sfx.play('whoosh');
+      stageApiRef.current?.hall.enter(TIMING.enterZoomMs / 1000 + 0.9).then(() => { if (!cancelled) router.push('/mapa'); });
+      return () => { cancelled = true; };
+    }
     const zoom = zoomRef.current;
     const screen = screenRef.current;
     const flash = flashRef.current;
@@ -302,7 +386,7 @@ export default function TvIntro() {
       window.setTimeout(() => router.push('/mapa'), 700 + TIMING.enterZoomMs + 100),
     ];
     return () => timers.forEach((id) => window.clearTimeout(id));
-  }, [phase, router, sfx]);
+  }, [phase, router, sfx, mode, stageApiRef]);
 
   // Salida directa (saltar o movimiento reducido): la sala se desvanece y se pasa al mapa.
   useEffect(() => {
@@ -311,65 +395,67 @@ export default function TvIntro() {
     return () => window.clearTimeout(id);
   }, [phase, router]);
 
-  return (
-    <section ref={roomRef} className="tv-room" data-phase={phase} aria-labelledby="tv-title">
-      <h1 id="tv-title" className="sr-only">Panem · transmisión oficial del Capitolio</h1>
-      <div ref={zoomRef} className="tv-zoom">
-        <div className="tv-amb" aria-hidden="true" />
-        <div className="tv-group">
-          <div className="tv-win" aria-hidden="true" />
-          <div className="tv-rings" aria-hidden="true" />
-          <div className="tv-lamp l" aria-hidden="true" />
-          <div className="tv-lamp r" aria-hidden="true" />
-          <div className="tv-console">
-            <div className="tv-grille" aria-hidden="true" />
-            <span className="tv-label" aria-hidden="true">Capitol TV</span>
-            {/* La perilla es el mismo comando que el botón de abajo, que es el que leen los lectores de pantalla. */}
-            <button type="button" className="tv-knob" onClick={power} tabIndex={-1} aria-hidden="true" />
+  const tvCss = mode === 'css' && (
+    <div ref={zoomRef} className="tv-zoom">
+      <div className="tv-amb" aria-hidden="true" />
+      <div className="tv-group">
+        <div className="tv-win" aria-hidden="true" />
+        <div className="tv-rings" aria-hidden="true" />
+        <div className="tv-lamp l" aria-hidden="true" />
+        <div className="tv-lamp r" aria-hidden="true" />
+        <div className="tv-console">
+          <div className="tv-grille" aria-hidden="true" />
+          <span className="tv-label" aria-hidden="true">Capitol TV</span>
+          {/* La perilla es el mismo comando que el botón de abajo, que es el que leen los lectores de pantalla. */}
+          <button type="button" className="tv-knob" onClick={power} tabIndex={-1} aria-hidden="true" />
+        </div>
+        <div ref={screenRef} className="tv-screen" aria-hidden="true">
+          <div className="tv-v tv-logo">
+            <span className="tv-seal" />
+            <span className="tv-logo-t">{SCREEN_COPY.logo}</span>
           </div>
-          <div ref={screenRef} className="tv-screen" aria-hidden="true">
-            <div className="tv-v tv-logo">
+          <div className="tv-v tv-address" lang="en">
+            <div className="tv-content">
               <span className="tv-seal" />
-              <span className="tv-logo-t">CAPITOL TV</span>
+              <p className="tv-eb">{SCREEN_COPY.eyebrow}</p>
+              <p className="tv-hd">{SCREEN_COPY.headline}</p>
+              <p className="tv-tx">{SCREEN_COPY.body}</p>
             </div>
-            <div className="tv-v tv-address">
-              <div className="tv-content">
-                <span className="tv-seal" />
-                <p className="tv-eb">CAPITOL TV · TRANSMISIÓN OFICIAL</p>
-                <p className="tv-hd">CIUDADANOS DE PANEM</p>
-                <p className="tv-tx">Nunca estuvimos tan unidos. Los distritos trabajan, el Capitolio cuida y Panem vive en paz.</p>
-              </div>
-              <div className="tv-ticker">
-                <span>TODA SEÑAL NO AUTORIZADA SERÁ ELIMINADA · PANEM VIVE EN PAZ · UNIDAD · ORDEN · TRABAJO · TODA SEÑAL NO AUTORIZADA SERÁ ELIMINADA · </span>
-              </div>
-            </div>
-            <div className="tv-v tv-pirate">
-              <Image className="tv-map" src="/assets/panem.svg" alt="" width={1000} height={744} loading="eager" />
-              <span className="tv-tag">SEÑAL NO AUTORIZADA</span>
-              <span className="tv-rec" />
-            </div>
-            <div ref={clipBoxRef} className="tv-v tv-clip" />
-            <div className="tv-noise" />
-            <div className="tv-sync" />
-            <div className="tv-tear" style={{ top: '20%' }} />
-            <div className="tv-tear" style={{ top: '55%' }} />
-            <div className="tv-tear" style={{ top: '80%' }} />
-            <div className="tv-scan" />
-            <div className="tv-vig" />
-            <div className="tv-glare" />
-            <div className="tv-line" />
+            <div className="tv-ticker"><span>{SCREEN_COPY.ticker}{SCREEN_COPY.ticker}</span></div>
           </div>
+          <div className="tv-v tv-pirate">
+            <Image className="tv-map" src="/assets/panem.svg" alt="" width={1000} height={744} loading="eager" />
+            <span className="tv-tag">{SCREEN_COPY.pirate}</span>
+            <span className="tv-rec" />
+          </div>
+          <div ref={clipBoxRef} className="tv-v tv-clip" />
+          <div className="tv-noise" />
+          <div className="tv-sync" />
+          <div className="tv-tear" style={{ top: '20%' }} />
+          <div className="tv-tear" style={{ top: '55%' }} />
+          <div className="tv-tear" style={{ top: '80%' }} />
+          <div className="tv-scan" />
+          <div className="tv-vig" />
+          <div className="tv-glare" />
+          <div className="tv-line" />
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <section ref={roomRef} className={`tv-room${mode === '3d' ? ' is-3d' : ''}`} data-phase={phase} aria-labelledby="tv-title">
+      <h1 id="tv-title" className="sr-only">Panem · transmisión oficial del Capitolio</h1>
+      {tvCss}
+      {mode === '3d' && (
+        <div ref={overlayRef} className="tv3d-clip" data-show="false" aria-hidden="true">
+          <div ref={clipBoxRef} className="tv3d-clip-box" />
+        </div>
+      )}
       <div className="tv-foot">
-        <button type="button" className="primary tv-power" onClick={power} disabled={phase !== 'off'}>
+        <button type="button" className="primary tv-power" onClick={power} disabled={phase !== 'off' || !mode}>
           {litDistricts.length ? 'Retomar la señal' : 'Encender la señal'}
         </button>
-        <p className="tv-warn">Con sonido · Contiene luces intermitentes</p>
-        <p className="tv-credit">
-          Fragmento del video oficial <cite>{CLIP.title}</cite> de {CLIP.channel} (Lionsgate), incrustado desde YouTube.
-          Experiencia de fans con fines académicos, inspirada en <cite>The Hunger Games</cite> de Suzanne Collins.
-        </p>
       </div>
       <button type="button" className="tv-skip" onClick={skip}>Saltar la intro</button>
       <div ref={flashRef} className="tv-flash" aria-hidden="true" />

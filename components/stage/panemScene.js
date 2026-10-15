@@ -3,6 +3,8 @@ import { loadPanemMap } from './mapMesh.js';
 import { createCameraRig } from './cameraRig.js';
 import { fogRangeFor, poseFor, viewShiftFor } from './cameraPoses.js';
 import { createSparks } from './effects.js';
+import { createBroadcastHall } from './broadcastHall.js';
+import { screenPoseFor } from '../../lib/broadcastHall.js';
 import { DIORAMAS } from './dioramas/index.js';
 import { MAP_IDS } from '../../data/districts.js';
 
@@ -43,6 +45,7 @@ export function createPanemScene(mount, callbacks) {
     map: null, diorama: null, dioramaId: null, finaleLit: new Set(), finaleTimers: [],
     aspect: 1, disposed: false, frame: 0, down: null, running: false,
     shift: { x: 0, y: 0 }, finaleRunning: false, poseRoute: { scene: 'intro', districtId: null },
+    hall: null, hallLoading: null, portal: null,
   };
 
   function resize() {
@@ -77,10 +80,32 @@ export function createPanemScene(mount, callbacks) {
     callbacks.onProgress(id, completed ? 1 : 0);
   }
 
+  // La sala de la intro se arma al entrar a "/" y se libera al salir.
+  function ensureHall() {
+    if (state.hall || state.hallLoading) return;
+    state.hallLoading = createBroadcastHall()
+      .then((hall) => {
+        state.hallLoading = null;
+        if (state.disposed || state.route.scene !== 'intro') { hall.dispose(); return; }
+        state.hall = hall;
+        scene.add(hall.group);
+      })
+      .catch((error) => { state.hallLoading = null; console.warn('No se pudo armar la sala de la intro:', error); });
+  }
+
+  function releaseHall() {
+    finishPortal(false);
+    state.hall?.dispose();
+    state.hall = null;
+  }
+
   function applyRoute() {
     const { route, map } = state;
+    // Al salir de la intro la cámara corta al mapa: volar desde la sala cruzaría 60 unidades de nada.
+    const leavingIntro = state.poseRoute?.scene === 'intro' && route.scene !== 'intro';
     state.poseRoute = route;
-    rig.goTo(poseFor(route, map?.centers, state.aspect), 1.6);
+    rig.goTo(poseFor(route, map?.centers, state.aspect), leavingIntro ? 0 : 1.6);
+    if (route.scene === 'intro') ensureHall(); else releaseHall();
     const wanted = route.scene === 'distrito' && map && DIORAMAS[route.districtId] ? route.districtId : null;
     if (wanted !== state.dioramaId) {
       disposeDiorama();
@@ -160,6 +185,39 @@ export function createPanemScene(mount, callbacks) {
     }
   }
 
+  // Entrada a la pantalla: la cámara vuela hasta llenar la vista con la tele, que muestra el mapa como un portal
+  // (se muestrea en coordenadas de pantalla). Cuando la pantalla tapa todo, se corta a la misma vista del mapa.
+  function finishPortal(completed) {
+    const portal = state.portal;
+    if (!portal) return;
+    state.portal = null;
+    if (completed) {
+      rig.goTo(portal.mapPose, 0);
+      if (state.hall) state.hall.group.visible = false;
+    }
+    state.hall?.setPortal(null, 0, 1, 1);
+    portal.target.dispose();
+    portal.resolve();
+  }
+
+  function renderPortal(dt) {
+    const portal = state.portal;
+    portal.t = Math.min(1, portal.t + dt / portal.seconds);
+    const amount = Math.min(1, Math.max(0, (portal.t - 0.3) / 0.45));
+    if (amount > 0) {
+      state.hall.group.visible = false;
+      renderer.setRenderTarget(portal.target);
+      renderer.setClearColor(0x0b0b0c, 1);
+      renderer.clear();
+      renderer.render(scene, portal.camera);
+      renderer.setRenderTarget(null);
+      renderer.setClearColor(0x000000, 0);
+      state.hall.group.visible = true;
+    }
+    state.hall.setPortal(portal.target.texture, amount, portal.width, portal.height);
+    if (portal.t >= 1) finishPortal(true);
+  }
+
   function animate(timestamp) {
     state.frame = requestAnimationFrame(animate);
     timer.update(timestamp);
@@ -175,6 +233,10 @@ export function createPanemScene(mount, callbacks) {
       lit: state.lit, finaleLit: state.finaleLit,
     });
     state.diorama?.update(dt, elapsed);
+    if (state.hall) {
+      state.hall.update(dt, elapsed);
+      if (state.portal) renderPortal(dt);
+    }
     sparks.update(dt);
     renderer.render(scene, camera);
   }
@@ -252,6 +314,31 @@ export function createPanemScene(mount, callbacks) {
       at(last + 1.5, () => { state.finaleRunning = false; onDone?.(); });
     },
     cancelFinale: clearFinale,
+    // La intro maneja la sala con esto. Sin sala (todavía cargando o sin WebGL) las llamadas no hacen nada.
+    hall: {
+      ready: () => Boolean(state.hall),
+      setPower: (on) => state.hall?.setPower(on),
+      setView: (view) => state.hall?.setView(view),
+      setGlitch: (glitch) => state.hall?.setGlitch(glitch),
+      setSmallTvs: (mode) => state.hall?.setSmallTvs(mode),
+      screenRect: () => state.hall?.screenRect(camera, mount.clientWidth, mount.clientHeight) ?? null,
+      enter(seconds = 2.4) {
+        return new Promise((resolve) => {
+          if (!state.hall) { resolve(); return; }
+          finishPortal(false);
+          const size = renderer.getDrawingBufferSize(new THREE.Vector2());
+          const mapPose = poseFor({ scene: 'mapa', districtId: null }, state.map?.centers, state.aspect);
+          const portalCamera = new THREE.PerspectiveCamera(camera.fov, camera.aspect, camera.near, camera.far);
+          portalCamera.position.set(...mapPose.position);
+          portalCamera.lookAt(new THREE.Vector3(...mapPose.target));
+          state.portal = {
+            t: 0, seconds, mapPose, camera: portalCamera, width: size.x, height: size.y, resolve,
+            target: new THREE.WebGLRenderTarget(size.x, size.y),
+          };
+          rig.goTo(screenPoseFor(state.aspect), seconds);
+        });
+      },
+    },
     getInfo() {
       return {
         canvases: mount.querySelectorAll('canvas').length,
@@ -271,6 +358,7 @@ export function createPanemScene(mount, callbacks) {
       canvas.removeEventListener('pointerleave', onPointerLeave);
       document.removeEventListener('visibilitychange', onVisibility);
       disposeDiorama();
+      releaseHall();
       state.map?.dispose();
       sparks.dispose();
       timer.dispose();

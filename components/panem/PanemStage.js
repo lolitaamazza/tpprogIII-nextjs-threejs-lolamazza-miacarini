@@ -40,6 +40,8 @@ export default function PanemStage() {
     }
     stageApiRef.current = api;
     if (process.env.NODE_ENV !== 'production') window.__panemInfo = api.getInfo;
+    // Con ?debug en la URL la escena queda a mano en la consola (para revisar la sala de la intro en producción).
+    if (new URLSearchParams(window.location.search).has('debug')) window.__panemStage = api;
     return () => {
       api.dispose();
       stageApiRef.current = null;

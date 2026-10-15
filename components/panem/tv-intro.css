@@ -82,9 +82,7 @@
 
 .tv-foot { position: absolute; z-index: 5; left: 0; right: 0; bottom: max(2.2cqmin, env(safe-area-inset-bottom, 0px)); display: grid; justify-items: center; gap: 1.2cqmin; padding-inline: 16px; text-align: center; transition: opacity .4s; }
 .tv-power { font-size: clamp(14px, 2.4cqmin, 20px); padding: 12px 26px; }
-.tv-warn, .tv-credit { margin: 0; max-width: 62ch; font: 400 clamp(11px, 1.7cqmin, 13px)/1.45 var(--font-body), sans-serif; color: var(--muted); text-transform: none; letter-spacing: 0; }
-.tv-credit { opacity: .8; }
-.tv-room:not([data-phase="off"]) .tv-power, .tv-room:not([data-phase="off"]) .tv-warn { opacity: 0; pointer-events: none; }
+.tv-room:not([data-phase="off"]) .tv-power { opacity: 0; pointer-events: none; }
 .tv-room[data-phase="enter"] .tv-foot { opacity: 0; }
 .tv-skip { position: absolute; z-index: 6; top: max(16px, env(safe-area-inset-top, 0px)); right: 16px; font-size: 13px; padding: 8px 14px; background: #0b0806aa; transition: opacity .3s; }
 .tv-room[data-phase="enter"] .tv-skip, .tv-room[data-phase="exit"] .tv-skip { opacity: 0; pointer-events: none; }
@@ -97,3 +95,17 @@
 @keyframes tv-lineon { 0% { opacity: 1; transform: scaleX(.02); } 45% { opacity: 1; transform: scaleX(1); height: calc(var(--u) * .35); } 100% { opacity: 0; transform: scaleX(1); height: calc(var(--u) * 22.5); top: 0; } }
 @keyframes tv-syncdown { from { transform: translateY(0); } to { transform: translateY(calc(var(--u) * 40)); } }
 @media (prefers-reduced-motion: reduce) { .tv-ticker span, .tv-noise, .tv-rec, .tv-room[data-phase="boot"] .tv-line { animation: none; } }
+
+/* Sala 3D: la escena está en el canvas de atrás; acá quedan los controles y el iframe del clip sobre la pantalla. */
+.tv-room.is-3d { background: none; }
+.tv-room.is-3d .tv-foot { padding-top: 48px; background: linear-gradient(transparent, rgba(11, 8, 6, .85)); bottom: 0; padding-bottom: max(2.2cqmin, env(safe-area-inset-bottom, 0px)); }
+.tv-room.is-3d[data-phase="exit"] { opacity: 1; }
+.tv-room.is-3d::after { content: ""; position: absolute; inset: 0; z-index: 8; background: #000; opacity: 0; pointer-events: none; transition: opacity .6s; }
+.tv-room.is-3d[data-phase="exit"]::after { opacity: 1; }
+.tv3d-clip { position: absolute; z-index: 1; overflow: hidden; border-radius: 4% / 5.5%; opacity: 0; pointer-events: none; background: #000; }
+.tv3d-clip[data-show="true"] { opacity: 1; }
+.tv3d-clip-box { position: absolute; inset: 0; overflow: hidden; }
+.tv3d-clip::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .2) 0 2px, transparent 2px 4px), radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0, 0, 0, .6) 100%); }
+/* El fragmento viene con franjas negras de cine: en la tele 3D se recortan. */
+.tv3d-clip .tv-clip-frame { transform: translate(-50%, -50%) scale(1.3); }
