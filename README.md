@@ -3,7 +3,7 @@
 > Panem está a oscuras: llevá la chispa de distrito en distrito hasta que el Capitolio no pueda apagarla.
 
 Experiencia web transmedia (TP6 · Programación Multimedial III · UMAI) inspirada en *The Hunger Games*.
-Next.js 16 + Three.js + Firebase · JavaScript · App Router.
+Next.js 16 + Three.js + GSAP + Firebase · JavaScript · App Router.
 
 **Deploy:** _pendiente: completar con la URL pública (Vercel)_
 
@@ -52,7 +52,7 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
 
 - **Canvas persistente:** la escena y el audio viven en `app/(panem)/layout.js`. Los layouts no se re-renderizan al navegar, así que la cámara *vuela* entre rutas en lugar de recargar la escena. `usePathname()` traduce la URL a una pose de cámara (`lib/routes.js` + `components/stage/cameraPoses.js`).
 - **Mapa desde SVG:** `scripts/extract_map.py` extrae las piezas de la imagen de referencia (flood fill + contornos con OpenCV) y genera `public/assets/panem.svg`, ajustable en Figma. En el navegador, `SVGLoader` y `ExtrudeGeometry` convierten cada `path#district-{id}` en una pieza 3D seleccionable por raycasting.
-- **Audio procedural:** `lib/audio/` sintetiza todo con Web Audio: ambiente de viento y drone, un secuenciador a 80 BPM en re menor con tres capas (percusión, silbido y pad) sincronizadas por un único reloj, y los efectos. No hace falta ningún archivo de audio y no hay problemas de derechos. El motivo de 4 notas es original.
+- **Audio procedural:** `lib/audio/` sintetiza todo con Web Audio: ambiente de viento y drone, un secuenciador a 80 BPM en re menor con tres capas (percusión, silbido y pad) sincronizadas por un único reloj, y los efectos. El ambiente y los efectos no requieren archivos de audio. La secuencia opcional «Panem arde» también puede intentar reproducir `/audio/the-hanging-tree.mp3`, que no se incluye: si falta, continúa sin esa grabación. El motivo de 4 notas es original.
 - **Intro de la sala de transmisión:** una escena 3D en el mismo canvas que el mapa, apartada 60 unidades (`components/stage/broadcastHall.js`, medidas y poses en `lib/broadcastHall.js`). Referencia: la sala de teles de los 10.º Juegos; estética años 50 y, dentro del mundo, textos en inglés. Todo es geometría propia (`InstancedMesh` para sillas, público, gabinetes y monitores) y texturas pintadas en canvas; la pantalla usa un shader de tubo (curvatura, corrimiento, aberración, ruido, línea de encendido). Al final la pantalla muestra el mapa como un portal (render a textura muestreado en coordenadas de pantalla) y, cuando la llena, la cámara corta a esa misma vista. El clip de YouTube va en un iframe ubicado sobre la pantalla proyectada; sin WebGL queda la tele dibujada con CSS (`components/panem/TvIntro.js` + `tv-intro.css`). El guion, el clip y la regla de destellos del corte propio son lógica pura en `lib/introTimeline.js`; el reproductor, en `lib/youtubeClip.js`. YouTube muestra su interfaz unos segundos al empezar, así que el clip arranca 7 s antes del corte, oculto y con volumen 0, y se muestra al llegar al segundo 29. Si no carga, una señal pirata propia ocupa su lugar.
 - **Dioramas desmontables:** cada distrito jugable se construye al entrar y se libera al salir (`components/stage/dioramas/`), con un contrato común (`build → { update, pointer*, performAction, dispose }`).
 - **Lógica testeable:** datos, progreso, rutas, poses, partitura y reglas de los dioramas son módulos puros, probados con `node --test` (`npm test`).
@@ -129,3 +129,50 @@ npm run build   # build de producción
 - Tipografías: Oswald (Vernon Adams) e Inter (Rasmus Andersson), SIL Open Font License, vía Google Fonts.
 - Música y efectos: sintetizados por código con Web Audio API.
 - Desarrollo: Mia y Lola · Programación Multimedial III · UMAI · 2026.
+
+
+## Archivo interactivo de los Juegos
+
+Con los tres emblemas, el enlace **Los Juegos** y el Capitolio abren una edición alternativa:
+
+```text
+/cosecha → /capitolio/preparacion → /arena → /desenlace → /capitolio
+```
+
+- La Cosecha presenta 24 personajes originales, dos por cada distrito del 1 al 12. La persona elige a quién acompañar como mentora.
+- Cada emblema permite una elección de preparación (+8 a un atributo). El entrenamiento se aplica una sola vez y funciona igual con botones o interacción 3D.
+- Cada turno permite refugiarse, conseguir provisiones, buscar alianzas o explorar. Los demás tributos actúan mediante reglas y azar reproducible.
+- Salud, energía, hambre, sed, recursos, zonas y alianzas determinan los eventos. Si cae el tributo elegido se puede seguir como observadora.
+- La partida termina con un sobreviviente, como máximo en 24 turnos (12 jornadas), y conserva la crónica completa. El epílogo de rebelión/memoria permanece disponible.
+- Las rutas validan el capítulo de la partida: abrir una URL futura redirige al estado actual.
+
+### Escenas y animación
+
+El mismo renderer carga y libera escenarios originales procedurales: plaza con urna de la Cosecha, columnas y tren del Capitolio, arena con bosque, río, ruinas y Cornucopia. Los personajes son figuras estilizadas propias, sin modelos GLB ni animaciones de terceros. Se puede evolucionar el arte sin cambiar el motor de reglas.
+
+GSAP anima interfaz y cámara. Las timelines de cámara se avanzan desde el reloj del renderer, sin competir con otro controlador. Los turnos activan planos breves de los eventos; pausa y salto no alteran resultados. Calidad alta incorpora bloom suave; el modo ligero reduce resolución y vegetación, y el automático usa ese modo en pantallas angostas. Movimiento reducido elimina las entradas animadas de la interfaz, el desplazamiento de los personajes y el postprocesado. Los efectos de Cosecha y cañón se sintetizan con el motor de audio existente.
+
+### Guardado de partidas
+
+El progreso anterior (`panem-chispa-v1` y `progress/{uid}`) se conserva intacto: no necesita migración destructiva ni resultados inventados. Las partidas usan un esquema independiente `version: 1`.
+
+- Guardado automático local en `panem-games-v1:<uid>` o `panem-games-v1:guest`.
+- Copia JSON descargable e importable desde el panel. Una copia incompatible no reemplaza automáticamente la actual.
+- Botón **Guardar en nube** para una cuenta autenticada: `users/{uid}/runs/active`, con `userId`, `snapshot` y `updatedAt`.
+- Una transacción compara la copia remota conocida antes de escribir. Si la nube, otra pestaña o un archivo importado tiene una partida distinta, se elige una versión completa; nunca se mezclan eventos.
+- La edición nueva reemplaza el espacio activo local después de una confirmación; se puede descargar la anterior. Las cuentas tienen espacios separados. Para trasladar una partida de invitada a una cuenta, descargarla e importarla en esa cuenta.
+- Las nuevas reglas están en `firestore.rules`. No se publican automáticamente: el guardado remoto requiere desplegarlas en el proyecto Firebase correspondiente. El botón informa errores y mantiene el archivo local.
+
+Esta es una simulación personal en cliente, no un ranking competitivo ni un servidor que certifique resultados. Firestore controla acceso por cuenta y la forma básica del documento; el cliente valida los snapshots importados.
+
+### Verificación y desarrollo
+
+`npm` es el único gestor de dependencias del proyecto; `package-lock.json` es la fuente reproducible. GSAP es dependencia de producción; TypeScript se instala como dependencia de las herramientas ESLint, sin convertir los archivos JavaScript.
+
+Las pruebas incluyen 300 ediciones completas con verificación de superviviente único, no resurrección, límites, determinismo al reanudar, puertas de entrenamiento y liberación de escenas. Ejecutar `npm test`, `npm run lint` y `npm run build`.
+
+Si Turbopack falla con `unable to start FSEvent stream` en macOS, usar `npm run dev:webpack`. Para revisar el build sin observador de archivos: `npm run build` y `npm start`.
+
+La primera verificación local incluyó completar los tres minijuegos, crear una edición, elegir a Brasa, preparar atributos, pausar/reanudar, recargar y continuar, avanzar en vista de 390 px hasta un ganador y volver al epílogo. La conexión real a Firebase y sus reglas desplegadas requieren validación en el entorno configurado.
+
+El análisis de dependencias reporta cinco alertas altas en la cadena de desarrollo `eslint-config-next → fast-glob → micromatch → braces`. La corrección sugerida por npm retrocede a Next ESLint 14; no se aplica ese cambio incompatible automáticamente. No hay alertas de producción en ese reporte.

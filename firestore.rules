@@ -19,6 +19,29 @@ service cloud.firestore {
         && validProgress(request.resource.data);
     }
 
+    // Una copia activa por cuenta. El cliente conserva el historial completo en el snapshot.
+    match /users/{userId}/runs/{slot} {
+      allow read, delete: if request.auth != null && request.auth.uid == userId && slot == 'active';
+      allow create, update: if request.auth != null && request.auth.uid == userId && slot == 'active'
+        && request.resource.data.keys().hasOnly(['userId', 'snapshot', 'updatedAt'])
+        && request.resource.data.userId == userId
+        && request.resource.data.snapshot.version == 1
+        && request.resource.data.snapshot.id is string
+        && request.resource.data.snapshot.id.size() <= 80
+        && request.resource.data.snapshot.phase in ['reaping', 'preparation', 'arena', 'ended']
+        && request.resource.data.snapshot.revision is int
+        && request.resource.data.snapshot.revision >= 0
+        && request.resource.data.snapshot.revision <= 26
+        && request.resource.data.snapshot.turn is int
+        && request.resource.data.snapshot.turn >= 0
+        && request.resource.data.snapshot.turn <= 24
+        && request.resource.data.snapshot.tributes is list
+        && request.resource.data.snapshot.tributes.size() == 24
+        && request.resource.data.snapshot.events is list
+        && request.resource.data.snapshot.events.size() <= 1600
+        && request.resource.data.updatedAt == request.time;
+    }
+
     match /users/{userId} {
       allow read: if request.auth != null
         && request.auth.uid == userId;

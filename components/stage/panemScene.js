@@ -1,4 +1,9 @@
 import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { createArchiveScene } from './games/archiveScene.js';
 import { loadPanemMap } from './mapMesh.js';
 import { createCameraRig } from './cameraRig.js';
 import { fogRangeFor, poseFor, viewShiftFor } from './cameraPoses.js';
@@ -46,12 +51,14 @@ export function createPanemScene(mount, callbacks) {
     aspect: 1, disposed: false, frame: 0, down: null, running: false,
     shift: { x: 0, y: 0 }, finaleRunning: false, poseRoute: { scene: 'intro', districtId: null },
     hall: null, hallLoading: null, portal: null,
+    archive: null, archiveChapter: null, run: null, gamesPaused: false, reducedMotion: false, quality: 'auto', composer: null, bloom: null, cinematic: null,
   };
 
   function resize() {
     const width = mount.clientWidth;
     const height = Math.max(mount.clientHeight, 1);
     renderer.setSize(width, height, false);
+    state.composer?.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     // La distancia de la cámara depende de la proporción de la pantalla: se reubica si cambia de verdad.
@@ -99,13 +106,51 @@ export function createPanemScene(mount, callbacks) {
     state.hall = null;
   }
 
+  function releaseComposer() {
+    if (!state.composer) return;
+    state.composer.passes.forEach((pass) => pass.dispose?.());
+    state.composer.dispose(); state.composer = null; state.bloom = null;
+  }
+
+  function configureQuality() {
+    const low = state.quality === 'low' || (state.quality === 'auto' && mount.clientWidth < 721);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 2));
+    state.archive?.setQuality(low ? 'low' : 'high');
+    if (!state.archive || low || state.reducedMotion) releaseComposer();
+    else if (!state.composer) {
+      try {
+        const composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        const bloom = new UnrealBloomPass(new THREE.Vector2(mount.clientWidth, mount.clientHeight), .22, .35, .8);
+        composer.addPass(bloom); composer.addPass(new OutputPass());
+        state.composer = composer; state.bloom = bloom;
+      } catch { releaseComposer(); }
+    }
+    state.composer?.setPixelRatio(renderer.getPixelRatio());
+    resize();
+  }
+
   function applyRoute() {
     const { route, map } = state;
+    state.cinematic = null;
     // Al salir de la intro la cámara corta al mapa: volar desde la sala cruzaría 60 unidades de nada.
     const leavingIntro = state.poseRoute?.scene === 'intro' && route.scene !== 'intro';
     state.poseRoute = route;
     rig.goTo(poseFor(route, map?.centers, state.aspect), leavingIntro ? 0 : 1.6);
     if (route.scene === 'intro') ensureHall(); else releaseHall();
+    const chapter = route.scene === 'games' ? route.chapter : null;
+    if (chapter !== state.archiveChapter) {
+      state.archive?.dispose(); state.archive = null; state.archiveChapter = chapter;
+      if (chapter) {
+        state.archive = createArchiveScene(chapter);
+        state.archive.setRun(state.run);
+        state.archive.setReducedMotion(state.reducedMotion);
+        state.archive.setQuality(state.quality);
+        scene.add(state.archive.group);
+      }
+    }
+    if (map) map.group.visible = !chapter;
+    configureQuality();
     const wanted = route.scene === 'distrito' && map && DIORAMAS[route.districtId] ? route.districtId : null;
     if (wanted !== state.dioramaId) {
       disposeDiorama();
@@ -223,7 +268,16 @@ export function createPanemScene(mount, callbacks) {
     timer.update(timestamp);
     const dt = Math.min(timer.getDelta(), 0.05);
     const elapsed = timer.getElapsed();
-    rig.update(dt);
+    if (!state.gamesPaused || state.route.scene !== 'games') {
+      rig.update(dt);
+      if (state.cinematic) {
+        state.cinematic.remaining -= dt;
+        if (state.cinematic.remaining <= 0) {
+          rig.goTo(poseFor(state.route, state.map?.centers, state.aspect), 1.4);
+          state.cinematic = null;
+        }
+      }
+    }
     const fog = fogRangeFor(camera.position.length());
     scene.fog.near = fog.near;
     scene.fog.far = fog.far;
@@ -233,12 +287,14 @@ export function createPanemScene(mount, callbacks) {
       lit: state.lit, finaleLit: state.finaleLit,
     });
     state.diorama?.update(dt, elapsed);
+    if (!state.gamesPaused) state.archive?.update(dt, elapsed);
     if (state.hall) {
       state.hall.update(dt, elapsed);
       if (state.portal) renderPortal(dt);
     }
     sparks.update(dt);
-    renderer.render(scene, camera);
+    if (state.composer && state.route.scene === 'games') state.composer.render(dt);
+    else renderer.render(scene, camera);
   }
 
   function start() {
@@ -264,7 +320,7 @@ export function createPanemScene(mount, callbacks) {
     state.finaleLit.clear();
   }
 
-  const observer = new ResizeObserver(resize);
+  const observer = new ResizeObserver(configureQuality);
   observer.observe(mount);
   resize();
   rig.goTo(poseFor(state.route, null, state.aspect), 0);
@@ -289,7 +345,25 @@ export function createPanemScene(mount, callbacks) {
     setRoute(route) { state.route = route; applyRoute(); },
     setLit(ids) { state.lit = ids; },
     setHovered(id) { state.externalHover = id; },
-    setReducedMotion(value) { rig.setReducedMotion(value); },
+    setReducedMotion(value) { state.reducedMotion = value; rig.setReducedMotion(value); state.archive?.setReducedMotion(value); configureQuality(); },
+    setGamesRun(run) {
+      const previous = state.run;
+      state.run = run; state.archive?.setRun(run);
+      if (run && previous?.id === run.id && previous.turn !== run.turn && state.route.scene === 'games' && !state.reducedMotion) {
+        const event = run.events.filter((e) => e.turn === run.turn).find((e) => e.type === 'elimination' || e.type === 'encounter');
+        const point = state.archive?.focus(event?.actors[0] || run.selectedId);
+        if (point) {
+          rig.goTo({ position: [point.x + 5, 5.5, point.z + 7], target: [point.x, .4, point.z] }, .8);
+          state.cinematic = { remaining: 2.2 };
+        }
+      }
+    },
+    setGamesPaused(value) { state.gamesPaused = value; },
+    skipGamesIntro() { state.cinematic = null; if (state.route.scene === 'games') rig.goTo(poseFor(state.route, state.map?.centers, state.aspect), 0); },
+    setGamesQuality(value) {
+      state.quality = value;
+      configureQuality();
+    },
     // true si había un diorama que tomó la acción; si no (mapa sin cargar o caído), quien llama la cuenta por su cuenta.
     performAction() {
       if (!state.diorama) return false;
@@ -358,10 +432,13 @@ export function createPanemScene(mount, callbacks) {
       canvas.removeEventListener('pointerleave', onPointerLeave);
       document.removeEventListener('visibilitychange', onVisibility);
       disposeDiorama();
+      state.archive?.dispose();
+      releaseComposer();
       releaseHall();
       state.map?.dispose();
       sparks.dispose();
       timer.dispose();
+      rig.dispose();
       renderer.dispose();
       canvas.remove();
     },

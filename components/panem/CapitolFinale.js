@@ -65,8 +65,9 @@ export default function CapitolFinale() {
       <section className="panel capitol-panel crt-lite" aria-labelledby="capitol-title">
         <p className="eyebrow">CAPITOLIO · SALA DE TRANSMISIÓN</p>
         <h1 id="capitol-title">La señal está lista.</h1>
-        <p>Tres distritos encendidos alcanzan para tomar la transmisión oficial. ¿Qué mensaje va a escuchar Panem?</p>
+        <p>Los emblemas abrieron el archivo del Capitolio. Acompañá a un tributo desde la Cosecha hasta la arena, o transmití el mensaje de la rebelión.</p>
         <div className="choices">
+          <Link className="primary" href="/cosecha">Abrir el archivo de los Juegos</Link>
           {Object.entries(MESSAGES).map(([key, m]) => (
             <button key={key} type="button" className="primary" onClick={() => choose(key)}>{m.label}</button>
           ))}
@@ -100,6 +101,7 @@ export default function CapitolFinale() {
       <p>Y en el noreste, donde el mapa oficial decía que no quedaba nada, una luz respondió: el Distrito 13.</p>
       <div className="choices">
         <Link href="/mapa" className="primary">Ver Panem encendido</Link>
+        <Link href="/cosecha">Volver al archivo de los Juegos</Link>
         {confirming ? (
           <>
             <button type="button" onClick={() => resetAll()}>Sí, apagar todo y empezar de nuevo</button>

@@ -22,6 +22,7 @@ export default function SiteHeader() {
         <span>PANEM</span>
       </Link>
       <div className="header-actions">
+        {progress.litDistricts.length === 3 && <Link className="chip" href="/cosecha">Los Juegos</Link>}
         <span className="sync" title={progress.syncState === 'cloud' ? 'Progreso guardado en Firestore' : 'Progreso guardado en este navegador'}>
           {SYNC_LABEL[progress.syncState] ?? SYNC_LABEL.local}
         </span>

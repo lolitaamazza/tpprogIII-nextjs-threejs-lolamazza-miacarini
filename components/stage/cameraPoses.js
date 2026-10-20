@@ -18,6 +18,10 @@ const fitFar = (aspect, minFar, needed) => Math.min(MAX_FAR, Math.max(minFar, ne
 export function poseFor(route, centers, aspect) {
   const close = aspect < 0.8 ? 1.7 : 1; // distritos y Capitolio: el contenido es chico
   const scene = route?.scene;
+  if (scene === 'games') {
+    const far = fitFar(aspect, 1, 1.1);
+    return { position: [8 * far, (route.chapter === 'arena' || route.chapter === 'ended' ? 10 : 5.5) * far, 11 * far], target: [0, .6, 0] };
+  }
   if (scene === 'intro') return hallPoseFor(aspect); // la sala de transmisión, lejos del mapa
   if (scene === 'finale') {
     const far = fitFar(aspect, 1.15, 2); // deja lugar al panel del final
@@ -38,7 +42,7 @@ export const MOBILE_MAX_WIDTH = 720; // mismo corte que el @media de app/globals
 
 export function viewShiftFor(route, width, height) {
   const scene = route?.scene;
-  const hasPanel = route?.panel === true || scene === 'distrito' || scene === 'capitolio';
+  const hasPanel = route?.panel === true || scene === 'distrito' || scene === 'capitolio' || (scene === 'games' && width > MOBILE_MAX_WIDTH);
   if (!hasPanel) return { x: 0, y: 0 };
   if (width <= MOBILE_MAX_WIDTH) return { x: 0, y: Math.round(height * 0.22) };
   return { x: Math.round(Math.min(PANEL_WIDTH, width / 2) / 2), y: 0 };

@@ -1,0 +1,75 @@
+.games-experience { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; pointer-events: none !important; --archive-gold: #dfc381; }
+.games-experience > * { pointer-events: auto; }
+.games-vignette { position: fixed; inset: 0; pointer-events: none; background: linear-gradient(90deg, #070c10b0, transparent 52%, #070c1080), linear-gradient(0deg, #080d12, transparent 55%); }
+.games-heading { position: relative; margin: 100px 440px 0 40px; max-width: 800px; }
+.games-heading h1 { font-size: clamp(42px, 6vw, 86px); letter-spacing: -.025em; margin-top: 12px; font-weight: 500; }
+.games-heading h1 > span { color: var(--archive-gold); }
+.games-chapters { display: flex; flex-wrap: wrap; list-style: none; padding: 0; gap: 8px 20px; font-size: 11px; color: #aaa; }
+.games-chapters li { display: flex; gap: 7px; padding-bottom: 8px; border-bottom: 1px solid #ffffff25; }
+.games-chapters [aria-current] { color: var(--archive-gold); border-color: var(--archive-gold); }
+.games-chapters span { opacity: .6; }
+.cinema-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 15px; }
+.cinema-controls label { display: flex; align-items: center; gap: 7px; font-size: 11px; }
+.cinema-controls select { background: #111a20; color: #ece8df; border: 1px solid #ffffff35; padding: 5px; }
+.games-console { position: fixed; max-height: calc(100dvh - 124px); overflow-y: auto; top: 100px; right: 24px; width: 360px; padding: 26px; background: linear-gradient(145deg,#1b2528f5,#0e1318f5); border: 1px solid #ffffff20; border-top: 2px solid var(--archive-gold); backdrop-filter: blur(16px); }
+.games-console h2 { font-weight: 400; font-size: 30px; line-height: 1.1; margin: 14px 0; }
+.games-console h2 small { font-size: 15px; color: var(--archive-gold); }
+.games-console p { font-size: 14px; color: #c5c7c5; }
+.games-console .primary { width: 100%; margin: 12px 0; text-align: center; background: var(--archive-gold); }
+.games-console fieldset { border: 0; padding: 0; margin: 22px 0; }
+.games-console legend { color: var(--archive-gold); font-size: 12px; margin-bottom: 8px; }
+.training-choice { display: flex; align-items: flex-start; gap: 10px; padding: 10px; margin: 5px 0; background: #ffffff05; border: 1px solid #ffffff12; cursor: pointer; font-size: 14px; }
+.training-choice:has(input:checked) { border-color: #dfc38180; background: #dfc3810d; }
+.training-choice input { accent-color: var(--archive-gold); margin-top: 5px; }
+.training-choice small { display: block; color: #aeb5b5; font-size: 11px; margin-top: 3px; }
+.games-save { margin-top: 24px; border-top: 1px solid #ffffff20; padding-top: 10px; }
+.games-save p { font-size: 11px; }
+.save-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.games-save .back { display: block; margin-top: 20px; }
+.import-run { display: block; margin-top: 12px; font-size: 11px; }
+.import-run input { width: 100%; margin-top: 5px; font-size: 11px; }
+.save-conflict { padding: 10px; border: 1px solid var(--archive-gold); }
+.save-conflict button { font-size: 12px; margin: 4px; }
+.games-roster { position: relative; margin: 25vh 420px 24px 40px; max-width: 1000px; padding: 16px; background: #0b1319dc; border: 1px solid #ffffff20; }
+.roster-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; }
+.roster-label > span { color: var(--archive-gold); font-size: 12px; }
+.tribute-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.tribute-card { display: flex; align-items: center; gap: 8px; text-align: left; padding: 12px 8px; min-height: 60px; background: #ffffff04; text-transform: none; letter-spacing: normal; }
+.tribute-card:disabled { opacity: 1; cursor: default; }
+.tribute-card.selected { border-color: var(--archive-gold); background: #dfc38115; }
+.tribute-card:not(:disabled):hover { border-color: var(--archive-gold); background: #dfc38120; }
+.tribute-card.fallen { opacity: .5; }
+.tribute-card.fallen .tribute-name { text-decoration: line-through; }
+.tribute-number { font-family: var(--font-display); font-size: 25px; color: var(--archive-gold); opacity: .75; }
+.tribute-name { font-size: 15px; }
+.tribute-name small { display: block; font-size: 8px; color: #adb3b4; letter-spacing: .07em; text-decoration: none; }
+.tribute-stats { font-size: 9px; color: #a4afb4; margin-left: auto; }
+.games-reaping .tribute-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.arena-counter { font-family: var(--font-display); letter-spacing: .1em; font-size: 13px; }
+.arena-counter b { color: var(--archive-gold); font-size: 48px; font-weight: 400; }
+.arena-counter > span { margin-left: 20px; color: #aab3b4; }
+.tribute-vitals { display: grid; gap: 8px; font-size: 12px; }
+.tribute-vitals label { display: flex; flex-wrap: wrap; justify-content: space-between; }
+.tribute-vitals meter { width: 100%; height: 9px; accent-color: var(--archive-gold); }
+.games-journal { position: relative; margin: 0 420px 40px 40px; max-width: 1000px; background: #0d151bf5; border: 1px solid #ffffff20; padding: 16px; }
+.games-journal summary { cursor: pointer; color: var(--archive-gold); font-family: var(--font-display); margin: 5px 0; }
+.journal-events { max-height: 220px; overflow: auto; }
+.games-journal p, .games-journal li { font-size: 13px; color: #b9c3c6; }
+.games-journal .event-elimination { color: #dfa699; border-left: 2px solid #bd6752; padding-left: 10px; }
+.games-journal .event-winner { color: var(--archive-gold); }
+.games-journal ol { max-height: 300px; overflow: auto; padding-left: 24px; }
+.games-console .winner-name { font-size: 54px; color: var(--archive-gold); }
+.games-console .winner-kicker { color: var(--archive-gold); font-size: 11px; }
+.games-arena .games-roster, .games-ended .games-roster { margin-top: 18vh; }
+@media (max-width: 1100px) { .tribute-grid, .games-reaping .tribute-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .games-heading, .games-roster, .games-journal { margin-left: 20px; } }
+@media (max-width: 720px) {
+ .games-heading { margin: 105px 18px 0; }
+ .games-heading h1 { font-size: 50px; }
+ .games-chapters { gap: 7px 12px; font-size: 10px; }
+ .games-console { position: relative; max-height: none; overflow: visible; inset: auto; width: auto; margin: 25vh 16px 16px; padding: 20px; }
+ .games-roster, .games-arena .games-roster, .games-ended .games-roster { margin: 16px; }
+ .games-journal { margin: 16px 16px 30px; }
+ .games-console fieldset { margin: 15px 0; }
+ .games-vignette { background: linear-gradient(#080d1280,transparent 30%,#080d12 85%); }
+}
+@media (prefers-reduced-motion: reduce) { .games-experience *, .games-experience *::before, .games-experience *::after { animation: none !important; transition: none !important; } }

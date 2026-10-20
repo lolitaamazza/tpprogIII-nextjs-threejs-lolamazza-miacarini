@@ -1,11 +1,13 @@
 'use client';
 import { useEffect, useMemo, useRef } from 'react';
+import { useGames } from '@/components/games/GamesProvider';
 import { usePanem } from './PanemProvider';
 import { createPanemScene } from '@/components/stage/panemScene';
 
 export default function PanemStage() {
   const mountRef = useRef(null);
   const panem = usePanem();
+  const { run } = useGames();
   const { route, visibleLit, hovered, reducedMotion, stageApiRef, setWebglFailed, setMapFailed, finalePlaying, progress } = panem;
   // Con el recorrido terminado, el Capitolio muestra Panem entero encendido (con el panel del final a un costado).
   const celebrating = route.scene === 'capitolio' && progress.completedAt !== null && !finalePlaying;
@@ -53,6 +55,8 @@ export default function PanemStage() {
   useEffect(() => { stageApiRef.current?.setLit(visibleLit); }, [visibleLit, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setHovered(hovered); }, [hovered, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setReducedMotion(reducedMotion); }, [reducedMotion, stageApiRef]);
+
+  useEffect(() => { stageApiRef.current?.setGamesRun(run); }, [run, stageApiRef]);
 
   return <div ref={mountRef} className="stage" aria-hidden="true" />;
 }
