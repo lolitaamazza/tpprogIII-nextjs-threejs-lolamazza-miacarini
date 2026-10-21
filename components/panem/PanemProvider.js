@@ -146,7 +146,7 @@ export default function PanemProvider({ children }) {
   }, [route, progress.litDistricts, fallbackCounts, sfx, handleProgress, handleComplete]);
 
   const resetAll = useCallback(async () => {
-    try { await progress.reset(); notify('Panem volvió a apagarse.'); }
+    try { await progress.reset(); try { localStorage.removeItem('panem-rebellion-v1'); } catch { /* El progreso principal ya se reinició. */ } notify('Panem volvió a apagarse.'); }
     catch { notify('No se pudo reiniciar en la nube; revisá tu conexión.'); }
     setFallbackCounts({});
     setInteraction({ districtId: null, value: 0 });

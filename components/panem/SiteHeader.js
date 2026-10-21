@@ -5,11 +5,14 @@ import Link from 'next/link';
 import AuthPanel from '@/components/AuthPanel';
 import EmblemsDialog from './EmblemsDialog';
 import { usePanem } from './PanemProvider';
+import { useGames } from '@/components/games/GamesProvider';
+import { PHASE_PATH } from '@/lib/games/simulation';
 
 const SYNC_LABEL = { cloud: '● NUBE', connecting: '◌ CONECTANDO', local: '○ LOCAL' };
 
 export default function SiteHeader() {
   const { route, progress, audioState, toggleSound } = usePanem();
+  const {run} = useGames();
   const [authOpen, setAuthOpen] = useState(false);
   const [emblemsOpen, setEmblemsOpen] = useState(false);
   if (route.scene === 'intro') return null;
@@ -22,7 +25,7 @@ export default function SiteHeader() {
         <span>PANEM</span>
       </Link>
       <div className="header-actions">
-        {progress.litDistricts.length === 3 && <Link className="chip" href="/cosecha">Los Juegos</Link>}
+        {progress.litDistricts.length === 3 && <><Link className="chip" href="/rebelion">La historia</Link><Link className="chip" href={PHASE_PATH[run?.phase] || '/cosecha'}>Los Juegos</Link></>}
         <span className="sync" title={progress.syncState === 'cloud' ? 'Progreso guardado en Firestore' : 'Progreso guardado en este navegador'}>
           {SYNC_LABEL[progress.syncState] ?? SYNC_LABEL.local}
         </span>

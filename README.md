@@ -139,18 +139,20 @@ Con los tres emblemas, el enlace **Los Juegos** y el Capitolio abren una edició
 /cosecha → /capitolio/preparacion → /arena → /desenlace → /capitolio
 ```
 
-- La Cosecha presenta 24 personajes originales, dos por cada distrito del 1 al 12. La persona elige a quién acompañar como mentora.
+- La Cosecha presenta 24 personajes originales, dos por cada distrito del 1 al 12. Cada ficha abre un expediente con retrato 3D, atributos y estado antes de elegir a quién acompañar como mentora.
 - Cada emblema permite una elección de preparación (+8 a un atributo). El entrenamiento se aplica una sola vez y funciona igual con botones o interacción 3D.
-- Cada turno permite refugiarse, conseguir provisiones, buscar alianzas o explorar. Los demás tributos actúan mediante reglas y azar reproducible.
+- Cada turno presenta una situación con opciones propias: Cornucopia, niebla tóxica, incendio, señales, río, patrocinadores o necesidades del personaje. Los atributos y recursos modifican riesgos y consecuencias; los demás tributos actúan mediante reglas y azar reproducible.
 - Salud, energía, hambre, sed, recursos, zonas y alianzas determinan los eventos. Si cae el tributo elegido se puede seguir como observadora.
 - La partida termina con un sobreviviente, como máximo en 24 turnos (12 jornadas), y conserva la crónica completa. El epílogo de rebelión/memoria permanece disponible.
 - Las rutas validan el capítulo de la partida: abrir una URL futura redirige al estado actual.
 
 ### Escenas y animación
 
-El mismo renderer carga y libera escenarios originales procedurales: plaza con urna de la Cosecha, columnas y tren del Capitolio, arena con bosque, río, ruinas y Cornucopia. Los personajes son figuras estilizadas propias, sin modelos GLB ni animaciones de terceros. Se puede evolucionar el arte sin cambiar el motor de reglas.
+La arena incluye un tablero fijo de salud, energía, hambre, sed, comida y agua, independiente del desplazamiento de las decisiones (anclado abajo en celular). Reúne la transmisión, las decisiones y una tira horizontal de tributos; los eventos incluyen actores y cambios de recursos. En pantallas pequeñas los paneles se apilan.
 
-GSAP anima interfaz y cámara. Las timelines de cámara se avanzan desde el reloj del renderer, sin competir con otro controlador. Los turnos activan planos breves de los eventos; pausa y salto no alteran resultados. Calidad alta incorpora bloom suave; el modo ligero reduce resolución y vegetación, y el automático usa ese modo en pantallas angostas. Movimiento reducido elimina las entradas animadas de la interfaz, el desplazamiento de los personajes y el postprocesado. Los efectos de Cosecha y cañón se sintetizan con el motor de audio existente.
+El mismo renderer carga y libera la plaza de la Cosecha y el tren del Capitolio. La arena es el modelo **The Hunger Games Arena de Flashness**, descargado oficialmente de Sketchfab y adaptado de 9.974.420 a 839.194 triángulos (GLB de aproximadamente 7,7 MB, Meshopt). Conserva el bosque, el lago, el río y la Cornucopia del original. Un mapa de alturas extraído de sus superficies coloca los pies y marcadores sobre el terreno. Los tributos usan dos modelos humanos texturizados y articulados: Valery de xander.dice y el escaneo de Mike Alger, con variaciones estables de ropa, cabello, proporciones y accesorios. Los brazos descansan y se animan en el esqueleto al desplazarse. Son 24 identidades visuales construidas a partir de dos bases humanas, no 24 rostros escaneados diferentes. Los modelos y las texturas se comparten, con esqueletos y materiales independientes. Se muestran avisos de carga y de reintento si falla la arena. Créditos accesibles dentro del juego y en `public/models/CREDITS.md`.
+
+GSAP anima interfaz y cámara. Las timelines de cámara se avanzan desde el reloj del renderer, sin competir con otro controlador. Los turnos activan planos breves de los eventos; pausa y salto no alteran resultados. Los incidentes activan interferencias GSAP breves en la transmisión. Calidad alta incorpora sombras y bloom suave; el modo ligero reduce resolución, sombras y partículas, y el automático usa ese modo en pantallas angostas. Movimiento reducido elimina las entradas animadas de la interfaz, el desplazamiento de los personajes y el postprocesado. Los efectos de Cosecha y cañón se sintetizan con el motor de audio existente.
 
 ### Guardado de partidas
 
@@ -169,10 +171,22 @@ Esta es una simulación personal en cliente, no un ranking competitivo ni un ser
 
 `npm` es el único gestor de dependencias del proyecto; `package-lock.json` es la fuente reproducible. GSAP es dependencia de producción; TypeScript se instala como dependencia de las herramientas ESLint, sin convertir los archivos JavaScript.
 
-Las pruebas incluyen 300 ediciones completas con verificación de superviviente único, no resurrección, límites, determinismo al reanudar, puertas de entrenamiento y liberación de escenas. Ejecutar `npm test`, `npm run lint` y `npm run build`.
+Las pruebas incluyen 200 ediciones con decisiones contextuales, rechazo de opciones desactualizadas y 300 ediciones completas con verificación de superviviente único, no resurrección, límites, determinismo al reanudar, puertas de entrenamiento y liberación de escenas. Ejecutar `npm test`, `npm run lint` y `npm run build`.
 
 Si Turbopack falla con `unable to start FSEvent stream` en macOS, usar `npm run dev:webpack`. Para revisar el build sin observador de archivos: `npm run build` y `npm start`.
 
 La primera verificación local incluyó completar los tres minijuegos, crear una edición, elegir a Brasa, preparar atributos, pausar/reanudar, recargar y continuar, avanzar en vista de 390 px hasta un ganador y volver al epílogo. La conexión real a Firebase y sus reglas desplegadas requieren validación en el entorno configurado.
 
 El análisis de dependencias reporta cinco alertas altas en la cadena de desarrollo `eslint-config-next → fast-glob → micromatch → braces`. La corrección sugerida por npm retrocede a Next ESLint 14; no se aplica ese cambio incompatible automáticamente. No hay alertas de producción en ese reporte.
+
+### Continuación de la rebelión
+
+La secuencia «If we burn, you burn with us» usa fondo negro, texto claro animado con GSAP y fuego procedural WebGL con turbulencia, humo y brasas. Movimiento reducido omite el fuego y las entradas animadas. «Saltar» y Escape continúan hacia `/rebelion`; «Seguir explorando» vuelve a la vista anterior.
+
+`/rebelion` presenta decisiones sobre la antena del Distrito 11 y el tren del Distrito 6, conserva las respuestas localmente en `panem-rebellion-v1` y conduce a la transmisión del Capitolio. Después de transmitir, permite seguir la respuesta del Distrito 13. Esta historia no requiere jugar la arena. Reiniciar los Juegos conserva los emblemas y la historia; reiniciar Panem también borra las respuestas narrativas.
+
+Al terminar la arena, «Volver a jugar» muestra su confirmación junto al botón, fuera del panel plegable de guardado.
+
+### Arena propuesta por el equipo
+
+Modelo integrado: [The Hunger Games Arena, Flashness](https://sketchfab.com/3d-models/the-hunger-games-arena-8735e8c171254663bd7db82878915190), licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Es una creación de Minecraft/Mineways y conserva ese diseño; la optimización no lo convierte en un entorno fotorealista. La versión original descargada queda fuera de `public`; el juego sirve únicamente la versión optimizada.

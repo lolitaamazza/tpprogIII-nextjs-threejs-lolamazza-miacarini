@@ -35,6 +35,10 @@ export function createPanemScene(mount, callbacks) {
   scene.add(new THREE.AmbientLight(0xffffff, 0.5));
   const sun = new THREE.DirectionalLight(0xfff1dc, 1.8);
   sun.position.set(4, 10, 6);
+  sun.shadow.mapSize.set(1024,1024);
+  Object.assign(sun.shadow.camera,{left:-10,right:10,top:10,bottom:-10,near:.5,far:40});
+  sun.shadow.bias=-.001;
+  sun.shadow.normalBias=.025;
   scene.add(sun);
   const rim = new THREE.DirectionalLight(0x8899ff, 0.4);
   rim.position.set(-6, 4, -8);
@@ -114,7 +118,10 @@ export function createPanemScene(mount, callbacks) {
 
   function configureQuality() {
     const low = state.quality === 'low' || (state.quality === 'auto' && mount.clientWidth < 721);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5));
+    renderer.shadowMap.enabled = Boolean(state.archive) && !low;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    sun.castShadow = Boolean(state.archive) && !low;
     state.archive?.setQuality(low ? 'low' : 'high');
     if (!state.archive || low || state.reducedMotion) releaseComposer();
     else if (!state.composer) {
@@ -142,7 +149,7 @@ export function createPanemScene(mount, callbacks) {
     if (chapter !== state.archiveChapter) {
       state.archive?.dispose(); state.archive = null; state.archiveChapter = chapter;
       if (chapter) {
-        state.archive = createArchiveScene(chapter);
+        state.archive = createArchiveScene(chapter, (status) => window.dispatchEvent(new CustomEvent('panem-arena-status', {detail:status})));
         state.archive.setRun(state.run);
         state.archive.setReducedMotion(state.reducedMotion);
         state.archive.setQuality(state.quality);
@@ -342,6 +349,7 @@ export function createPanemScene(mount, callbacks) {
     .catch((error) => callbacks.onError?.(error));
 
   return {
+    getGamesAssetStatus() { return state.archive?.getAssetStatus() ?? null; },
     setRoute(route) { state.route = route; applyRoute(); },
     setLit(ids) { state.lit = ids; },
     setHovered(id) { state.externalHover = id; },
@@ -350,13 +358,19 @@ export function createPanemScene(mount, callbacks) {
       const previous = state.run;
       state.run = run; state.archive?.setRun(run);
       if (run && previous?.id === run.id && previous.turn !== run.turn && state.route.scene === 'games' && !state.reducedMotion) {
-        const event = run.events.filter((e) => e.turn === run.turn).find((e) => e.type === 'elimination' || e.type === 'encounter');
+        const event = run.events.filter((e) => e.turn === run.turn).find((e) => e.type === 'decision' || e.type === 'elimination' || e.type === 'encounter');
         const point = state.archive?.focus(event?.actors[0] || run.selectedId);
         if (point) {
-          rig.goTo({ position: [point.x + 5, 5.5, point.z + 7], target: [point.x, .4, point.z] }, .8);
+          rig.goTo({ position: [point.x + 5, point.y + 5.5, point.z + 7], target: [point.x, point.y + .4, point.z] }, .8);
           state.cinematic = { remaining: 2.2 };
         }
       }
+    },
+    focusGamesTribute(id) {
+      const point=state.archive?.focus(id);
+      if(!point || state.route.scene!=='games')return;
+      rig.goTo({position:[point.x+3,point.y+3.6,point.z+4.5],target:[point.x,point.y+.65,point.z]},state.reducedMotion?0:.8);
+      state.cinematic={remaining:3.5};
     },
     setGamesPaused(value) { state.gamesPaused = value; },
     skipGamesIntro() { state.cinematic = null; if (state.route.scene === 'games') rig.goTo(poseFor(state.route, state.map?.centers, state.aspect), 0); },
@@ -439,6 +453,7 @@ export function createPanemScene(mount, callbacks) {
       sparks.dispose();
       timer.dispose();
       rig.dispose();
+      sun.shadow.map?.dispose();
       renderer.dispose();
       canvas.remove();
     },

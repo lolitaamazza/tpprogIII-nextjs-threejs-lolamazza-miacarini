@@ -1,15 +1,14 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { gsap } from 'gsap';
 import { createFire } from '@/components/stage/fire';
 import {
   BURN_AUDIO_SRC, BURN_AUDIO_VOLUME, BURN_DUCK_LEVEL, BURN_MESSAGE, BURN_TIMING, burnPlan, volumeAt,
 } from '@/lib/burn';
 import { usePanem } from './PanemProvider';
 
-// Al juntar los tres emblemas todo se prende fuego: llamas sobre toda la pantalla, el mapa y la interfaz se
-// chamuscan, suena «The Hanging Tree» y aparece el mensaje. Cada recurso (fuego, canción, clase del body, temporizadores)
-// se arma al montarse y se suelta al desmontarse, así cerrar la secuencia en cualquier momento deja todo apagado.
+// La chispa abre la historia de la rebelión. Fuego, audio, GSAP y foco se liberan al salir.
 export default function BurnSequence() {
   const { burning } = usePanem();
   return burning ? <Burning /> : null;
@@ -69,6 +68,15 @@ function Burning() {
   useEffect(() => {
     const root = rootRef.current;
     document.body.classList.add('is-burning');
+    const previousFocus = document.activeElement;
+    const backgrounds = [...document.querySelectorAll('.overlay, .site-header')].map(el => ({el, inert:el.inert}));
+    backgrounds.forEach(({el}) => {el.inert=true;});
+    const animation = gsap.context(() => {
+      if (!plan.animated) return;
+      gsap.fromTo('.burn-message [aria-hidden]', {yPercent:110, rotateX:-45, opacity:0}, {yPercent:0, rotateX:0, opacity:1, duration:1.1, stagger:.22, delay:1.6, ease:'power4.out'});
+      gsap.fromTo('.burn-rule', {scaleX:0}, {scaleX:1,duration:1.8,delay:.4,ease:'power3.inOut'});
+      gsap.fromTo('.burn-content', {scale:1.05}, {scale:1,duration:9,ease:'power1.out'});
+    }, root);
     let fire = null;
     if (plan.animated && canvasRef.current) {
       try { fire = createFire(canvasRef.current, root); fire.setTarget(1); }
@@ -88,6 +96,9 @@ function Burning() {
       fire?.dispose();
       fireRef.current = null;
       document.body.classList.remove('is-burning');
+      animation.revert();
+      backgrounds.forEach(({el,inert}) => {el.inert=inert;});
+      if (previousFocus?.isConnected) previousFocus.focus();
       sfx.duck(false);
       const audio = songRef.current;
       songRef.current = null;
@@ -104,12 +115,20 @@ function Burning() {
     fadeSong(0, BURN_TIMING.leaveMs);
     leaveRef.current = setTimeout(() => {
       setBurning(false);
-      if (toCapitol) router.push('/capitolio');
+      if (toCapitol) router.push('/rebelion');
     }, BURN_TIMING.leaveMs);
   }, [fadeSong, router, setBurning]);
 
   useEffect(() => {
-    const onKey = (event) => { if (event.key === 'Escape') close(false); };
+    const onKey = (event) => {
+      if (event.key === 'Escape') close(true);
+      if (event.key === 'Tab') {
+        const buttons=[...rootRef.current.querySelectorAll('button')].filter(el=>!el.disabled&&!el.closest('[inert]'));
+        const first=buttons[0],last=buttons.at(-1);
+        if(event.shiftKey&&(document.activeElement===first||document.activeElement===rootRef.current)){event.preventDefault();last?.focus();}
+        else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}
+      }
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [close]);
@@ -124,13 +143,13 @@ function Burning() {
       ref={rootRef} className={`burn${leaving ? ' leaving' : ''}`} role="dialog" aria-modal="true"
       aria-labelledby="burn-message" tabIndex={-1}
     >
-      <div className="burn-glow" aria-hidden="true" />
+      <button className="burn-skip" onClick={() => close(true)}>Saltar · continuar la historia</button>
       {plan.animated && <canvas ref={canvasRef} className="burn-fire" aria-hidden="true" />}
       {song === 'idle' && (
         <button type="button" className="burn-song" onClick={listen}>♪ Escuchar</button>
       )}
       <div className="burn-content">
-        <p className="eyebrow">LOS TRES EMBLEMAS · PANEM ARDE</p>
+        <p className="eyebrow">SEÑAL PIRATA / LOS DISTRITOS RESPONDEN</p><div className="burn-rule" aria-hidden="true" />
         <p id="burn-message" className="burn-message" lang="en">
           <span className="sr-only">{BURN_MESSAGE}</span>
           {plan.words.map((word, i) => (
@@ -141,7 +160,7 @@ function Burning() {
           Ningún Agente de la Paz puede apagar un fuego que ya prendió en todos los distritos.
         </p>
         <div className="burn-actions" data-show={actionsShown ? 'true' : 'false'} inert={!actionsShown}>
-          <button ref={primaryRef} type="button" className="primary" onClick={() => close(true)}>Entrar al Capitolio</button>
+          <button ref={primaryRef} type="button" className="primary" onClick={() => close(true)}>Continuar la historia →</button>
           <button type="button" onClick={() => close(false)}>Seguir explorando</button>
         </div>
       </div>

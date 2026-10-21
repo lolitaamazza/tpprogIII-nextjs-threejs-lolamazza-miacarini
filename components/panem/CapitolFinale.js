@@ -100,7 +100,8 @@ export default function CapitolFinale() {
       <p>{message.body}</p>
       <p>Y en el noreste, donde el mapa oficial decía que no quedaba nada, una luz respondió: el Distrito 13.</p>
       <div className="choices">
-        <Link href="/mapa" className="primary">Ver Panem encendido</Link>
+        <Link href="/rebelion" className="primary">Continuar la historia →</Link>
+        <Link href="/mapa">Ver Panem encendido</Link>
         <Link href="/cosecha">Volver al archivo de los Juegos</Link>
         {confirming ? (
           <>

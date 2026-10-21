@@ -11,7 +11,8 @@ export default function PanemStage() {
   const { route, visibleLit, hovered, reducedMotion, stageApiRef, setWebglFailed, setMapFailed, finalePlaying, progress } = panem;
   // Con el recorrido terminado, el Capitolio muestra Panem entero encendido (con el panel del final a un costado).
   const celebrating = route.scene === 'capitolio' && progress.completedAt !== null && !finalePlaying;
-  const stageRoute = useMemo(() => (celebrating ? { scene: 'finale', districtId: null, panel: true } : route), [celebrating, route]);
+  const activeChapter = run?.phase || 'reaping';
+  const stageRoute = useMemo(() => (celebrating ? { scene: 'finale', districtId: null, panel: true } : route.scene === 'games' ? {...route,chapter:activeChapter} : route), [celebrating, route, activeChapter]);
   const callbacksRef = useRef(null);
 
   useEffect(() => {

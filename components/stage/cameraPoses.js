@@ -20,6 +20,7 @@ export function poseFor(route, centers, aspect) {
   const scene = route?.scene;
   if (scene === 'games') {
     const far = fitFar(aspect, 1, 1.1);
+    if (route.chapter === 'arena' || route.chapter === 'ended') return {position:[10*far,15*far,17*far],target:[0,.8,0]};
     return { position: [8 * far, (route.chapter === 'arena' || route.chapter === 'ended' ? 10 : 5.5) * far, 11 * far], target: [0, .6, 0] };
   }
   if (scene === 'intro') return hallPoseFor(aspect); // la sala de transmisión, lejos del mapa
