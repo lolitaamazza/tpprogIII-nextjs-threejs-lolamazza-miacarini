@@ -8,7 +8,7 @@ export default function PanemStage() {
   const mountRef = useRef(null);
   const panem = usePanem();
   const { run } = useGames();
-  const { route, visibleLit, hovered, reducedMotion, stageApiRef, setWebglFailed, setMapFailed, finalePlaying, progress } = panem;
+  const { route, visibleLit, hovered, reducedMotion, stageApiRef, setWebglFailed, setMapFailed, finalePlaying, progress, classified } = panem;
   // Con el recorrido terminado, el Capitolio muestra Panem entero encendido (con el panel del final a un costado).
   const celebrating = route.scene === 'capitolio' && progress.completedAt !== null && !finalePlaying;
   const activeChapter = run?.phase || 'reaping';
@@ -17,8 +17,9 @@ export default function PanemStage() {
 
   useEffect(() => {
     callbacksRef.current = {
-      onHover: panem.setHovered, onSelect: panem.selectDistrict,
-      onProgress: panem.handleProgress, onComplete: panem.handleComplete, sfx: panem.sfx,
+      onHover: panem.setHovered, onSelect: panem.selectDistrict, onBack: panem.goToMap,
+      onClassifiedProgress: panem.classifiedProgress, onClassifiedReveal: panem.revealClassified,
+      onProgress: panem.handleProgress, onMatch: panem.handleMatch, onComplete: panem.handleComplete, sfx: panem.sfx,
     };
   });
 
@@ -28,7 +29,11 @@ export default function PanemStage() {
       api = createPanemScene(mountRef.current, {
         onHover: (id) => callbacksRef.current?.onHover(id),
         onSelect: (id) => callbacksRef.current?.onSelect(id),
+        onBack: () => callbacksRef.current?.onBack(),
+        onClassifiedProgress: (value) => callbacksRef.current?.onClassifiedProgress(value),
+        onClassifiedReveal: () => callbacksRef.current?.onClassifiedReveal(),
         onProgress: (id, value) => callbacksRef.current?.onProgress(id, value),
+        onMatch: (id, match) => callbacksRef.current?.onMatch(id, match),
         onComplete: (id) => callbacksRef.current?.onComplete(id),
         sfx: { play: (name) => callbacksRef.current?.sfx.play(name) },
         onError: (error) => {
@@ -56,6 +61,7 @@ export default function PanemStage() {
   useEffect(() => { stageApiRef.current?.setLit(visibleLit); }, [visibleLit, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setHovered(hovered); }, [hovered, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setReducedMotion(reducedMotion); }, [reducedMotion, stageApiRef]);
+  useEffect(() => { stageApiRef.current?.setClassifiedRevealed(classified.revealed); }, [classified.revealed, stageApiRef]);
 
   useEffect(() => { stageApiRef.current?.setGamesRun(run); }, [run, stageApiRef]);
 

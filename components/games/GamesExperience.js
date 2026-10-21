@@ -13,6 +13,7 @@ import TributeModal from './TributeModal';
 import TributeHud from './TributeHud';
 import { gamesView } from '@/lib/games/view';
 import './games.css';
+import BackLink from '@/components/panem/BackLink';
 
 const TITLES = { reaping: 'La Cosecha', preparation: 'El Capitolio', arena: 'La arena', ended: 'Una sola voz' };
 const CHAPTERS = ['reaping', 'preparation', 'arena', 'ended'];
@@ -94,7 +95,7 @@ export default function GamesExperience({ chapter: requestedChapter }) {
   }
 
   if (gate === 'blocked') return <section className="panel"><p className="eyebrow">ARCHIVO CLASIFICADO</p><h1>Tres señales para entrar.</h1><p>Completá Carbón, Agricultura y Pesca para intervenir la transmisión del Capitolio.</p><Link className="primary" href="/mapa">Volver a los distritos</Link></section>;
-  if (!canShow) return <section className="panel" aria-busy="true"><p>Recuperando el archivo…</p><p className="hint">La partida guardada se conserva.</p><button onClick={() => window.location.reload()}>Reintentar carga</button><Link className="back" href="/mapa">Volver al mapa</Link></section>;
+  if (!canShow) return <section className="panel" aria-busy="true"><p>Recuperando el archivo…</p><p className="hint">La partida guardada se conserva.</p><button onClick={() => window.location.reload()}>Reintentar carga</button><BackLink /></section>;
 
   const selected = run?.tributes.find((t) => t.id === run.selectedId);
   const winner = run?.tributes.find((t) => t.id === run.winnerId);
@@ -144,7 +145,7 @@ export default function GamesExperience({ chapter: requestedChapter }) {
           {games.conflict && <div className="save-conflict" role="alert"><p>Las partidas son diferentes. Elegí una copia completa; sus eventos no se mezclan.</p><p>Actual: turno {run?.turn ?? 0}. Entrante: turno {games.conflict.turn}.</p><button onClick={() => games.resolveConflict(false)}>Conservar actual</button><button onClick={() => games.resolveConflict(true)}>Usar copia entrante</button></div>}
           {run && <div className="save-actions"><button className="chip" onClick={games.exportRun}>Descargar partida</button>{games.uid && <button className="chip" disabled={disabled} onClick={games.saveCloud}>Guardar en nube</button>}</div>}
           <label className="import-run">Importar partida <input type="file" accept="application/json,.json" disabled={disabled} onChange={(e) => { games.importRun(e.target.files?.[0]); e.target.value = ''; }} /></label>
-          <Link className="back" href="/mapa">← Volver al mapa</Link>
+          <BackLink />
         </details>
         <details className="model-credits"><summary>Créditos de los modelos 3D</summary><p><a href="https://sketchfab.com/3d-models/the-hunger-games-arena-8735e8c171254663bd7db82878915190" target="_blank" rel="noreferrer">The Hunger Games Arena</a> · Flashness. Adaptada y optimizada para esta experiencia.</p><p><a href="https://sketchfab.com/3d-models/rigged-t-pose-human-male-w-50-face-blendshapes-cc7e4596bcd145208a6992c757854c07" target="_blank" rel="noreferrer">Humano masculino</a> · Mike Alger / Doob / High Fidelity. <a href="https://sketchfab.com/3d-models/valery-tpose-blender-rigged-woman-1cce3c0410634a9497fec3afc1fb8eda" target="_blank" rel="noreferrer">Valery</a> · xander.dice. Vestuario, proporciones y movimiento adaptados.</p><p>Modelos bajo <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>.</p></details>
       </aside>

@@ -5,6 +5,7 @@ import {gsap} from 'gsap';
 import {usePanem} from './PanemProvider';
 import {capitolGate} from '@/lib/progress';
 import './rebellion.css';
+import BackLink from './BackLink';
 
 const CHAPTERS=[
  {id:'signal',number:'01',title:'Alguien está escuchando.',body:'La frase desaparece. Durante unos segundos solo queda estática. Entonces, desde el Distrito 11, una voz atraviesa la frecuencia: «Vimos el fuego. Las patrullas vienen hacia la antena». La señal ya no es un símbolo. Hay gente al otro lado.',question:'Tenés unos segundos antes de que rastreen la transmisión. ¿Qué enviás?',options:[{id:'route',label:'Transmitir una ruta de evacuación',hint:'Guiar a las familias hacia los túneles de carga.',result:'Las luces de los depósitos se apagan una a una. Las familias siguen la ruta y la antena queda vacía cuando llega la patrulla.'},{id:'relay',label:'Dividir la señal entre los distritos',hint:'Mantener las comunicaciones sin una única antena.',result:'El Distrito 3 replica la frecuencia. Cuando el Capitolio corta una antena, otras dos continúan transmitiendo.'}]},
@@ -27,7 +28,7 @@ export default function RebellionChapter(){
    {last&&<p className="rebellion-result" role="status">{last.result}</p>}
    {chapter?<><p className="eyebrow">CAPÍTULO {chapter.number}</p><h1>{chapter.title}</h1><p>{chapter.body}</p><h2>{chapter.question}</h2><div className="rebellion-options">{chapter.options.map(option=><button key={option.id} onClick={()=>choose(option.id)}><strong>{option.label}</strong><span>{option.hint}</span><b aria-hidden="true">↗</b></button>)}</div></>:progress.finalMessage?<><p className="eyebrow">CAPÍTULO 04 / UNA RESPUESTA DESDE EL SUBSUELO</p><h1>El Trece no era una tumba.</h1><p>La transmisión del Capitolio termina, pero la frecuencia sigue abierta. «Recibimos sus mensajes. Mantengan los refugios conectados. No están solos».</p><p>Las rutas que abriste y los suministros que enviaste forman ahora una red. La rebelión dejó de ser una frase: los distritos pueden organizarse.</p><Link className="primary" href="/distrito/13">Seguir la señal del Distrito 13</Link><Link href="/mapa">Volver a la red de distritos</Link></>:<><p className="eyebrow">CAPÍTULO 03 / LA VOZ QUE FALTA</p><h1>Ahora, que escuche el Capitolio.</h1><p>Los refugios están conectados. Falta ocupar la frecuencia que todavía transmite la versión oficial. Los distritos te dejan una decisión: convocar a la rebelión o leer los nombres de quienes ya no pueden responder.</p><Link className="primary" href="/capitolio">Tomar la transmisión →</Link></>}
    {storageIssue&&<p role="status">El navegador no pudo guardar este capítulo. Podés continuar en esta sesión.</p>}
-   <Link className="rebellion-back" href="/mapa">← Volver al mapa</Link>
+   <BackLink className="rebellion-back" />
   </div></div>
  </section>;
 }

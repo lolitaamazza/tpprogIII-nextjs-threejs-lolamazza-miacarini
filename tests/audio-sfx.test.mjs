@@ -48,6 +48,16 @@ test('los efectos de la tele (encendido, fanfarria, corte y entrada) hacen sonar
   });
 });
 
+test('los efectos de los minijuegos (error, canario, perder, cada sinsajo) hacen sonar algo', async () => {
+  await withEngine((engine, log) => {
+    for (const name of ['miss', 'canary', 'lose', 'bird0', 'bird1', 'bird2', 'bird3']) {
+      const before = log.starts;
+      engine.playSfx(name);
+      assert.ok(log.starts > before, `${name} no armó ningún sonido`);
+    }
+  });
+});
+
 test('un efecto desconocido no suena, y sin start() no pasa nada', async () => {
   await withEngine((engine, log) => {
     const before = log.starts;

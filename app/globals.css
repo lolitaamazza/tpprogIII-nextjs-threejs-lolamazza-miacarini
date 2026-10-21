@@ -82,7 +82,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Panel de distrito */
 .panel { position: absolute; top: 72px; right: 24px; bottom: 24px; width: min(400px, calc(100vw - 48px)); overflow: auto; padding: 22px 24px; background: var(--panel); border-top: 2px solid var(--gold); backdrop-filter: blur(10px); }
-.back { font-size: 13px; color: var(--muted); text-decoration: none; }
+.back { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; margin-left: -8px; border-radius: 50%; font-size: 24px; color: var(--muted); text-decoration: none; transition: color .2s, background-color .2s; }
+.back:hover, .back:focus-visible { color: var(--ink); background: #ffffff12; }
 .district-heading { display: flex; align-items: center; gap: 14px; margin: 16px 0 10px; }
 .district-number { font-size: 64px; line-height: 1; }
 .quote { font-size: 17px; color: #d7d2c7; }
@@ -90,9 +91,23 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .meter { height: 6px; background: #ffffff1a; margin: 14px 0; }
 .meter span { display: block; height: 100%; background: var(--gold); transition: width .3s; box-shadow: 0 0 10px var(--gold); }
 .hint { font-size: 12px; color: var(--muted); }
+.hud { display: flex; justify-content: space-between; gap: 12px; margin: 14px 0 0; font-family: var(--font-display); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); }
+.hud-lives { color: var(--gold); letter-spacing: 0.16em; }
+.lost { border-left: 3px solid #c8553d; padding-left: 12px; }
+.help-note { color: var(--gold); }
+.bird-buttons { display: flex; gap: 8px; margin-bottom: 12px; }
+.bird-buttons button { flex: 1; padding: 10px 0; }
 .done { border-left: 3px solid var(--gold); padding-left: 12px; }
 .status { font-family: var(--font-display); letter-spacing: 0.12em; color: var(--muted); }
 .district-panel.classified { border-top-color: #fff; }
+.classified-signal { display: flex; align-items: center; gap: 12px; margin: 18px 0 8px; }
+.classified-tag { padding: 3px 7px; font: 600 11px/1.3 ui-monospace, Menlo, monospace; letter-spacing: 0.08em; text-transform: uppercase; background: #c82828d9; color: #fff; }
+.classified-tag.live { background: #8fe0a0; color: #06140a; }
+.classified-tag.live::before { content: '●'; margin-right: 6px; animation: flicker 1s steps(2) infinite; }
+.signal-bars { display: inline-flex; align-items: flex-end; gap: 3px; height: 16px; }
+.signal-bars span { width: 4px; background: #ffffff26; transition: background-color .3s; }
+.signal-bars span:nth-child(1) { height: 25%; } .signal-bars span:nth-child(2) { height: 50%; } .signal-bars span:nth-child(3) { height: 75%; } .signal-bars span:nth-child(4) { height: 100%; }
+.signal-bars span.on { background: #8fd0d8; }
 .district-panel.classified h1, .district-panel.classified .district-number { animation: flicker 0.6s steps(2) infinite; }
 
 /* Mensajes */

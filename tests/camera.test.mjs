@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { easeInOutCubic, lerpPose, poseFor, viewShiftFor, fogRangeFor } from '../components/stage/cameraPoses.js';
+import { easeInOutCubic, lerpPose, poseFor, viewShiftFor, fogRangeFor, openAreaFor } from '../components/stage/cameraPoses.js';
 import { hallPoseFor } from '../lib/broadcastHall.js';
 
 const centers = { 12: { x: 2, z: 1 }, c: { x: -1, z: -0.5 } };
@@ -94,4 +94,22 @@ test('la niebla acompaña a la cámara: en celular el mapa lejano no puede queda
   const map = poseFor({ scene: 'mapa' }, {}, 0.46);
   const distance = Math.hypot(...map.position);
   assert.ok(fogRangeFor(distance).near > distance, 'la pose del mapa en celular queda fuera de la niebla');
+});
+
+test('el Distrito 13 no tiene adónde acercarse: la cámara se queda en el mapa entero, corrido para que el panel no lo tape', () => {
+  const centers13 = { ...centers, 13: { x: 3, z: -2 } };
+  assert.deepEqual(poseFor({ scene: 'distrito', districtId: '13' }, centers13, 1.6), poseFor({ scene: 'mapa' }, centers13, 1.6));
+  assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: '13' }, 1440, 800), viewShiftFor({ scene: 'distrito', districtId: '12' }, 1440, 800));
+  assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: '13' }, 390, 800), { x: 0, y: 176 });
+});
+
+test('la zona del canvas que no tapan el encabezado ni el panel (en proporción de pantalla)', () => {
+  const desk = openAreaFor(1440, 900);
+  assert.equal(desk.x0, 0);
+  assert.ok(Math.abs(desk.x1 - (1440 - 424) / 1440) < 1e-9, 'a la izquierda del panel');
+  assert.ok(Math.abs(desk.y0 - 72 / 900) < 1e-9, 'debajo del encabezado');
+  assert.equal(desk.y1, 1);
+  const phone = openAreaFor(375, 812);
+  assert.deepEqual([phone.x0, phone.x1, phone.y1], [0, 1, 0.45], 'en celular, arriba de la hoja inferior');
+  assert.ok(openAreaFor(760, 600).x1 >= 0.5, 'en ventanas angostas el panel nunca se come más de la mitad');
 });

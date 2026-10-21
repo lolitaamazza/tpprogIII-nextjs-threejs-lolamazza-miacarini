@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { capitolGate } from '@/lib/progress';
 import { usePanem } from './PanemProvider';
+import BackLink from './BackLink';
 
 const MESSAGES = {
   rebelion: {
@@ -21,7 +22,7 @@ const BROADCAST_MS = 2600;
 
 export default function CapitolFinale() {
   const router = useRouter();
-  const { progress, stageApiRef, setFinalePlaying, sfx, notify, resetAll } = usePanem();
+  const { progress, stageApiRef, setFinalePlaying, sfx, notify, resetAll, classified } = usePanem();
   const [phase, setPhase] = useState('choose');
   const [confirming, setConfirming] = useState(false);
   const timerRef = useRef(null);
@@ -72,7 +73,7 @@ export default function CapitolFinale() {
             <button key={key} type="button" className="primary" onClick={() => choose(key)}>{m.label}</button>
           ))}
         </div>
-        <Link href="/mapa" className="back">← Todavía no</Link>
+        <BackLink label="Todavía no: volver al mapa" />
       </section>
     );
   }
@@ -98,7 +99,7 @@ export default function CapitolFinale() {
       <p className="eyebrow">FIN DE LA TRANSMISIÓN · {message.label.toUpperCase()}</p>
       <h1 id="end-title">{message.title}</h1>
       <p>{message.body}</p>
-      <p>Y en el noreste, donde el mapa oficial decía que no quedaba nada, una luz respondió: el Distrito 13.</p>
+      <p>Y en el noreste, donde el mapa oficial decía que no quedaba nada, una luz respondió: el Distrito 13.{classified.revealed ? ' Era la misma señal que encontraste debajo de la estática.' : ''}</p>
       <div className="choices">
         <Link href="/rebelion" className="primary">Continuar la historia →</Link>
         <Link href="/mapa">Ver Panem encendido</Link>

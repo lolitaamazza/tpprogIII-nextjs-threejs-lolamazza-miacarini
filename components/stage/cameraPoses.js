@@ -28,7 +28,8 @@ export function poseFor(route, centers, aspect) {
     const far = fitFar(aspect, 1.15, 2); // deja lugar al panel del final
     return { position: [0, 12 * far, 8.5 * far], target: [0, 0, 0.3] };
   }
-  const id = scene === 'capitolio' ? 'c' : scene === 'distrito' ? route.districtId : null;
+  // El Distrito 13 no tiene dónde acercarse: su escena es la pantalla rota sobre el mapa entero.
+  const id = scene === 'capitolio' ? 'c' : scene === 'distrito' && route.districtId !== '13' ? route.districtId : null;
   const c = id ? centers?.[id] : null;
   if (c && scene === 'distrito') return { position: [c.x, 4.4 * close, c.z + 3.9 * close], target: [c.x, 0.3, c.z] };
   if (c && scene === 'capitolio') return { position: [c.x, 5.5 * close, c.z + 5 * close], target: [c.x, 0.3, c.z] };
@@ -40,6 +41,8 @@ export function poseFor(route, centers, aspect) {
 // corre para que el distrito quede centrado en la zona libre. Valores en píxeles de pantalla.
 export const PANEL_WIDTH = 424; // 400 px de panel + 24 px de margen (.panel en app/globals.css)
 export const MOBILE_MAX_WIDTH = 720; // mismo corte que el @media de app/globals.css
+const PANEL_TOP = 72; // el panel arranca debajo del encabezado (top de .panel)
+const SHEET_TOP = 0.45; // en celular la hoja inferior ocupa hasta el 55 % de la altura
 
 export function viewShiftFor(route, width, height) {
   const scene = route?.scene;
@@ -47,6 +50,13 @@ export function viewShiftFor(route, width, height) {
   if (!hasPanel) return { x: 0, y: 0 };
   if (width <= MOBILE_MAX_WIDTH) return { x: 0, y: Math.round(height * 0.22) };
   return { x: Math.round(Math.min(PANEL_WIDTH, width / 2) / 2), y: 0 };
+}
+
+// La parte del canvas que queda a la vista con el panel abierto, en proporción de pantalla (y hacia abajo).
+export function openAreaFor(width, height) {
+  const y0 = Math.min(PANEL_TOP / Math.max(height, 1), 0.3);
+  if (width <= MOBILE_MAX_WIDTH) return { x0: 0, y0, x1: 1, y1: SHEET_TOP };
+  return { x0: 0, y0, x1: 1 - Math.min(PANEL_WIDTH, width / 2) / width, y1: 1 };
 }
 
 // La niebla (el color del fondo) acompaña a la cámara: con el mapa lejano en pantallas angostas,

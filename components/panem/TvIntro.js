@@ -457,7 +457,7 @@ export default function TvIntro() {
           {litDistricts.length ? 'Retomar la señal' : 'Encender la señal'}
         </button>
       </div>
-      <button type="button" className="tv-skip" onClick={skip}>Saltar la intro</button>
+      <button type="button" className="tv-skip" onClick={skip} aria-label="Saltar la intro">saltar</button>
       <div ref={flashRef} className="tv-flash" aria-hidden="true" />
       <p className="sr-only" role="status">{STATUS[phase] ?? ''}</p>
     </section>

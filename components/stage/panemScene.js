@@ -10,6 +10,8 @@ import { fogRangeFor, poseFor, viewShiftFor } from './cameraPoses.js';
 import { createSparks } from './effects.js';
 import { createBroadcastHall } from './broadcastHall.js';
 import { screenPoseFor } from '../../lib/broadcastHall.js';
+import { mapClickAction } from '../../lib/mapClick.js';
+import { createClassifiedGlitch } from './classifiedGlitch.js';
 import { DIORAMAS } from './dioramas/index.js';
 import { MAP_IDS } from '../../data/districts.js';
 
@@ -54,7 +56,7 @@ export function createPanemScene(mount, callbacks) {
     map: null, diorama: null, dioramaId: null, finaleLit: new Set(), finaleTimers: [],
     aspect: 1, disposed: false, frame: 0, down: null, running: false,
     shift: { x: 0, y: 0 }, finaleRunning: false, poseRoute: { scene: 'intro', districtId: null },
-    hall: null, hallLoading: null, portal: null,
+    hall: null, hallLoading: null, portal: null, glitch: null, wantGlitch: false, classifiedRevealed: false,
     archive: null, archiveChapter: null, run: null, gamesPaused: false, reducedMotion: false, quality: 'auto', composer: null, bloom: null, cinematic: null,
   };
 
@@ -69,6 +71,24 @@ export function createPanemScene(mount, callbacks) {
     const changed = Math.abs(state.aspect - camera.aspect) > 0.02;
     state.aspect = camera.aspect;
     if (changed) rig.goTo(poseFor(state.poseRoute, state.map?.centers, state.aspect), 0.5);
+    // La imagen rota del Distrito 13 se congela con el tamaño de pantalla: si cambia, se vuelve a romper.
+    if (state.glitch) releaseGlitch();
+  }
+
+  function releaseGlitch() {
+    state.glitch?.dispose();
+    state.glitch = null;
+  }
+
+  // Distrito 13: se arma recién cuando el mapa está cargado (la imagen rota es una foto del mapa).
+  function ensureGlitch() {
+    if (state.glitch || !state.wantGlitch || !state.map) return;
+    state.glitch = createClassifiedGlitch({
+      renderer, scene, camera, reducedMotion: state.reducedMotion, revealed: state.classifiedRevealed,
+      onProgress: (value) => callbacks.onClassifiedProgress?.(value),
+      onReveal: () => callbacks.onClassifiedReveal?.(),
+    });
+    callbacks.sfx.play('cut');
   }
 
   function disposeDiorama() {
@@ -84,6 +104,7 @@ export function createPanemScene(mount, callbacks) {
     state.diorama = DIORAMAS[id]({
       origin: centers[id], completed, sfx: callbacks.sfx, rig,
       onProgress: (value) => callbacks.onProgress(id, value),
+      onMatch: (match) => callbacks.onMatch?.(id, match),
       onComplete: () => { callbacks.onComplete(id); sparks.emit(centers[id], centers.c); },
     });
     state.dioramaId = id;
@@ -142,8 +163,12 @@ export function createPanemScene(mount, callbacks) {
     state.cinematic = null;
     // Al salir de la intro la cámara corta al mapa: volar desde la sala cruzaría 60 unidades de nada.
     const leavingIntro = state.poseRoute?.scene === 'intro' && route.scene !== 'intro';
+    const classified = route.scene === 'distrito' && route.districtId === '13';
     state.poseRoute = route;
-    rig.goTo(poseFor(route, map?.centers, state.aspect), leavingIntro ? 0 : 1.6);
+    // En el 13 la cámara corta al mapa entero: la imagen se rompe al instante, no hay vuelo.
+    rig.goTo(poseFor(route, map?.centers, state.aspect), leavingIntro || classified ? 0 : 1.6);
+    state.wantGlitch = classified;
+    if (!classified) releaseGlitch();
     if (route.scene === 'intro') ensureHall(); else releaseHall();
     const chapter = route.scene === 'games' ? route.chapter : null;
     if (chapter !== state.archiveChapter) {
@@ -179,7 +204,13 @@ export function createPanemScene(mount, callbacks) {
     return hit?.object.userData.districtId ?? null;
   }
 
+  function normalized(event) {
+    const rect = renderer.domElement.getBoundingClientRect();
+    return [(event.clientX - rect.left) / rect.width, (event.clientY - rect.top) / rect.height];
+  }
+
   function onPointerMove(event) {
+    if (state.glitch) { renderer.domElement.style.cursor = state.glitch.pointerMove(...normalized(event)); return; }
     setPointer(event);
     let cursor = 'default';
     if (state.diorama) {
@@ -197,26 +228,41 @@ export function createPanemScene(mount, callbacks) {
   }
 
   function onPointerDown(event) {
+    if (state.glitch) {
+      if (state.glitch.pointerDown(...normalized(event))) {
+        event.preventDefault(); // que arrastrar un pedazo no seleccione el texto del panel
+        renderer.domElement.setPointerCapture?.(event.pointerId);
+        renderer.domElement.style.cursor = 'grabbing';
+        callbacks.sfx.play('tick');
+      }
+      return;
+    }
     setPointer(event);
-    state.down = { x: event.clientX, y: event.clientY };
-    if (state.diorama) {
+    // Lo que empieza sobre el minijuego es del minijuego; el resto del mapa sirve para salir o cambiar de distrito.
+    const onDiorama = Boolean(state.diorama) && raycaster.intersectObject(state.diorama.group, true).length > 0;
+    state.down = { x: event.clientX, y: event.clientY, onDiorama };
+    if (onDiorama) {
       renderer.domElement.setPointerCapture?.(event.pointerId);
       state.diorama.pointerDown(raycaster);
     }
   }
 
   function onPointerUp(event) {
+    if (state.glitch) { state.glitch.pointerUp(); state.down = null; return; }
     setPointer(event);
     const down = state.down;
     state.down = null;
-    if (state.diorama) { state.diorama.pointerUp(raycaster); return; }
+    if (state.diorama && down?.onDiorama) { state.diorama.pointerUp(raycaster); return; }
     if (!down || Math.hypot(event.clientX - down.x, event.clientY - down.y) > CLICK_TOLERANCE_PX) return;
-    if (state.route.scene !== 'mapa') return;
-    const id = pickDistrict();
-    if (id) callbacks.onSelect(id);
+    const action = mapClickAction({
+      scene: state.route.scene, currentId: state.route.districtId, hasDiorama: Boolean(state.diorama), pickedId: pickDistrict(),
+    });
+    if (action.type === 'select') callbacks.onSelect(action.id);
+    else if (action.type === 'map') callbacks.onBack?.();
   }
 
   function onPointerLeave() {
+    state.glitch?.pointerLeave();
     if (state.hovered) { state.hovered = null; callbacks.onHover(null); }
   }
 
@@ -226,7 +272,8 @@ export function createPanemScene(mount, callbacks) {
     const width = mount.clientWidth;
     const height = mount.clientHeight;
     const target = state.finaleRunning ? { x: 0, y: 0 } : viewShiftFor(state.route, width, height);
-    const blend = 1 - Math.exp(-5 * dt);
+    // La imagen rota del Distrito 13 es una foto: se saca con la vista ya corrida, sin esperar la transición.
+    const blend = state.wantGlitch && !state.glitch ? 1 : 1 - Math.exp(-5 * dt);
     state.shift.x += (target.x - state.shift.x) * blend;
     state.shift.y += (target.y - state.shift.y) * blend;
     const settled = Math.abs(state.shift.x) < 0.05 && Math.abs(state.shift.y) < 0.05;
@@ -300,6 +347,8 @@ export function createPanemScene(mount, callbacks) {
       if (state.portal) renderPortal(dt);
     }
     sparks.update(dt);
+    ensureGlitch();
+    if (state.glitch) { state.glitch.update(dt, elapsed); state.glitch.render(); return; }
     if (state.composer && state.route.scene === 'games') state.composer.render(dt);
     else renderer.render(scene, camera);
   }
@@ -353,7 +402,14 @@ export function createPanemScene(mount, callbacks) {
     setRoute(route) { state.route = route; applyRoute(); },
     setLit(ids) { state.lit = ids; },
     setHovered(id) { state.externalHover = id; },
-    setReducedMotion(value) { state.reducedMotion = value; rig.setReducedMotion(value); state.archive?.setReducedMotion(value); configureQuality(); },
+    // Quien ya descubrió la señal la encuentra abierta (lo guardado puede llegar con la rotura ya armada);
+    // si se borra el progreso, el Distrito 13 se vuelve a romper.
+    setClassifiedRevealed(value) {
+      if (value) state.glitch?.markRevealed();
+      else if (state.classifiedRevealed) releaseGlitch();
+      state.classifiedRevealed = value;
+    },
+    setReducedMotion(value) { if (value !== state.reducedMotion) releaseGlitch(); state.reducedMotion = value; rig.setReducedMotion(value); state.archive?.setReducedMotion(value); configureQuality(); },
     setGamesRun(run) {
       const previous = state.run;
       state.run = run; state.archive?.setRun(run);
@@ -384,6 +440,8 @@ export function createPanemScene(mount, callbacks) {
       state.diorama.performAction();
       return true;
     },
+    retryMinigame() { state.diorama?.retry?.(); },
+    minigameInput(i) { state.diorama?.input?.(i); },
     playFinale(onDone) {
       clearFinale();
       const map = state.map;
@@ -433,6 +491,7 @@ export function createPanemScene(mount, callbacks) {
         geometries: renderer.info.memory.geometries,
         textures: renderer.info.memory.textures,
         programs: renderer.info.programs?.length ?? 0,
+        minigame: state.diorama?.getState?.() ?? null, // la partida del distrito abierto (para revisar con ?debug)
       };
     },
     dispose() {
@@ -449,6 +508,7 @@ export function createPanemScene(mount, callbacks) {
       state.archive?.dispose();
       releaseComposer();
       releaseHall();
+      releaseGlitch();
       state.map?.dispose();
       sparks.dispose();
       timer.dispose();

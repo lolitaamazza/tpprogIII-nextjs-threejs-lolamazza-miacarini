@@ -84,7 +84,9 @@
 .tv-power { font-size: clamp(14px, 2.4cqmin, 20px); padding: 12px 26px; }
 .tv-room:not([data-phase="off"]) .tv-power { opacity: 0; pointer-events: none; }
 .tv-room[data-phase="enter"] .tv-foot { opacity: 0; }
-.tv-skip { position: absolute; z-index: 6; top: max(16px, env(safe-area-inset-top, 0px)); right: 16px; font-size: 13px; padding: 8px 14px; background: #0b0806aa; transition: opacity .3s; }
+/* Saltar queda para testear: chico, sin borde y casi transparente, para que no tiente. Esc también salta. */
+.tv-skip { position: absolute; z-index: 9; right: 12px; bottom: max(10px, env(safe-area-inset-bottom, 0px)); padding: 4px 6px; border: 0; background: none; font-size: 11px; letter-spacing: .12em; color: var(--muted); opacity: .3; transition: opacity .3s; }
+.tv-skip:hover, .tv-skip:focus-visible { opacity: .85; }
 .tv-room[data-phase="enter"] .tv-skip, .tv-room[data-phase="exit"] .tv-skip { opacity: 0; pointer-events: none; }
 .tv-flash { position: absolute; inset: 0; z-index: 7; background: #fff; opacity: 0; pointer-events: none; }
 .tv-room[data-phase="exit"] { opacity: 0; transition: opacity .6s; }

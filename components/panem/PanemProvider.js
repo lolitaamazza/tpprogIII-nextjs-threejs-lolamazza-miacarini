@@ -10,6 +10,10 @@ import { MAP_IDS, getDistrict } from '@/data/districts';
 
 const PanemContext = createContext(null);
 const SOUND_KEY = 'panem-sound';
+const CLASSIFIED_KEY = 'panem-d13-v1'; // si ya se descubrió la señal oculta del Distrito 13
+
+// Lo que ya se sabía del minijuego, si sigue siendo el mismo distrito.
+const sameDistrict = (current, districtId) => (current.districtId === districtId ? current : {});
 
 export function usePanem() {
   const value = useContext(PanemContext);
@@ -34,6 +38,13 @@ export default function PanemProvider({ children }) {
   const [burning, setBurning] = useState(false); // secuencia "Panem arde": se dispara al juntar el tercer emblema
   const [toast, setToast] = useState('');
   const [reducedMotion, setReducedMotion] = useState(false);
+  // Distrito 13: cuánto se descubrió moviendo los fragmentos y si ya apareció el mensaje oculto.
+  const [classified, setClassified] = useState({ progress: 0, revealed: false });
+  useEffect(() => {
+    let revealed = false;
+    try { revealed = window.localStorage.getItem(CLASSIFIED_KEY) === 'revealed'; } catch { /* sin storage */ }
+    if (revealed) setClassified({ progress: 1, revealed: true }); // eslint-disable-line react-hooks/set-state-in-effect
+  }, []);
 
   const notify = useCallback((message) => setToast(message), []);
   useEffect(() => {
@@ -121,7 +132,17 @@ export default function PanemProvider({ children }) {
     router.push(`/distrito/${id}`);
   }, [progress, notify, sfx, router]);
 
-  const handleProgress = useCallback((districtId, value) => setInteraction({ districtId, value }), []);
+  // Tocar el mapa fuera del minijuego cierra el panel del distrito.
+  const goToMap = useCallback(() => {
+    sfx.play('click');
+    router.push('/mapa');
+  }, [sfx, router]);
+
+  // El avance y la partida del minijuego del distrito abierto (la partida la usa el panel: vidas, perder, reintentar).
+  const handleProgress = useCallback((districtId, value) => setInteraction((current) => ({ ...sameDistrict(current, districtId), districtId, value })), []);
+  const handleMatch = useCallback((districtId, match) => setInteraction((current) => ({ ...sameDistrict(current, districtId), districtId, value: match.score / match.goal, match })), []);
+  const retryMinigame = useCallback(() => { sfx.play('click'); stageApiRef.current?.retryMinigame(); }, [sfx]);
+  const minigameInput = useCallback((i) => stageApiRef.current?.minigameInput(i), []);
 
   const handleComplete = useCallback((districtId) => {
     if (progress.litDistricts.includes(districtId)) return;
@@ -145,10 +166,18 @@ export default function PanemProvider({ children }) {
     if (next >= district.actionsToComplete) handleComplete(district.id);
   }, [route, progress.litDistricts, fallbackCounts, sfx, handleProgress, handleComplete]);
 
+  const classifiedProgress = useCallback((value) => setClassified((current) => (current.revealed ? current : { ...current, progress: value })), []);
+  const revealClassified = useCallback(() => {
+    setClassified({ progress: 1, revealed: true });
+    try { window.localStorage.setItem(CLASSIFIED_KEY, 'revealed'); } catch { /* sin storage */ }
+    sfx.play('ignite');
+  }, [sfx]);
+
   const resetAll = useCallback(async () => {
-    try { await progress.reset(); try { localStorage.removeItem('panem-rebellion-v1'); } catch { /* El progreso principal ya se reinició. */ } notify('Panem volvió a apagarse.'); }
+    try { await progress.reset(); try { localStorage.removeItem('panem-rebellion-v1'); localStorage.removeItem(CLASSIFIED_KEY); } catch { /* El progreso principal ya se reinició. */ } notify('Panem volvió a apagarse.'); }
     catch { notify('No se pudo reiniciar en la nube; revisá tu conexión.'); }
     setFallbackCounts({});
+    setClassified({ progress: 0, revealed: false });
     setInteraction({ districtId: null, value: 0 });
     setBurning(false);
     router.push('/');
@@ -156,7 +185,7 @@ export default function PanemProvider({ children }) {
 
   const value = {
     route, progress, audioState, startAudio, toggleSound, sfx, hovered, setHovered,
-    interaction, performAction, selectDistrict, handleProgress, handleComplete,
+    interaction, performAction, retryMinigame, minigameInput, selectDistrict, goToMap, classified, classifiedProgress, revealClassified, handleProgress, handleMatch, handleComplete,
     stageApiRef, webglFailed, setWebglFailed, mapFailed, setMapFailed, finalePlaying, setFinalePlaying,
     burning, setBurning, visibleLit, reducedMotion, notify, resetAll,
   };

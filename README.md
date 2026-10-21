@@ -11,9 +11,13 @@ Next.js 16 + Three.js + GSAP + Firebase · JavaScript · App Router.
 
 En la sala de transmisión del Capitolio, una tele gigante rodeada de teles chicas y de un público de espaldas emite el anuncio oficial: Panem vive en paz. Al "encender la señal" la transmisión se corta (se ve el fragmento del video oficial en el que se rompe la señal) y la cámara entra en la pantalla hasta un mapa 3D de Panem, gris y apagado. La persona puede explorar los trece distritos; tres de ellos guardan una chispa:
 
-- **Distrito 12 · Carbón:** picar la veta hasta liberar una brasa.
-- **Distrito 11 · Agricultura:** cosechar el trigo hasta que los sinsajos repiten un silbido.
-- **Distrito 4 · Pesca:** lanzar la red y atrapar tres peces.
+- **Distrito 12 · Carbón:** una luz recorre la veta y hay que picar cuando pasa por la grieta. Tres capas hasta la brasa; cada error asusta al canario y, con tres, hay que salir a respirar.
+- **Distrito 11 · Agricultura:** cosechar el trigo sin que te alumbre el reflector de las torres (si te ve, se pierde lo cosechado en esa pasada) y después repetir el silbido que cantan los sinsajos.
+- **Distrito 4 · Pesca:** mantener apretado carga el alcance de la red y soltar la tira; la corriente la desvía un poco. Cinco redes para tres peces; el dorado vale por dos.
+
+Los tres se pueden perder y reintentar, pero no son difíciles: después de perder dos veces el juego ayuda (grieta más ancha, reflector más chico, agua calma). El panel del distrito muestra el avance, las vidas y el botón de reintento; todo se juega también con el botón del panel o la barra espaciadora.
+
+**Distrito 13 (secreto opcional):** al entrar, la imagen del mapa se rompe en fragmentos con señal corrupta y cajas de rastreo. Los pedazos se apartan del puntero y se pueden arrastrar; debajo transmite otra señal. Moviendo suficientes aparece el mensaje oculto, que queda guardado y cambia una frase del final.
 
 Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una capa a la música. Con los tres emblemas se desbloquea el Capitolio: allí se elige el mensaje (*Encender la rebelión* o *Recordar a los caídos*), se hackea la transmisión y Panem entero se enciende, incluido el Distrito 13, que el Capitolio declaraba inexistente.
 
@@ -25,7 +29,9 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
       ├─ /distrito/12  diorama jugable → emblema 1
       ├─ /distrito/11  diorama jugable → emblema 2
       ├─ /distrito/4   diorama jugable → emblema 3
-      ├─ /distrito/1…13 (resto)  ficha del distrito (el 13: archivo clasificado)
+      ├─ /distrito/13  la imagen se rompe: secreto opcional
+      ├─ /distrito/1…10 (resto)  ficha del distrito
+      │   (tocar el mapa fuera del diorama cierra el panel; tocar otro distrito va a ese)
       └─ C → /capitolio  (requiere 3/3; si no, aviso y vuelta al mapa)
               └─ decisión → transmisión → Panem encendido → fin
 ```
@@ -44,7 +50,7 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
 | Metadata, carga y error | `generateMetadata` por distrito, `loading.js`, `error.js`, `not-found.js` |
 | Escena Three.js | `components/stage/panemScene.js`: escena, cámara, renderer, luces, RAF, raycasting, resize, pixel ratio ≤ 2, `dispose()` |
 | Recurso propio | Mapa extruido desde un SVG vectorizado a partir de la imagen de referencia y sistema de partículas de la chispa (`effects.js`) |
-| Alternativas accesibles | Dial de distritos con teclado; botón alternativo para cada interacción 3D; `prefers-reduced-motion` (la intro no corta la señal ni usa el clip); botón y Esc para saltar la intro |
+| Alternativas accesibles | Dial de distritos con teclado; cada minijuego se juega con el botón del panel o la barra espaciadora (y las teclas 1 a 4 para los sinsajos) con las mismas reglas; `prefers-reduced-motion` (la intro no corta la señal ni usa el clip; el Distrito 13 no tiembla); Esc para salir de la intro y del Distrito 13; las flechas de volver tienen `aria-label` |
 | Firebase | Auth anónima, Google y email; `progress/{uid}`; reglas por usuario; indicador NUBE/LOCAL |
 | Responsive | Cámara más alejada, dial horizontal y panel en hoja inferior en celular; touch en todos los dioramas |
 
@@ -54,8 +60,10 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
 - **Mapa desde SVG:** `scripts/extract_map.py` extrae las piezas de la imagen de referencia (flood fill + contornos con OpenCV) y genera `public/assets/panem.svg`, ajustable en Figma. En el navegador, `SVGLoader` y `ExtrudeGeometry` convierten cada `path#district-{id}` en una pieza 3D seleccionable por raycasting.
 - **Audio procedural:** `lib/audio/` sintetiza todo con Web Audio: ambiente de viento y drone, un secuenciador a 80 BPM en re menor con tres capas (percusión, silbido y pad) sincronizadas por un único reloj, y los efectos. El ambiente y los efectos no requieren archivos de audio. La secuencia opcional «Panem arde» también puede intentar reproducir `/audio/the-hanging-tree.mp3`, que no se incluye: si falta, continúa sin esa grabación. El motivo de 4 notas es original.
 - **Intro de la sala de transmisión:** una escena 3D en el mismo canvas que el mapa, apartada 60 unidades (`components/stage/broadcastHall.js`, medidas y poses en `lib/broadcastHall.js`). Referencia: la sala de teles de los 10.º Juegos; estética años 50 y, dentro del mundo, textos en inglés. Todo es geometría propia (`InstancedMesh` para sillas, público, gabinetes y monitores) y texturas pintadas en canvas; la pantalla usa un shader de tubo (curvatura, corrimiento, aberración, ruido, línea de encendido). Al final la pantalla muestra el mapa como un portal (render a textura muestreado en coordenadas de pantalla) y, cuando la llena, la cámara corta a esa misma vista. El clip de YouTube va en un iframe ubicado sobre la pantalla proyectada; sin WebGL queda la tele dibujada con CSS (`components/panem/TvIntro.js` + `tv-intro.css`). El guion, el clip y la regla de destellos del corte propio son lógica pura en `lib/introTimeline.js`; el reproductor, en `lib/youtubeClip.js`. YouTube muestra su interfaz unos segundos al empezar, así que el clip arranca 7 s antes del corte, oculto y con volumen 0, y se muestra al llegar al segundo 29. Si no carga, una señal pirata propia ocupa su lugar.
-- **Dioramas desmontables:** cada distrito jugable se construye al entrar y se libera al salir (`components/stage/dioramas/`), con un contrato común (`build → { update, pointer*, performAction, dispose }`).
-- **Lógica testeable:** datos, progreso, rutas, poses, partitura y reglas de los dioramas son módulos puros, probados con `node --test` (`npm test`).
+- **Dioramas desmontables:** cada distrito jugable se construye al entrar y se libera al salir (`components/stage/dioramas/`), con un contrato común (`build → { update, pointer*, performAction, retry, getState, dispose }`). La partida (objetivo, vidas, ganar, perder, reintentar y ayuda) es común a los tres: `lib/minigame.js`.
+- **Distrito 13:** la vista del mapa se congela en un render target y se parte en fragmentos dibujados con un solo `InstancedBufferGeometry` y un shader de señal rota (separación RGB, pixelado, barrido). Los resortes, el arrastre y cuánto se descubrió están en `lib/glitchShards.js`; la escena, en `components/stage/classifiedGlitch.js`. Se guarda en `panem-d13-v1`.
+- **Íconos:** las flechas de volver son de `react-icons` (Phosphor), sin texto al lado.
+- **Lógica testeable:** datos, progreso, rutas, poses, partitura, reglas de los minijuegos y los fragmentos del Distrito 13 son módulos puros, probados con `node --test` (`npm test`).
 
 ## Puesta en marcha
 
