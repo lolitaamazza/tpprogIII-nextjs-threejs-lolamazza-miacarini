@@ -141,7 +141,7 @@ npm run build   # build de producción
 
 ## Archivo interactivo de los Juegos
 
-Con los tres emblemas, el enlace **Los Juegos** y el Capitolio abren una edición alternativa:
+Con los tres emblemas, el enlace **Los Juegos** y el Capitolio abren una edición alternativa. Es el archivo de los Juegos del Capitolio, interceptado por la resistencia a través de la frecuencia del Distrito 13: al entrar, una secuencia corta niega el acceso, lo fuerza y tacha el sello del Capitolio (una vez por sesión; se saltea con un clic o una tecla, y con movimiento reducido se muestra quieta). En pantalla queda la etiqueta «Señal pirata · FREQ 13» y los expedientes llevan el sello «Property of the Capitol» tachado. La secuencia está en `lib/games/intercept.js` y `components/games/ArchiveIntercept.js`.
 
 ```text
 /cosecha → /capitolio/preparacion → /arena → /desenlace → /capitolio

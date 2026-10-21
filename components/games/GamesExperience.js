@@ -9,6 +9,7 @@ import { PHASE_PATH, TRAINING, ZONES } from '@/lib/games/simulation';
 import { useGames } from './GamesProvider';
 import { encounterFor } from '@/lib/games/encounters';
 import LiveBroadcast from './LiveBroadcast';
+import ArchiveIntercept from './ArchiveIntercept';
 import TributeModal from './TributeModal';
 import TributeHud from './TributeHud';
 import { gamesView } from '@/lib/games/view';
@@ -107,9 +108,11 @@ export default function GamesExperience({ chapter: requestedChapter }) {
 
   return (
     <div className={`games-experience games-${chapter}`} ref={root}>
+      <ArchiveIntercept />
       <div className="games-vignette" aria-hidden="true" />
       <section className="games-heading">
-        <p className="eyebrow">ARCHIVO INTERVENIDO / EDICIÓN ALTERNATIVA</p>
+        <p className="eyebrow">ARCHIVO DEL CAPITOLIO · INTERCEPTADO</p>
+        <p className="pirate-tag"><span aria-hidden="true">●</span> Señal pirata · FREQ 13</p>
         <h1>{TITLES[chapter]}<span aria-hidden="true">.</span></h1>
         <nav aria-label="Capítulos del archivo"><ol className="games-chapters">{CHAPTERS.map((key, i) => <li key={key} aria-current={chapter === key ? 'step' : undefined}><span>0{i + 1}</span> {TITLES[key]}</li>)}</ol></nav>
         {chapter === 'arena' && <p className="arena-counter"><b>{String(alive).padStart(2, '0')}</b> / 24 EN PIE <span>{turn === 0 ? 'APERTURA' : `JORNADA ${Math.ceil(turn / 2)} · ${turn % 2 ? 'DÍA' : 'NOCHE'}`}</span></p>}
@@ -125,9 +128,9 @@ export default function GamesExperience({ chapter: requestedChapter }) {
 
       {chapter === 'arena' && selected && <TributeHud tribute={selected}/>}
       <aside className="games-console" aria-label="Controles de la mentora">
-        <p className="eyebrow">{chapter === 'arena' ? 'TU CANAL PRIVADO' : 'SEÑAL DEL CAPITOLIO'}</p>
-        {!run && <><h2>El archivo está abierto.</h2><p>La chispa llegó al Capitolio. Reconstruí una edición de los Juegos y acompañá a un tributo desde la Cosecha.</p><p>Los nombres y los resultados pertenecen a esta simulación. Cada edición tiene un destino diferente.</p><button className="primary" onClick={() => { startAudio(); newRun(); }} disabled={disabled}>Abrir una edición</button></>}
-        {chapter === 'reaping' && run && <><h2>Veinticuatro nombres.</h2><p>Dos por distrito. Elegí a quién vas a acompañar como mentora. Tocá una ficha para conocer su historia, ver sus atributos y decidir a quién acompañar.</p><p className="hint">La Cosecha ya está registrada. Saltar la presentación no cambia los tributos.</p></>}
+        <p className="eyebrow">{chapter === 'arena' ? 'TU CANAL PRIVADO' : 'LÍNEA DE LA RESISTENCIA'}</p>
+        {!run && <><h2>Entramos.</h2><p>Así guarda el Capitolio cada edición de los Juegos. Reconstruí una y acompañá a un tributo: esta vez, la crónica es nuestra.</p><p className="hint">Cada edición es distinta.</p><button className="primary" onClick={() => { startAudio(); newRun(); }} disabled={disabled}>Abrir una edición</button></>}
+        {chapter === 'reaping' && run && <><h2>Veinticuatro nombres.</h2><p>Dos por distrito. Abrí sus fichas y elegí a quién acompañar.</p></>}
         {chapter === 'preparation' && selected && <><h2>Prepará a {selected.name}.</h2><p>Los tres emblemas te permiten transmitir conocimientos desde los distritos. Elegí una especialidad por emblema.</p>{TRAINING.map((training) => <fieldset key={training.district}><legend>{training.label}</legend>{training.options.map((option) => <label className="training-choice" key={option.id}><input type="radio" name={`training-${training.district}`} value={option.id} checked={choices[training.district] === option.id} disabled={disabled} onChange={() => setChoices((old) => ({ ...old, [training.district]: option.id }))} /><span>{option.label}<small>+8 {({ strength: 'fuerza', stealth: 'sigilo', survival: 'supervivencia', empathy: 'empatía', agility: 'agilidad' })[option.stat]}</small></span></label>)}</fieldset>)}<button className="primary" disabled={disabled} onClick={prepare}>Entrar a la arena</button></>}
         {chapter === 'arena' && selected && <>
           <h2>{selected.name} <small>D{selected.district}</small></h2>
