@@ -200,3 +200,11 @@ Al terminar la arena, «Volver a jugar» muestra su confirmación junto al botó
 ### Arena propuesta por el equipo
 
 Modelo integrado: [The Hunger Games Arena, Flashness](https://sketchfab.com/3d-models/the-hunger-games-arena-8735e8c171254663bd7db82878915190), licencia [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Es una creación de Minecraft/Mineways y conserva ese diseño; la optimización no lo convierte en un entorno fotorealista. La versión original descargada queda fuera de `public`; el juego sirve únicamente la versión optimizada.
+
+### La extracción y los eventos visibles
+
+Antes del escenario de selección, la Cosecha abre una urna de vidrio con papeles interactivos. Se puede hacer clic, arrastrar un papel o usar el botón con teclado. Cada papel revela uno de los 24 nombres sin repetir; «Revelar los nombres restantes» permite completar la ceremonia. Al terminar se pasa al escenario existente para elegir al tributo. `drawnCount` y `reapingComplete` viajan dentro de la partida local/exportada/nube; no alteran la semilla, los turnos ni la revisión del motor de la arena. Los snapshots anteriores siguen siendo válidos.
+
+`visualCueFor` conecta la pregunta pendiente con `arenaEffects`: fuego volumétrico simulado en planos cruzados con ruido, humo y luz cálida; niebla tóxica; lluvia; regalos en paracaídas; cajas y ondas de agua; brasas nocturnas y señales. El efecto comienza antes de responder y se conserva durante el turno de resolución. La mesa de los Vigilantes también muestra los peligros; el modo ligero reduce el humo y el movimiento reducido congela la animación.
+
+Poly Haven aporta materiales PBR 1K de madera, concreto y suelo, además de una roca fotogramétrica. Se sirven localmente y se reutilizan entre escenas. La urna tiene vidrio físico e iluminación HDRI. La arena de Sketchfab conserva su diseño original de Minecraft/Mineways; aplicar nuevos materiales y objetos no convierte todo ese escenario en fotogrametría. Fuentes y licencias en `public/models/CREDITS.md`.

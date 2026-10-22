@@ -31,6 +31,7 @@ export function createPanemScene(mount, callbacks) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
   renderer.setClearColor(0x000000, 0);
   mount.appendChild(renderer.domElement);
 
@@ -55,6 +56,8 @@ export function createPanemScene(mount, callbacks) {
   rim.position.set(-6, 4, -8);
   scene.add(rim);
 
+  let sceneDisposed=false;
+  loadEnvironment(renderer,'/models/districts/day.hdr').then(env=>{if(!sceneDisposed&&env){scene.environment=env;scene.environmentIntensity=.45;}});
   const rig = createCameraRig(camera);
   const sparks = createSparks(scene);
   const raycaster = new THREE.Raycaster();
@@ -66,7 +69,7 @@ export function createPanemScene(mount, callbacks) {
     aspect: 1, disposed: false, frame: 0, down: null, running: false,
     shift: { x: 0, y: 0 }, finaleRunning: false, poseRoute: { scene: 'intro', districtId: null },
     hall: null, hallLoading: null, portal: null, glitch: null, wantGlitch: false, classifiedRevealed: false, gamesView: 'follow',
-    archive: null, archiveChapter: null, run: null, gamesPaused: false, reducedMotion: false, quality: 'auto', composer: null, bloom: null, cinematic: null,
+    gamesCovered:false, archive: null, archiveChapter: null, run: null, gamesPaused: false, reducedMotion: false, quality: 'auto', composer: null, bloom: null, cinematic: null,
   };
 
   // La arena se mira desde la mesa de los Vigilantes o siguiendo a tu tributo (si sigue en pie); el resto, como siempre.
@@ -196,7 +199,7 @@ export function createPanemScene(mount, callbacks) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5));
     const shadows = (Boolean(state.archive) || Boolean(state.diorama)) && !low;
     renderer.shadowMap.enabled = shadows;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
     sun.castShadow = shadows;
     // En un diorama la sombra cubre solo la maqueta (más definida); en la arena, toda la escena.
     const reach = state.diorama && !state.archive ? 1.8 : 10;
@@ -397,6 +400,7 @@ export function createPanemScene(mount, callbacks) {
     timer.update(timestamp);
     const dt = Math.min(timer.getDelta(), 0.05);
     const elapsed = timer.getElapsed();
+    if(state.gamesCovered && state.route.scene==='games')return;
     if (!state.gamesPaused || state.route.scene !== 'games') {
       rig.update(dt);
       if (state.cinematic) {
@@ -474,6 +478,7 @@ export function createPanemScene(mount, callbacks) {
     .catch((error) => callbacks.onError?.(error));
 
   return {
+    setGamesCovered(value) {state.gamesCovered=value;renderer.domElement.style.visibility=value?'hidden':'';},
     getGamesAssetStatus() { return state.archive?.getAssetStatus() ?? null; },
     setRoute(route) { state.route = route; applyRoute(); },
     setLit(ids) { state.lit = ids; },
@@ -579,7 +584,7 @@ export function createPanemScene(mount, callbacks) {
       };
     },
     dispose() {
-      state.disposed = true;
+      state.disposed = true;sceneDisposed=true;
       stop();
       clearFinale();
       observer.disconnect();

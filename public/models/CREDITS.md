@@ -43,3 +43,13 @@ Entornos de luz de **Poly Haven** (https://polyhaven.com), licencia CC0, reducid
 
 - `dawn.hdr` — Kiara 1 Dawn, de Greg Zaal: https://polyhaven.com/a/kiara_1_dawn
 - `day.hdr` — Kloofendal 48d Partly Cloudy (Pure Sky), de Greg Zaal y Jarod Guest: https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky
+
+## Poly Haven · materiales y fotogrametría (CC0)
+
+Descargados mediante la API oficial para uso local, sin consultas a Poly Haven durante el juego:
+- Wood Table 001: https://polyhaven.com/a/wood_table_001
+- Concrete Floor Worn 001: https://polyhaven.com/a/concrete_floor_worn_001
+- Brown Mud Leaves 01: https://polyhaven.com/a/brown_mud_leaves_01
+- Boulder 01 (modelo fotogramétrico): https://polyhaven.com/a/boulder_01
+
+Mapas de color, normal OpenGL y rugosidad en JPG 1K. El modelo conserva su conjunto PBR 1K. Se aplican a la mesa y el suelo de la urna, la plaza de la Cosecha, el suelo de los minijuegos y objetos de la arena. La iluminación usa también los entornos HDRI de Poly Haven que ya estaban en public/models/districts (ver sus créditos). La urna y los papeles son geometría original de esta experiencia; Poly Haven aporta sus materiales y la iluminación. Licencia CC0: https://polyhaven.com/license

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { applyPolyMaterial } from '../polyHaven.js';
 import { DEPTH, LIFT_FOCUS } from '../mapMesh.js';
 
 export const DIORAMA_Y = DEPTH + LIFT_FOCUS + 0.03;
@@ -11,7 +12,7 @@ export function createDioramaBase(origin, groundColor) {
   const group = new THREE.Group();
   group.position.set(origin.x, DIORAMA_Y, origin.z);
   group.scale.setScalar(0.001); // crece al aparecer (growIn)
-  const ground = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.15, 0.08, 9), mat(groundColor));
+  const ground = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.15, 0.08, 64), applyPolyMaterial(mat('#b3a997', {flatShading:false}), 'soil', 2));
   ground.position.y = 0.04;
   group.add(ground);
   return { group };

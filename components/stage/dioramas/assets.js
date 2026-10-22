@@ -15,7 +15,7 @@ const PALETTE = {
 };
 const kits = new Map();
 const files = new Map();
-const environments = new Map();
+const environmentCaches = new WeakMap();
 
 function loadGltf(path) {
   if (!files.has(path)) {
@@ -65,6 +65,8 @@ export function instanceOf(kit, name) {
 
 export function loadEnvironment(renderer, url) {
   if (typeof window === 'undefined' || !renderer || !url) return Promise.resolve(null);
+  if (!environmentCaches.has(renderer)) environmentCaches.set(renderer,new Map());
+  const environments=environmentCaches.get(renderer);
   if (!environments.has(url)) {
     environments.set(url, new HDRLoader().loadAsync(url).then((texture) => {
       const pmrem = new THREE.PMREMGenerator(renderer);

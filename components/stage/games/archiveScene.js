@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {applyPolyMaterial,loadPolyBoulder} from '../polyHaven.js';
+import {createArenaEffects} from './arenaEffects.js';
 import { createTributeFigure } from './tributeFigure.js';
 import { loadArenaModel, instantiateArena, heightOnArena } from './arenaModel.js';
 
@@ -38,6 +40,7 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
   const material = (color, options = {}) => own(new THREE.MeshStandardMaterial({ color, roughness: 0.7, ...options }));
   const stone = material('#53606a');
   const dark = material('#172329');
+  applyPolyMaterial(stone,'stone',2);stone.color.set('#acaea4');
   const gold = material('#cba85c', { metalness: 0.75, roughness: 0.25 });
   const light = material('#d8d3bd', { emissive: '#69562e', emissiveIntensity: 1.1 });
   const box = own(new THREE.BoxGeometry(1, 1, 1));
@@ -54,7 +57,10 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
   }
   const floor = mesh(own(new THREE.CylinderGeometry(6.5, 6.8, 0.35, 64)), dark, [0, -0.2, 0]);
 
+  const realism=new THREE.Group();realism.name='polyhaven-details';group.add(realism);
   const isArena=chapter === 'arena' || chapter === 'ended';
+  if(!isArena){applyPolyMaterial(dark,'stone',3);dark.color.set('#747a75');}
+  const eventEffects=isArena?createArenaEffects(group,own,terrainHeight):null;
   const atmosphere=new THREE.HemisphereLight('#bacdda','#403d28',1.3);group.add(atmosphere);
   const weatherGeometry=own(new THREE.BufferGeometry());
   const weatherPositions=new Float32Array(180*3);
@@ -71,6 +77,23 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
       ground=terrain;
       arenaModel=instantiateArena(asset,ground,own);
       group.add(arenaModel);
+      // A detailed ground layer in the clearing, following the original terrain.
+      // Its soft edge and central opening retain the imported Cornucopia and forest.
+      const patchGeo=own(new THREE.PlaneGeometry(7,7,48,48));patchGeo.rotateX(-Math.PI/2);
+      const patchPos=patchGeo.attributes.position;
+      for(let i=0;i<patchPos.count;i++)patchPos.setY(i,terrainHeight(patchPos.getX(i),patchPos.getZ(i))+.016);
+      patchGeo.computeVertexNormals();
+      const edge=new Uint8Array(128*128*4);
+      for(let z=0;z<128;z++)for(let x=0;x<128;x++){const r=Math.hypot(x/127-.5,z/127-.5)*7;const v=Math.round(255*THREE.MathUtils.smoothstep(r,.7,1.1)*(1-THREE.MathUtils.smoothstep(r,2.8,3.45)));edge.set([v,v,v,255],(z*128+x)*4);}
+      const alpha=own(new THREE.DataTexture(edge,128,128));alpha.needsUpdate=true;alpha.magFilter=THREE.LinearFilter;
+      const patchMaterial=applyPolyMaterial(material('#b5b3a3',{transparent:true,alphaMap:alpha,depthWrite:false,roughness:.95}),'soil',4);
+      const patch=new THREE.Mesh(patchGeo,patchMaterial);patch.receiveShadow=true;realism.add(patch);
+
+      loadPolyBoulder().then(source=>{
+        if(disposed||!source)return;
+        const bounds=new THREE.Box3().setFromObject(source),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3()),scale=.8/Math.max(size.x,size.y,size.z);
+        for(let i=0;i<4;i++){const a=i*1.7+.4,x=Math.cos(a)*3.3,z=Math.sin(a)*3.3;const rock=source.clone(true);rock.scale.setScalar(scale);rock.position.set(x-center.x*scale,terrainHeight(x,z)-bounds.min.y*scale,z-center.z*scale);rock.traverse(n=>{if(n.isMesh){n.castShadow=true;n.receiveShadow=true;}});realism.add(rock);}
+      }).catch(error=>console.warn('No se pudo cargar la roca de Poly Haven:',error));
       if(view==='table')hologram(true);
       assetStatus='ready';onAssetStatus(assetStatus);
       setRun(currentRun);
@@ -78,7 +101,7 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
   } else {
     mesh(box, stone, [0, .12, -1.4], [6.5, .25, 2.5]);
     for (let i = 0; i < 7; i += 1) {
-      mesh(own(new THREE.CylinderGeometry(.16,.21,4,24)), material('#c4c2b4',{map:surfaceTexture([210,207,193],22)}), [-3 + i, 2, -2.4]);
+      mesh(own(new THREE.CylinderGeometry(.16,.21,4,24)), applyPolyMaterial(material('#d7d6c8'),'stone',1), [-3 + i, 2, -2.4]);
       mesh(box,stone,[-3+i,.2,-2.4],[.5,.4,.5]);
       mesh(box, gold, [-3 + i, 4, -2.4], [.38, .15, .5]);
     }
@@ -134,6 +157,7 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
   const tmpMatrix=new THREE.Matrix4(),tmpColor=new THREE.Color();
   function syncTable(){
     const onTable=view==='table';
+    realism.visible=!onTable;
     lights.visible=onTable;crosses.visible=onTable;table.visible=onTable;
     halo.visible=false;
     markers.forEach((marker,i)=>{
@@ -184,6 +208,8 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
       if (!marker.actor.userData.placed || reduced) { marker.actor.position.copy(marker.target); marker.actor.userData.placed = true; }
     });
     syncTable();
+    const selected=markers[run?.tributes.findIndex(t=>t.id===run.selectedId)];
+    eventEffects?.setRun(run,selected?.target??new THREE.Vector3());
   }
   setRun(null);
   return {
@@ -224,6 +250,7 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
       }
       weather.visible=!reduced && !low && isArena && view!=='table';
       holo.uniforms.uTime.value=elapsed;
+      eventEffects?.update(dt,elapsed,reduced,low,view==='table');
     },
     dispose() { disposed=true;group.removeFromParent(); resources.forEach((resource) => resource.dispose()); },
   };

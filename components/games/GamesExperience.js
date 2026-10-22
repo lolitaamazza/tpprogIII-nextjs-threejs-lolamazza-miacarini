@@ -8,6 +8,7 @@ import { PHASE_PATH, TRAINING } from '@/lib/games/simulation';
 import { useGames } from './GamesProvider';
 import { encounterFor } from '@/lib/games/encounters';
 import { statusLine } from '@/lib/games/hud';
+import ReapingDraw from './ReapingDraw';
 import ArchiveIntercept from './ArchiveIntercept';
 import ArchiveBar from './ArchiveBar';
 import ArenaHud from './ArenaHud';
@@ -42,6 +43,12 @@ export default function GamesExperience({ chapter: requestedChapter }) {
   const arena = chapter === 'arena' || chapter === 'ended';
 
   useEffect(() => { if (redirect) router.replace(redirect); }, [redirect, router]);
+
+  useEffect(()=>{
+    const stage=stageApiRef.current;
+    stage?.setGamesCovered(canShow && chapter==='reaping' && !run?.reapingComplete);
+    return()=>stage?.setGamesCovered(false);
+  },[canShow,chapter,run?.reapingComplete,stageApiRef]);
 
   useEffect(() => {
     const stage = stageApiRef.current;
@@ -118,6 +125,8 @@ export default function GamesExperience({ chapter: requestedChapter }) {
   const inspected = run?.tributes.find((t) => t.id === inspecting);
   const disabled = paused || !!games.conflict || games.status === 'saving';
   const status = run && chapter === 'arena' ? statusLine(run) : null;
+
+  if(chapter==='reaping' && run && !run.reapingComplete)return <ReapingDraw key={run.id} run={run} onDraw={games.draw} onContinue={games.revealStage} disabled={disabled}/>;
 
   return (
     <div className={`games-experience games-${chapter}`}>

@@ -1,0 +1,13 @@
+.reaping-draw{position:fixed;inset:0;z-index:50;background:#101312;color:#e8e2d5;pointer-events:auto;overflow:auto;}
+.reaping-canvas{position:absolute;inset:0 26% 0 0;touch-action:none;}
+.reaping-canvas canvas{display:block;width:100%;height:100%;}
+.reaping-intro{position:absolute;top:11%;left:4%;max-width:440px;pointer-events:none;}
+.reaping-intro h1{font-size:clamp(42px,4.2vw,60px);margin:12px 0;line-height:.95;}
+.reaping-intro h1 span{color:#d4af37;}.reaping-intro p{font-size:14px;line-height:1.7;color:#b4b9ad;}
+.reaping-control{position:relative;margin:13vh 4% 5vh auto;width:25%;max-width:380px;min-width:260px;padding:25px;border-top:1px solid #c8ae65;background:#101512e8;}
+.reaping-count{font-family:var(--font-display);font-size:48px;color:#dcc58f;margin:0 0 25px;}.reaping-count span{font-size:15px;color:#b3b7ad;}
+.drawn-name{min-height:175px;display:flex;flex-direction:column;justify-content:center;gap:12px;border-top:1px solid #ffffff19;border-bottom:1px solid #ffffff19;margin-bottom:20px;}
+.drawn-name small{font-size:10px;letter-spacing:.15em;color:#bba776;}.drawn-name strong{font-family:Georgia,serif;font-weight:400;font-size:38px;line-height:1.2;}.drawn-name span{font-size:12px;color:#a7afa2;}
+.reaping-control .primary{width:100%;font-size:13px;}.reaping-skip{background:none;border:0;text-decoration:underline;text-transform:none;letter-spacing:0;font-size:11px;margin:12px auto;display:block;color:#b5b6aa;}
+.reaping-help{font-size:11px;line-height:1.6;color:#939d90;}.reaping-register{font-size:12px;margin:20px 0;}.reaping-register ol{max-height:150px;overflow:auto;padding-left:20px;}.reaping-register li{padding:5px;}.reaping-register li span{color:#d8bf7d;}.reaping-credit{font-size:9px;color:#859181;}
+@media(max-width:720px){.reaping-canvas{inset:0 0 24% 0;}.reaping-intro{top:9%;left:6%;}.reaping-intro h1{font-size:42px;}.reaping-intro p{font-size:12px;}.reaping-intro .eyebrow{font-size:8px;}.reaping-control{margin:65vh 4% 30px;width:92%;max-width:none;min-width:0;padding:18px;box-sizing:border-box;}.reaping-count{font-size:30px;margin:0 0 10px;}.drawn-name{min-height:70px;gap:6px;padding:12px 0;}.drawn-name strong{font-size:30px;}.reaping-register{margin:12px 0;}}
