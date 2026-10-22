@@ -74,7 +74,6 @@ function Burning() {
     const animation = gsap.context(() => {
       if (!plan.animated) return;
       gsap.fromTo('.burn-message [aria-hidden]', {yPercent:110, rotateX:-45, opacity:0}, {yPercent:0, rotateX:0, opacity:1, duration:1.1, stagger:.22, delay:1.6, ease:'power4.out'});
-      gsap.fromTo('.burn-rule', {scaleX:0}, {scaleX:1,duration:1.8,delay:.4,ease:'power3.inOut'});
       gsap.fromTo('.burn-content', {scale:1.05}, {scale:1,duration:9,ease:'power1.out'});
     }, root);
     let fire = null;
@@ -115,7 +114,7 @@ function Burning() {
     fadeSong(0, BURN_TIMING.leaveMs);
     leaveRef.current = setTimeout(() => {
       setBurning(false);
-      if (toCapitol) router.push('/rebelion');
+      if (toCapitol) router.push('/capitolio');
     }, BURN_TIMING.leaveMs);
   }, [fadeSong, router, setBurning]);
 
@@ -143,13 +142,12 @@ function Burning() {
       ref={rootRef} className={`burn${leaving ? ' leaving' : ''}`} role="dialog" aria-modal="true"
       aria-labelledby="burn-message" tabIndex={-1}
     >
-      <button className="burn-skip" onClick={() => close(true)}>Saltar · continuar la historia</button>
+      <button type="button" className="burn-skip" onClick={() => close(true)} aria-label="Saltar e ir al Capitolio">saltar</button>
       {plan.animated && <canvas ref={canvasRef} className="burn-fire" aria-hidden="true" />}
       {song === 'idle' && (
         <button type="button" className="burn-song" onClick={listen}>♪ Escuchar</button>
       )}
       <div className="burn-content">
-        <p className="eyebrow">SEÑAL PIRATA / LOS DISTRITOS RESPONDEN</p><div className="burn-rule" aria-hidden="true" />
         <p id="burn-message" className="burn-message" lang="en">
           <span className="sr-only">{BURN_MESSAGE}</span>
           {plan.words.map((word, i) => (
@@ -157,10 +155,10 @@ function Burning() {
           ))}
         </p>
         <p className="burn-sub" style={{ animationDelay: `${plan.subtitleAt}ms` }}>
-          Ningún Agente de la Paz puede apagar un fuego que ya prendió en todos los distritos.
+          Tres distritos encendidos. Ahora responden todos.
         </p>
         <div className="burn-actions" data-show={actionsShown ? 'true' : 'false'} inert={!actionsShown}>
-          <button ref={primaryRef} type="button" className="primary" onClick={() => close(true)}>Continuar la historia →</button>
+          <button ref={primaryRef} type="button" className="primary" onClick={() => close(true)}>Ir al Capitolio →</button>
           <button type="button" onClick={() => close(false)}>Seguir explorando</button>
         </div>
       </div>

@@ -62,11 +62,60 @@ export function createBurst(parent, color, count = 40) {
   };
 }
 
+// Una mota redonda y difusa para las partículas (en Node no hay canvas: quedan cuadradas, da igual).
+let softDot = null;
+function dotTexture() {
+  if (softDot || typeof document === 'undefined') return softDot;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gradient.addColorStop(0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 64, 64);
+  softDot = new THREE.CanvasTexture(canvas);
+  softDot.userData.shared = true;
+  return softDot;
+}
+
+// Motas que flotan y suben despacio (polvo, polen, brasas, humo): vuelven a empezar abajo al llegar arriba.
+export function createMotes(parent, { count = 30, center = [0, 0.3, 0], spread = [1.6, 0.6, 1.6], color = '#ffffff', size = 0.03, rise = 0.04, sway = 0.02, opacity = 0.6, seed = 7 } = {}) {
+  let s = seed;
+  const random = () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
+  const base = new Float32Array(count * 3);
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    base.set([center[0] + (random() - 0.5) * spread[0], random() * spread[1], center[2] + (random() - 0.5) * spread[2]], i * 3);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const points = new THREE.Points(geometry, new THREE.PointsMaterial({
+    color, size, map: dotTexture(), transparent: true, opacity, depthWrite: false, sizeAttenuation: true,
+  }));
+  points.frustumCulled = false;
+  parent.add(points);
+  return {
+    points,
+    update(elapsed) {
+      for (let i = 0; i < count; i++) {
+        const height = (base[i * 3 + 1] + elapsed * rise) % spread[1];
+        positions[i * 3] = base[i * 3] + Math.sin(elapsed * 0.7 + i) * sway;
+        positions[i * 3 + 1] = center[1] + height;
+        positions[i * 3 + 2] = base[i * 3 + 2] + Math.cos(elapsed * 0.5 + i * 1.7) * sway;
+      }
+      geometry.attributes.position.needsUpdate = true;
+    },
+  };
+}
+
+// Libera lo que es del diorama; lo marcado como compartido (los modelos en caché, ver assets.js) queda para la
+// próxima visita.
 export function disposeObject(root) {
   root.traverse((o) => {
-    o.geometry?.dispose();
+    if (!o.geometry?.userData.shared) o.geometry?.dispose();
     const materials = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
-    materials.forEach((m) => { m.map?.dispose(); m.dispose(); });
+    materials.filter((m) => !m.userData.shared).forEach((m) => { if (!m.map?.userData.shared) m.map?.dispose(); m.dispose(); });
   });
   root.removeFromParent();
 }

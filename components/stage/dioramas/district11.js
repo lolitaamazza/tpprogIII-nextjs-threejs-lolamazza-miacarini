@@ -1,5 +1,7 @@
 import * as THREE from 'three';
-import { createBurst, createDioramaBase, disposeObject, growIn, mat } from './common.js';
+import { createBurst, createDioramaBase, createMotes, disposeObject, growIn, mat } from './common.js';
+import { instanceOf, loadKit } from './assets.js';
+import { createFigure, lookToward } from './figure.js';
 import { HARVEST, inLight, searchlight, songOrder } from './logic.js';
 import { createMatch, helpLevel, resolve, retry as retryMatch } from '../../../lib/minigame.js';
 import { MOTIF } from '../../../lib/audio/music.js';
@@ -36,12 +38,16 @@ function makeTower(x, z) {
 export function buildDistrict11({ origin, completed, onProgress, onComplete, onMatch = () => {}, sfx, rig }) {
   const { group } = createDioramaBase(origin, '#64543a');
 
+  // Lo hecho con código mientras cargan los modelos de Kenney (y si no cargan): el huerto y las torres.
+  const fallback = new THREE.Group();
+  group.add(fallback);
+
   // Huerto al fondo y una rama donde se posan los sinsajos
   const leaf = mat('#3f6b3a');
   for (let i = 0; i < 6; i++) {
     const bush = new THREE.Mesh(new THREE.IcosahedronGeometry(0.07, 0), leaf);
     bush.position.set(-0.6 + i * 0.24, 0.14, -0.78);
-    group.add(bush);
+    fallback.add(bush);
   }
   const branch = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.015, 0.015), mat('#4a3626'));
   branch.position.set(0, 0.24, -0.6);
@@ -51,20 +57,40 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
     post.position.set(x, 0.16, -0.6);
     group.add(post);
   }
-  TOWERS.forEach(([x, z]) => group.add(makeTower(x, z)));
+  TOWERS.forEach(([x, z]) => fallback.add(makeTower(x, z)));
 
-  // Sinsajos: de izquierda a derecha, de grave a agudo. Cada uno con una caja más grande para tocarlo fácil.
+  // Sinsajos: de izquierda a derecha, de grave a agudo. Cuerpo, cabeza, pico, cola y alas que aletean; cada uno
+  // con una esfera invisible más grande para tocarlo fácil.
   const birdMats = [];
+  const dark = mat('#26303f');
   const birds = Array.from({ length: NOTES }, (_, i) => {
     const material = mat('#a9bdf0', { emissive: '#2a3a66' });
     birdMats.push(material);
-    const bird = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.17, 4), material);
-    bird.rotation.z = Math.PI / 2;
-    bird.position.set(-0.42 + i * 0.28, 0.3, -0.6);
-    bird.userData.baseY = bird.position.y;
+    const bird = new THREE.Group();
     const hit = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshBasicMaterial({ visible: false }));
     hit.userData.bird = i;
-    bird.add(hit);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), material);
+    body.scale.set(1.45, 1, 1);
+    const headBall = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), material);
+    headBall.position.set(0.045, 0.028, 0);
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.007, 0.024, 4), dark);
+    beak.rotation.z = -Math.PI / 2;
+    beak.position.set(0.075, 0.026, 0);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.006, 0.03), dark);
+    tail.position.set(-0.065, 0.012, 0);
+    tail.rotation.z = 0.35;
+    const wings = [-1, 1].map((side) => {
+      const wing = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.005, 0.05), dark);
+      wing.geometry.translate(0, 0, side * 0.025);
+      wing.position.set(-0.005, 0.018, side * 0.02);
+      wing.userData.side = side;
+      return wing;
+    });
+    bird.add(hit, body, headBall, beak, tail, ...wings);
+    bird.userData.wings = wings;
+    bird.position.set(-0.42 + i * 0.28, 0.285, -0.6);
+    bird.rotation.y = 0.5; // un poco de frente
+    bird.userData.baseY = bird.position.y;
     group.add(bird);
     return bird;
   });
@@ -97,6 +123,56 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
   });
   const hitBoxes = stalks.map((s) => s.hit);
   const sparkles = createBurst(group, '#ffd36b');
+  // Vida: polen que flota sobre el campo.
+  const pollen = createMotes(group, { count: 28, center: [0, 0.1, 0.2], spread: [1.5, 0.45, 1.1], color: '#f3e2a0', size: 0.02, rise: 0.02, sway: 0.04, opacity: 0.7, seed: 3 });
+
+  // Con los modelos: trigo y surcos, huerto, torres de vigilancia y la cosechadora.
+  let figure = null;
+  let disposed = false;
+  const trees = [];
+  const home = new THREE.Vector3(-0.72, 0.08, 0.62);
+  let walkTo = null;
+  let walking = false;
+  let cabinY = CABIN_Y;
+  const place = (kit, name, [x, y, z], scale, rotation = 0, parent = group) => {
+    const object = instanceOf(kit, name);
+    if (!object) return null;
+    object.position.set(x, y, z);
+    object.scale.setScalar(scale);
+    object.rotation.y = rotation;
+    parent.add(object);
+    return object;
+  };
+  loadKit('11').then((kit) => {
+    if (!kit || disposed) return;
+    fallback.visible = false;
+    TOWERS.forEach(([x, z], i) => place(kit, 'tower', [x, 0.08, z], 0.12, i ? -0.6 : 0.6));
+    cabinY = 0.4; // el reflector sale de la cabina de la torre de Kenney, más baja que la de palitos
+    // Trigo dorado y rastrojo (los materiales son de estos dos modelos solamente).
+    const tint = (name, color) => kit.models[name]?.traverse((node) => { if (node.isMesh) node.material.color.set(color); });
+    tint('wheat', '#d8ae4e');
+    tint('wheatCut', '#9a7f4a');
+    [['oak', -0.7, 0.3], ['tree', -0.38, 0.26], ['oak', 0.0, 0.32], ['tree', 0.36, 0.27], ['oak', 0.68, 0.3]]
+      .forEach(([name, x, scale], i) => { const tree = place(kit, name, [x, 0.08, -0.84 + (i % 2) * 0.05], scale, i * 1.7); if (tree) trees.push(tree); });
+    [[-0.54, -0.74, 'bush'], [-0.18, -0.76, 'bushSmall'], [0.18, -0.74, 'bush'], [0.52, -0.76, 'bushSmall']].forEach(([x, z, name], i) => place(kit, name, [x, 0.08, z], 0.3, i));
+    for (let row = 0; row < 4; row++) for (let k = 0; k < 4; k++) place(kit, 'dirtRow', [-0.45 + k * 0.33, 0.08, FIELD_Z - 0.3 + row * 0.2], 0.33);
+    [[-0.86, 0.3], [0.9, 0.22], [-0.66, 0.8], [0.6, 0.8], [0.88, -0.2]].forEach(([x, z], i) => place(kit, i % 2 ? 'grassLarge' : 'grass', [x, 0.08, z], 0.3, i));
+    [[-0.45, 0.84], [0.3, 0.86], [0.8, 0.5]].forEach(([x, z], i) => place(kit, 'flower', [x, 0.08, z], 0.35, i));
+    place(kit, 'rock', [0.92, 0.08, 0.02], 0.3, 1);
+    // El trigo de Kenney dentro de cada espiga del juego (la caja de toque se queda).
+    stalks.forEach((s, i) => {
+      const full = place(kit, 'wheat', [0, 0, 0], 0.3, i * 0.9, s.stalk);
+      const cut = place(kit, 'wheatCut', [0, 0, 0], 0.3, i * 0.9, s.stalk);
+      if (!full || !cut) return;
+      s.dressed = { full, cut };
+      setCut(s, s.harvested);
+    });
+    figure = createFigure(kit, 'harvester', { scale: 0.28, position: home.toArray(), facing: lookToward(0.5, -0.5) });
+    if (figure) {
+      group.add(figure.group);
+      if (match.phase === 'won') figure.play('emote-yes', { loop: true });
+    }
+  });
 
   // El reflector: un círculo de luz sobre el campo y el haz desde la torre más cercana
   const spotMat = new THREE.MeshBasicMaterial({ color: '#fff4c8', transparent: true, opacity: 0.32, depthWrite: false });
@@ -119,11 +195,18 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
 
   function setCut(s, cut) {
     s.harvested = cut;
+    s.stalk.rotation.z = 0;
+    if (s.dressed) {
+      s.dressed.full.visible = !cut;
+      s.dressed.cut.visible = cut;
+      s.stem.visible = false;
+      s.head.visible = false;
+      return;
+    }
     s.head.visible = !cut;
     s.stem.material = cut ? cutMat : stemMat;
     s.stem.scale.y = cut ? 0.35 : 1;
     s.stem.position.y = cut ? 0.04 : 0.11;
-    s.stalk.rotation.z = 0;
   }
   if (completed) stalks.forEach((s) => setCut(s, true));
 
@@ -154,6 +237,8 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
     grace = HARVEST.graceSeconds;
     sfx.play('glitch');
     rig?.shake(0.03);
+    walkTo = null;
+    figure?.play('emote-no', { then: match.phase === 'lost' ? 'sit' : 'idle' });
     if (match.phase === 'lost') sfx.play('lose');
     syncVisuals();
     report();
@@ -169,6 +254,10 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
       s.at = clock;
       sparkles.burst(new THREE.Vector3(s.x, 0.3, s.z));
     });
+    // La cosechadora va hasta la última espiga y la levanta.
+    const last = fresh.at(-1);
+    walkTo = new THREE.Vector3(last.x - 0.07, 0.08, last.z + 0.1);
+    if (!walking && figure && figure.group.position.distanceTo(walkTo) < 0.05) figure.play('pick-up');
     sfx.play('harvest');
     match = resolve(match, { points: fresh.length });
     onProgress(match.score / match.goal);
@@ -176,6 +265,7 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
       step = 'song';
       syncVisuals();
       startSong();
+      walkTo = new THREE.Vector3(0.1, 0.08, -0.3); // se acerca a escuchar a los sinsajos
     }
     report();
   }
@@ -196,6 +286,7 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
     if (match.phase === 'won') {
       step = 'done';
       sfx.play('whistle');
+      figure?.play('emote-yes', { loop: true });
       onComplete();
     }
     report();
@@ -211,6 +302,27 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
       growIn(group, dt);
       sparkles.update(dt);
       stalks.forEach((s, i) => { if (!s.harvested) s.stalk.rotation.z = Math.sin(elapsed * 1.6 + i) * 0.06; });
+      trees.forEach((tree, i) => { tree.rotation.z = Math.sin(elapsed * 1.1 + i) * 0.025; }); // viento
+      pollen.update(elapsed);
+      if (figure) {
+        figure.update(dt);
+        if (walkTo) {
+          const pos = figure.group.position;
+          const dx = walkTo.x - pos.x;
+          const dz = walkTo.z - pos.z;
+          const distance = Math.hypot(dx, dz);
+          if (distance > 0.02) {
+            if (!walking) { walking = true; figure.play('walk', { loop: true }); }
+            const stepLength = Math.min(distance, dt * 0.7);
+            pos.x += (dx / distance) * stepLength;
+            pos.z += (dz / distance) * stepLength;
+            figure.group.rotation.y = lookToward(dx, dz);
+          } else {
+            walkTo = null;
+            if (walking) { walking = false; figure.play(step === 'harvest' ? 'pick-up' : 'idle', { loop: step !== 'harvest' }); }
+          }
+        }
+      }
       if (step === 'harvest' && match.phase === 'playing') {
         light = searchlight(elapsed, helpLevel(match));
         grace = Math.max(0, grace - dt);
@@ -219,7 +331,7 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
         spotMat.color.set(grace > 0 ? '#ff5a3a' : '#fff4c8');
         beamMat.color.copy(spotMat.color);
         const [tx, tz] = TOWERS[light.x < 0 ? 0 : 1];
-        const top = tmp.set(tx, CABIN_Y, tz);
+        const top = tmp.set(tx, cabinY, tz);
         const dir = top.clone().sub(spot.position);
         const length = dir.length();
         beam.position.copy(spot.position).addScaledVector(dir, 0.5);
@@ -238,6 +350,8 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
         const idle = step === 'done' ? Math.abs(Math.sin(elapsed * 5 + i)) * 0.04 : 0;
         bird.position.y = bird.userData.baseY + hop + idle;
         birdMats[i].emissiveIntensity = bounce[i] > 0 ? 3 : 1;
+        const flap = bounce[i] > 0 || step === 'done' ? Math.sin(elapsed * 30 + i) * 0.7 : Math.sin(elapsed * 2 + i) * 0.08;
+        bird.userData.wings.forEach((wing) => { wing.rotation.x = wing.userData.side * flap; });
       });
     },
     pointerDown(raycaster) {
@@ -267,6 +381,8 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
       step = 'harvest';
       grace = 0;
       stalks.forEach((s) => setCut(s, false));
+      walkTo = home.clone();
+      figure?.reset();
       syncVisuals();
       onProgress(0);
       report();
@@ -277,6 +393,6 @@ export function buildDistrict11({ origin, completed, onProgress, onComplete, onM
         stalks: stalks.map(({ x, z, harvested }) => ({ x, z, harvested })),
       };
     },
-    dispose() { disposeObject(group); },
+    dispose() { disposed = true; figure?.dispose(); disposeObject(group); },
   };
 }

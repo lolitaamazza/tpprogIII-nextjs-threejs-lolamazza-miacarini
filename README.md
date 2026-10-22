@@ -15,7 +15,9 @@ En la sala de transmisión del Capitolio, una tele gigante rodeada de teles chic
 - **Distrito 11 · Agricultura:** cosechar el trigo sin que te alumbre el reflector de las torres (si te ve, se pierde lo cosechado en esa pasada) y después repetir el silbido que cantan los sinsajos.
 - **Distrito 4 · Pesca:** mantener apretado carga el alcance de la red y soltar la tira; la corriente la desvía un poco. Cinco redes para tres peces; el dorado vale por dos.
 
-Los tres se pueden perder y reintentar, pero no son difíciles: después de perder dos veces el juego ayuda (grieta más ancha, reflector más chico, agua calma). El panel del distrito muestra el avance, las vidas y el botón de reintento; todo se juega también con el botón del panel o la barra espaciadora.
+Los tres se pueden perder y reintentar, pero no son difíciles: después de perder dos veces el juego ayuda (grieta más ancha, reflector más chico, agua calma). Los distritos no tienen panel: arriba a la izquierda quedan la flecha, el distrito y una pista que se va al empezar a jugar; abajo, el avance, las vidas, el botón alternativo y el de reintentar. Todo se juega también con ese botón o la barra espaciadora.
+
+**Cómo se ven:** cada diorama usa piezas de los packs de **Kenney** (Nature, Survival, Pirate y Mini Characters, CC0) y un entorno de luz de **Poly Haven** (CC0): el carbón amanece y la pesca y el campo son de día. Hay una figurita que hace la acción (el minero pica, la pescadora tira la red, la cosechadora camina hasta las espigas), sombras suaves y un tilt-shift leve de maqueta. El entorno de luz ilumina solo la maqueta, no el mapa de alrededor. Vida: humo de la mina, polvo, brasas, agua con olas y espuma, peces que saltan, trigo y árboles con viento, polen y sinsajos que aletean. La paleta pastel del Nature Kit se pasa a tonos apagados al cargar. Los modelos se cargan al entrar a cada distrito (menos de 1,5 MB cada uno) y, si no llegan, el juego se juega igual con su geometría propia (`components/stage/dioramas/assets.js`, `lib/dioramaAssets.js`, `lib/dioramaLook.js`). Créditos en `public/models/CREDITS.md`.
 
 **Distrito 13 (secreto opcional):** al entrar, la imagen del mapa se rompe en fragmentos con señal corrupta y cajas de rastreo. Los pedazos se apartan del puntero y se pueden arrastrar; debajo transmite otra señal. Moviendo suficientes aparece el mensaje oculto, que queda guardado y cambia una frase del final.
 
@@ -31,7 +33,7 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
       ├─ /distrito/4   diorama jugable → emblema 3
       ├─ /distrito/13  la imagen se rompe: secreto opcional
       ├─ /distrito/1…10 (resto)  ficha del distrito
-      │   (tocar el mapa fuera del diorama cierra el panel; tocar otro distrito va a ese)
+      │   (tocar el mapa fuera del diorama vuelve al mapa; tocar otro distrito va a ese)
       └─ C → /capitolio  (requiere 3/3; si no, aviso y vuelta al mapa)
               └─ decisión → transmisión → Panem encendido → fin
 ```
@@ -50,9 +52,9 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
 | Metadata, carga y error | `generateMetadata` por distrito, `loading.js`, `error.js`, `not-found.js` |
 | Escena Three.js | `components/stage/panemScene.js`: escena, cámara, renderer, luces, RAF, raycasting, resize, pixel ratio ≤ 2, `dispose()` |
 | Recurso propio | Mapa extruido desde un SVG vectorizado a partir de la imagen de referencia y sistema de partículas de la chispa (`effects.js`) |
-| Alternativas accesibles | Dial de distritos con teclado; cada minijuego se juega con el botón del panel o la barra espaciadora (y las teclas 1 a 4 para los sinsajos) con las mismas reglas; `prefers-reduced-motion` (la intro no corta la señal ni usa el clip; el Distrito 13 no tiembla); Esc para salir de la intro y del Distrito 13; las flechas de volver tienen `aria-label` |
+| Alternativas accesibles | Dial de distritos con teclado; cada minijuego se juega con el botón del HUD o la barra espaciadora (y las teclas 1 a 4 para los sinsajos) con las mismas reglas; `prefers-reduced-motion` (la intro no corta la señal ni usa el clip; el Distrito 13 no tiembla); Esc para salir de la intro y del Distrito 13; las flechas de volver tienen `aria-label` |
 | Firebase | Auth anónima, Google y email; `progress/{uid}`; reglas por usuario; indicador NUBE/LOCAL |
-| Responsive | Cámara más alejada, dial horizontal y panel en hoja inferior en celular; touch en todos los dioramas |
+| Responsive | Cámara más alejada y dial horizontal en celular; el HUD de los distritos y del archivo se apila abajo; touch en todos los dioramas y en la arena |
 
 ## Decisiones técnicas
 
@@ -147,16 +149,18 @@ Con los tres emblemas, el enlace **Los Juegos** y el Capitolio abren una edició
 /cosecha → /capitolio/preparacion → /arena → /desenlace → /capitolio
 ```
 
-- La Cosecha presenta 24 personajes originales, dos por cada distrito del 1 al 12. Cada ficha abre un expediente con retrato 3D, atributos y estado antes de elegir a quién acompañar como mentora.
+- La Cosecha presenta 24 personajes originales, dos por cada distrito del 1 al 12. Se los toca en el escenario 3D (o desde la lista de tributos) y cada uno abre un expediente con retrato 3D, atributos y estado antes de elegir a quién acompañar como mentora.
 - Cada emblema permite una elección de preparación (+8 a un atributo). El entrenamiento se aplica una sola vez y funciona igual con botones o interacción 3D.
-- Cada turno presenta una situación con opciones propias: Cornucopia, niebla tóxica, incendio, señales, río, patrocinadores o necesidades del personaje. Los atributos y recursos modifican riesgos y consecuencias; los demás tributos actúan mediante reglas y azar reproducible.
+- Una pregunta cada dos turnos (la apertura incluida): en los turnos del medio la transmisión sigue sola a los 6 s, o a los 3,5 s si el tributo ya cayó. «Pausar escena» o abrir una ficha frena el avance y «Seguir la transmisión» lo adelanta. Cada pregunta presenta una situación con opciones propias: Cornucopia, niebla tóxica, incendio, señales, río, patrocinadores o necesidades del personaje. Los atributos y recursos modifican riesgos y consecuencias; los demás tributos actúan mediante reglas y azar reproducible.
 - Salud, energía, hambre, sed, recursos, zonas y alianzas determinan los eventos. Si cae el tributo elegido se puede seguir como observadora.
 - La partida termina con un sobreviviente, como máximo en 24 turnos (12 jornadas), y conserva la crónica completa. El epílogo de rebelión/memoria permanece disponible.
 - Las rutas validan el capítulo de la partida: abrir una URL futura redirige al estado actual.
 
 ### Escenas y animación
 
-La arena incluye un tablero fijo de salud, energía, hambre, sed, comida y agua, independiente del desplazamiento de las decisiones (anclado abajo en celular). Reúne la transmisión, las decisiones y una tira horizontal de tributos; los eventos incluyen actores y cambios de recursos. En pantallas pequeñas los paneles se apilan.
+La interfaz deja el 3D a la vista (`components/games/ArenaHud.js` y `ArchiveBar.js`; lo que muestra sale de `lib/games/hud.js`). Arriba a la izquierda, «● En vivo · jornada» y cuántos quedan en pie; arriba a la derecha, íconos para cambiar de vista, los tributos, la crónica, la pausa y el menú (calidad, guardado, créditos), que se abren en un cajón de a uno. Abajo a la izquierda, tu tributo con salud y energía (hambre y sed aparecen cuando apremian); abajo al centro, la pregunta como subtítulos (clic o teclas 1 a 3) o una sola línea que rota con los eventos del turno, primero los de tu tributo y las caídas.
+
+La arena tiene dos vistas: **siguiendo a tu tributo** (cámara cercana) y **la mesa de los Vigilantes** (la arena entera como holograma sobre una mesa, con siluetas en el borde; los tributos son luces, la tuya dorada, y los caídos, cruces). En la mesa se puede tocar una luz para abrir la ficha de ese tributo.
 
 El mismo renderer carga y libera la plaza de la Cosecha y el tren del Capitolio. La arena es el modelo **The Hunger Games Arena de Flashness**, descargado oficialmente de Sketchfab y adaptado de 9.974.420 a 839.194 triángulos (GLB de aproximadamente 7,7 MB, Meshopt). Conserva el bosque, el lago, el río y la Cornucopia del original. Un mapa de alturas extraído de sus superficies coloca los pies y marcadores sobre el terreno. Los tributos usan dos modelos humanos texturizados y articulados: Valery de xander.dice y el escaneo de Mike Alger, con variaciones estables de ropa, cabello, proporciones y accesorios. Los brazos descansan y se animan en el esqueleto al desplazarse. Son 24 identidades visuales construidas a partir de dos bases humanas, no 24 rostros escaneados diferentes. Los modelos y las texturas se comparten, con esqueletos y materiales independientes. Se muestran avisos de carga y de reintento si falla la arena. Créditos accesibles dentro del juego y en `public/models/CREDITS.md`.
 
@@ -167,7 +171,7 @@ GSAP anima interfaz y cámara. Las timelines de cámara se avanzan desde el relo
 El progreso anterior (`panem-chispa-v1` y `progress/{uid}`) se conserva intacto: no necesita migración destructiva ni resultados inventados. Las partidas usan un esquema independiente `version: 1`.
 
 - Guardado automático local en `panem-games-v1:<uid>` o `panem-games-v1:guest`.
-- Copia JSON descargable e importable desde el panel. Una copia incompatible no reemplaza automáticamente la actual.
+- Copia JSON descargable e importable desde el menú del archivo. Una copia incompatible no reemplaza automáticamente la actual.
 - Botón **Guardar en nube** para una cuenta autenticada: `users/{uid}/runs/active`, con `userId`, `snapshot` y `updatedAt`.
 - Una transacción compara la copia remota conocida antes de escribir. Si la nube, otra pestaña o un archivo importado tiene una partida distinta, se elige una versión completa; nunca se mezclan eventos.
 - La edición nueva reemplaza el espacio activo local después de una confirmación; se puede descargar la anterior. Las cuentas tienen espacios separados. Para trasladar una partida de invitada a una cuenta, descargarla e importarla en esa cuenta.
@@ -187,13 +191,11 @@ La primera verificación local incluyó completar los tres minijuegos, crear una
 
 El análisis de dependencias reporta cinco alertas altas en la cadena de desarrollo `eslint-config-next → fast-glob → micromatch → braces`. La corrección sugerida por npm retrocede a Next ESLint 14; no se aplica ese cambio incompatible automáticamente. No hay alertas de producción en ese reporte.
 
-### Continuación de la rebelión
+### «If we burn, you burn with us»
 
-La secuencia «If we burn, you burn with us» usa fondo negro, texto claro animado con GSAP y fuego procedural WebGL con turbulencia, humo y brasas. Movimiento reducido omite el fuego y las entradas animadas. «Saltar» y Escape continúan hacia `/rebelion`; «Seguir explorando» vuelve a la vista anterior.
+Al juntar el tercer emblema, la cámara se aleja al mapa entero, con todos los distritos encendidos, y desde abajo sube un fuego procedural WebGL (turbulencia, humo y brasas; transparente donde no hay llamas, para que se vea el mapa). Encima, la frase animada con GSAP, una línea («Tres distritos encendidos. Ahora responden todos.») y dos acciones: «Ir al Capitolio» y «Seguir explorando». «saltar» (chico, abajo a la derecha, como en la intro) y Escape van a `/capitolio`. Movimiento reducido omite el fuego y las entradas animadas.
 
-`/rebelion` presenta decisiones sobre la antena del Distrito 11 y el tren del Distrito 6, conserva las respuestas localmente en `panem-rebellion-v1` y conduce a la transmisión del Capitolio. Después de transmitir, permite seguir la respuesta del Distrito 13. Esta historia no requiere jugar la arena. Reiniciar los Juegos conserva los emblemas y la historia; reiniciar Panem también borra las respuestas narrativas.
-
-Al terminar la arena, «Volver a jugar» muestra su confirmación junto al botón, fuera del panel plegable de guardado.
+Al terminar la arena, «Volver a jugar» muestra su confirmación junto al botón.
 
 ### Arena propuesta por el equipo
 

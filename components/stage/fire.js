@@ -24,7 +24,7 @@ void main(){
  vec3 flame=mix(vec3(.72,.055,.008),vec3(1.,.30,.025),core);
  flame=mix(flame,vec3(1.,.88,.48),pow(core,3.));
  flame*=.7+.5*turbulence;
- // Humo visible solo en remolinos; el fondo permanece negro uniforme.
+ // Humo visible solo en remolinos; el resto queda transparente para ver el mapa encendido detrás.
  float smoke=smoothstep(.43,.72,fbm(p*.8+vec2(bend,-t*.32)))*(1.-smoothstep(.25,.9,uv.y))*.13*uIntensity;
  vec3 color=vec3(smoke*.58,smoke*.60,smoke*.63)+flame*edge;
  for(int i=0;i<36;i++){
@@ -35,10 +35,10 @@ void main(){
   float spark=1.-smoothstep(.0008,.0035,length(d*vec2(1.,.48)));
   color+=vec3(1.,.38,.06)*spark*(1.-y)*uIntensity;
  }
- gl_FragColor=vec4(color,1.);
+ gl_FragColor=vec4(color,clamp(max(max(color.r,color.g),color.b)*1.6,0.,1.)); // transparente donde no hay fuego
 }`;
 export function createFire(canvas,root){
- const renderer=new THREE.WebGLRenderer({canvas,alpha:false,antialias:false,powerPreference:'low-power'});
+ const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:false,powerPreference:'low-power'});renderer.setClearColor(0x000000,0);
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.25));
  const scene=new THREE.Scene(),camera=new THREE.Camera();
  const uniforms={uTime:{value:0},uIntensity:{value:0},uResolution:{value:new THREE.Vector2(1,1)}};

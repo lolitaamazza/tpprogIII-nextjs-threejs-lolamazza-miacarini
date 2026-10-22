@@ -28,3 +28,18 @@ Archivo: tribute-woman.glb. CC BY 4.0.
 Adaptaciones: escala, proporciones, tintes de vestuario y cabello, accesorios originales, pose de reposo y movimiento de extremidades. Cada actor tiene su propio esqueleto y materiales. Son dos bases humanas con 24 variantes, no 24 escaneos independientes. Las caras y la piel conservan sus texturas originales. El modelo Soldier/robot anterior fue retirado.
 
 Los mismos créditos y enlaces están disponibles en «Créditos de los modelos 3D» dentro del juego.
+
+## Dioramas de los distritos 12, 11 y 4
+
+Modelos de **Kenney** (www.kenney.nl), licencia Creative Commons Zero (CC0): https://creativecommons.org/publicdomain/zero/1.0/
+Se usan piezas sueltas, sin modificar, en `public/models/districts/`:
+
+- Nature Kit — https://kenney.nl/assets/nature-kit (`nature/`)
+- Survival Kit — https://kenney.nl/assets/survival-kit (`survival/`)
+- Pirate Kit — https://kenney.nl/assets/pirate-kit (`pirate/`)
+- Mini Characters — https://kenney.nl/assets/mini-characters (`characters/`)
+
+Entornos de luz de **Poly Haven** (https://polyhaven.com), licencia CC0, reducidos a 256×128 para iluminar los dioramas:
+
+- `dawn.hdr` — Kiara 1 Dawn, de Greg Zaal: https://polyhaven.com/a/kiara_1_dawn
+- `day.hdr` — Kloofendal 48d Partly Cloudy (Pure Sky), de Greg Zaal y Jarod Guest: https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky

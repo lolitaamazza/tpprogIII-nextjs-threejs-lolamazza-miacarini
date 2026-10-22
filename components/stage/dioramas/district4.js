@@ -1,5 +1,7 @@
 import * as THREE from 'three';
-import { createBurst, createDioramaBase, disposeObject, growIn, mat } from './common.js';
+import { createBurst, createDioramaBase, createMotes, disposeObject, growIn, mat } from './common.js';
+import { instanceOf, loadKit } from './assets.js';
+import { createFigure, lookToward } from './figure.js';
 import { FISHING, fishPosition, landingPoint, nearestFish, netCatch, reachAt } from './logic.js';
 import { createMatch, helpLevel, resolve, retry as retryMatch } from '../../../lib/minigame.js';
 
@@ -12,23 +14,57 @@ const WATER_Y = 0.09;
 const GOLDEN = FISHING.fish - 1;
 const FOAM = 12;
 
-export function buildDistrict4({ origin, completed, onProgress, onComplete, onMatch = () => {}, sfx }) {
+// Agua de juguete: más clara en la orilla, espuma en el borde, ondas que se mueven y destellos.
+const WATER_VERTEX = /* glsl */`
+  uniform float uTime;
+  varying vec2 vPos;
+  void main() {
+    vPos = position.xy;
+    vec3 p = position;
+    p.z += sin(p.x * 18.0 + uTime * 1.6) * 0.0025 + cos(p.y * 15.0 - uTime * 1.3) * 0.0025; // sin bajar de la arena
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  }
+`;
+const WATER_FRAGMENT = /* glsl */`
+  uniform float uTime;
+  uniform float uRadius;
+  varying vec2 vPos;
+  void main() {
+    float r = length(vPos) / uRadius;
+    vec3 deep = vec3(0.09, 0.30, 0.42);
+    vec3 shallow = vec3(0.30, 0.62, 0.66);
+    vec3 col = mix(deep, shallow, smoothstep(0.35, 0.95, r));
+    float ripple = sin(vPos.x * 40.0 + uTime * 1.2) * sin(vPos.y * 37.0 - uTime * 0.9);
+    col += smoothstep(0.82, 0.98, ripple) * 0.12;
+    float foam = smoothstep(0.9, 0.97, r + sin(atan(vPos.y, vPos.x) * 9.0 + uTime * 1.5) * 0.015);
+    col = mix(col, vec3(0.92, 0.96, 0.95), foam);
+    gl_FragColor = vec4(col, 0.92);
+    #include <colorspace_fragment>
+  }
+`;
+
+export function buildDistrict4({ origin, completed, onProgress, onComplete, onMatch = () => {}, sfx, rig }) {
   const { group } = createDioramaBase(origin, '#c8b88a');
 
-  const water = new THREE.Mesh(
-    new THREE.CircleGeometry(WATER_RADIUS, 32),
-    new THREE.MeshStandardMaterial({ color: '#2f6f8f', transparent: true, opacity: 0.88, roughness: 0.2, metalness: 0.1 }),
-  );
+  const waterMaterial = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uRadius: { value: WATER_RADIUS } },
+    vertexShader: WATER_VERTEX, fragmentShader: WATER_FRAGMENT, transparent: true, depthWrite: false,
+  });
+  const water = new THREE.Mesh(new THREE.RingGeometry(0, WATER_RADIUS, 64, 10), waterMaterial);
   water.rotation.x = -Math.PI / 2;
-  water.position.set(WATER_CENTER.x, 0.085, WATER_CENTER.z);
+  water.position.set(WATER_CENTER.x, 0.088, WATER_CENTER.z);
   group.add(water);
+
+  // Lo hecho con código mientras cargan los modelos de Kenney (y si no cargan): el muelle y el pescador.
+  const fallback = new THREE.Group();
+  group.add(fallback);
 
   // Muelle, el pescador en la punta y las redes que quedan, apiladas
   const plank = mat('#7a5a3a');
   for (let i = 0; i < 5; i++) {
     const board = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.18), plank);
     board.position.set(-0.85 + i * 0.1, 0.12, 0);
-    group.add(board);
+    fallback.add(board);
   }
   const dockTip = new THREE.Vector3(-0.42, 0.14, 0);
   const from = { x: dockTip.x, z: dockTip.z };
@@ -39,7 +75,7 @@ export function buildDistrict4({ origin, completed, onProgress, onComplete, onMa
   head.position.y = 0.14;
   fisher.add(coat, head);
   fisher.position.set(dockTip.x - 0.06, 0.13, 0.05);
-  group.add(fisher);
+  fallback.add(fisher);
   const netPile = Array.from({ length: FISHING.nets }, (_, i) => {
     const coil = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.007, 4, 12), mat('#e8e2cc'));
     coil.rotation.x = -Math.PI / 2;
@@ -107,6 +143,59 @@ export function buildDistrict4({ origin, completed, onProgress, onComplete, onMa
   arc.visible = false;
   const drops = createBurst(group, '#cfefff', 24);
   group.add(net, aim, splash, arc);
+  // Vida: destellos que flotan sobre el agua.
+  const glints = createMotes(group, { count: 18, center: [WATER_CENTER.x, WATER_Y + 0.015, WATER_CENTER.z], spread: [1.3, 0.001, 1.3], color: '#ffffff', size: 0.02, rise: 0, sway: 0.04, opacity: 0.7, seed: 11 });
+
+  // Con los modelos: muelle de madera, botes, cajas y barriles, rocas de orilla, peces de verdad y la pescadora.
+  let figure = null;
+  let disposed = false;
+  let haul = null; // los peces que sube la red
+  const hiddenMat = new THREE.MeshBasicMaterial({ visible: false });
+  const place = (kit, name, [x, y, z], scale, rotation = 0, parent = group) => {
+    const object = instanceOf(kit, name);
+    if (!object) return null;
+    object.position.set(x, y, z);
+    object.scale.setScalar(scale);
+    object.rotation.y = rotation;
+    parent.add(object);
+    return object;
+  };
+  loadKit('4').then((kit) => {
+    if (!kit || disposed) return;
+    fallback.visible = false;
+    const deck = 0.13;
+    place(kit, 'dock', [-0.66, deck - 0.2, 0], 0.17, Math.PI / 2);
+    place(kit, 'barrel', [-0.84, deck, -0.13], 0.07, 0.4);
+    place(kit, 'crate', [-0.82, deck, 0.13], 0.075, 0.2);
+    place(kit, 'bucket', [-0.6, deck, 0.13], 0.32);
+    [[-0.55, -0.75, 'rocksA'], [0.85, -0.45, 'rocksB'], [0.62, 0.8, 'rocksA'], [-0.78, 0.62, 'rocksB']].forEach(([x, z, name], i) => place(kit, name, [x, 0.06, z], 0.045, i * 1.3));
+    [[-0.9, -0.3], [-0.35, -0.88], [0.3, -0.9], [-0.95, 0.3]].forEach(([x, z], i) => place(kit, 'grassPlant', [x, 0.08, z], 0.07, i));
+    [[0.62, 0.46], [0.7, 0.36], [-0.18, -0.42]].forEach(([x, z], i) => place(kit, 'lily', [x, WATER_Y + 0.002, z], 0.4, i * 2));
+    boats.forEach((boat, i) => {
+      boat.children.forEach((child) => { child.visible = false; });
+      place(kit, i ? 'boatLarge' : 'boatSmall', [0, -0.03, 0], 0.11, 0, boat);
+    });
+    // Peces de verdad dentro de cada pez del juego (el cono queda invisible); el dorado, teñido y más grande.
+    fishMeshes.forEach((m, i) => {
+      m.material = hiddenMat;
+      const golden = fish[i].golden;
+      const model = place(kit, golden ? 'fishLarge' : 'fish', [0, 0, 0], golden ? 0.5 : 0.48, 0, m);
+      if (!model) return;
+      model.rotation.set(0, 0, -Math.PI / 2); // deshace el giro del cono
+      if (golden) model.traverse((node) => {
+        if (!node.isMesh) return;
+        node.material = node.material.clone();
+        node.material.userData.shared = false;
+        node.material.color.set('#ffd25a');
+        node.material.emissive = new THREE.Color('#8a5a00');
+      });
+    });
+    figure = createFigure(kit, 'fisher', { scale: 0.28, position: [dockTip.x - 0.05, deck, 0.05], facing: lookToward(1, 0.15) });
+    if (figure) {
+      group.add(figure.group);
+      if (match.phase === 'won') figure.play('emote-yes', { loop: true });
+    }
+  });
 
   let match = createMatch({ goal: FISHING.goal, lives: FISHING.nets, completed });
   if (completed) fish.slice(0, FISHING.goal).forEach((f) => { f.caught = true; });
@@ -152,6 +241,7 @@ export function buildDistrict4({ origin, completed, onProgress, onComplete, onMa
     netTimer = 0;
     syncVisuals();
     sfx.play('throw');
+    figure?.play('interact-right');
   }
 
   function land(target) {
@@ -165,7 +255,16 @@ export function buildDistrict4({ origin, completed, onProgress, onComplete, onMa
     caught.forEach((i) => { fish[i].caught = true; });
     netTimer = 0.6;
     match = resolve(match, { points, cost: 1 });
-    if (points) { sfx.play('harvest'); onProgress(match.score / match.goal); } else sfx.play('miss');
+    if (points) {
+      sfx.play('harvest');
+      onProgress(match.score / match.goal);
+      rig?.shake(0.03);
+      haul = caught;
+      figure?.play('emote-yes', { loop: match.phase === 'won' });
+    } else {
+      sfx.play('miss');
+      figure?.play('emote-no', { then: match.phase === 'lost' ? 'sit' : 'idle' });
+    }
     if (match.phase === 'won') { sfx.play('ignite'); onComplete(); }
     if (match.phase === 'lost') sfx.play('lose');
     syncVisuals();
@@ -202,7 +301,8 @@ export function buildDistrict4({ origin, completed, onProgress, onComplete, onMa
         const m = fishMeshes[i];
         m.rotation.y = -Math.atan2(p.z - f.z, p.x - f.x);
         f.x = p.x; f.z = p.z;
-        m.position.set(p.x, 0.07, p.z);
+        // de vez en cuando alguno salta fuera del agua
+        m.position.set(p.x, 0.07 + Math.max(0, Math.sin(elapsed * 0.8 + i * 2.3)) ** 14 * 0.09, p.z);
       });
       boats.forEach((b, i) => { b.position.y = 0.1 + Math.sin(elapsed * 2 + i) * 0.01; });
       foam.forEach((m) => {
@@ -233,7 +333,16 @@ export function buildDistrict4({ origin, completed, onProgress, onComplete, onMa
         net.scale.setScalar(netRadius() * (0.4 + 0.6 * t));
         if (t >= 1) { const target = throwing.to; throwing = null; land(target); }
       }
-      if (netTimer > 0) { netTimer -= dt; if (netTimer <= 0) net.visible = false; }
+      waterMaterial.uniforms.uTime.value = elapsed;
+      glints.update(elapsed);
+      figure?.update(dt);
+      if (netTimer > 0) {
+        netTimer -= dt;
+        // la red se hunde un poco y sube con lo que atrapó
+        net.position.y = WATER_Y - 0.02 + Math.max(0, 0.6 - netTimer) / 0.6 * 0.14;
+        haul?.forEach((i, k) => { fishMeshes[i].visible = true; fishMeshes[i].position.set(net.position.x + (k - 0.5) * 0.05, net.position.y - 0.02, net.position.z); });
+        if (netTimer <= 0) { net.visible = false; haul?.forEach((i) => { fishMeshes[i].visible = false; }); haul = null; }
+      }
       if (splash.material.opacity > 0) {
         splash.scale.multiplyScalar(1 + dt * 2.5);
         splash.material.opacity = Math.max(0, splash.material.opacity - dt * 1.2);
@@ -266,6 +375,8 @@ export function buildDistrict4({ origin, completed, onProgress, onComplete, onMa
       if (match.phase !== 'lost') return;
       match = retryMatch(match);
       fish.forEach((f) => { f.caught = false; });
+      haul = null;
+      figure?.reset();
       syncVisuals();
       onProgress(0);
       onMatch(match);
@@ -273,6 +384,6 @@ export function buildDistrict4({ origin, completed, onProgress, onComplete, onMa
     getState() {
       return { match, charging: Boolean(charge), reach: charge ? reachAt(charge.t, help()) : FISHING.minReach, aim: charge?.aim ?? null, from };
     },
-    dispose() { disposeObject(group); },
+    dispose() { disposed = true; figure?.dispose(); disposeObject(group); hiddenMat.dispose(); },
   };
 }

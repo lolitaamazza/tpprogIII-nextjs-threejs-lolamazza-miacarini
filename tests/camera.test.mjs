@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { easeInOutCubic, lerpPose, poseFor, viewShiftFor, fogRangeFor, openAreaFor } from '../components/stage/cameraPoses.js';
+import { easeInOutCubic, lerpPose, poseFor, viewShiftFor, fogRangeFor, openAreaFor, gamesViewPose } from '../components/stage/cameraPoses.js';
 import { hallPoseFor } from '../lib/broadcastHall.js';
 
 const centers = { 12: { x: 2, z: 1 }, c: { x: -1, z: -0.5 } };
@@ -37,10 +37,16 @@ test('sin centro conocido cae en la pose del mapa', () => {
 });
 
 test('el panel lateral desplaza la vista: en escritorio hacia la izquierda, en celular hacia arriba', () => {
-  assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: '12' }, 1440, 800), { x: 212, y: 0 });
   assert.deepEqual(viewShiftFor({ scene: 'capitolio' }, 1024, 768), { x: 212, y: 0 });
-  assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: '4' }, 390, 800), { x: 0, y: 176 });
-  assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: '4' }, 720, 1000), { x: 0, y: 220 });
+  assert.deepEqual(viewShiftFor({ scene: 'capitolio' }, 390, 800), { x: 0, y: 176 });
+  assert.deepEqual(viewShiftFor({ scene: 'capitolio' }, 720, 1000), { x: 0, y: 220 });
+});
+
+test('los distritos ya no tienen panel: el diorama queda en el centro', () => {
+  for (const id of ['12', '4', '7']) {
+    assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: id }, 1440, 800), { x: 0, y: 0 });
+    assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: id }, 390, 800), { x: 0, y: 0 });
+  }
 });
 
 test('sin panel (intro, mapa, final) la vista queda centrada', () => {
@@ -49,7 +55,7 @@ test('sin panel (intro, mapa, final) la vista queda centrada', () => {
 });
 
 test('en ventanas angostas el desplazamiento nunca supera la mitad del panel disponible', () => {
-  assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: '12' }, 760, 600), { x: 190, y: 0 });
+  assert.deepEqual(viewShiftFor({ scene: 'capitolio' }, 760, 600), { x: 190, y: 0 });
 });
 
 const near = (actual, expected, label) => {
@@ -96,20 +102,33 @@ test('la niebla acompaña a la cámara: en celular el mapa lejano no puede queda
   assert.ok(fogRangeFor(distance).near > distance, 'la pose del mapa en celular queda fuera de la niebla');
 });
 
-test('el Distrito 13 no tiene adónde acercarse: la cámara se queda en el mapa entero, corrido para que el panel no lo tape', () => {
+test('el Distrito 13 no tiene adónde acercarse: la cámara se queda en el mapa entero, centrado (no hay panel)', () => {
   const centers13 = { ...centers, 13: { x: 3, z: -2 } };
   assert.deepEqual(poseFor({ scene: 'distrito', districtId: '13' }, centers13, 1.6), poseFor({ scene: 'mapa' }, centers13, 1.6));
-  assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: '13' }, 1440, 800), viewShiftFor({ scene: 'distrito', districtId: '12' }, 1440, 800));
-  assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: '13' }, 390, 800), { x: 0, y: 176 });
+  assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: '13' }, 1440, 800), { x: 0, y: 0 });
+  assert.deepEqual(viewShiftFor({ scene: 'distrito', districtId: '13' }, 390, 800), { x: 0, y: 0 });
 });
 
-test('la zona del canvas que no tapan el encabezado ni el panel (en proporción de pantalla)', () => {
+test('la zona del canvas que no tapa el encabezado (en proporción de pantalla; ya no hay panel)', () => {
   const desk = openAreaFor(1440, 900);
-  assert.equal(desk.x0, 0);
-  assert.ok(Math.abs(desk.x1 - (1440 - 424) / 1440) < 1e-9, 'a la izquierda del panel');
+  assert.deepEqual([desk.x0, desk.x1, desk.y1], [0, 1, 1]);
   assert.ok(Math.abs(desk.y0 - 72 / 900) < 1e-9, 'debajo del encabezado');
-  assert.equal(desk.y1, 1);
   const phone = openAreaFor(375, 812);
-  assert.deepEqual([phone.x0, phone.x1, phone.y1], [0, 1, 0.45], 'en celular, arriba de la hoja inferior');
-  assert.ok(openAreaFor(760, 600).x1 >= 0.5, 'en ventanas angostas el panel nunca se come más de la mitad');
+  assert.deepEqual([phone.x0, phone.x1, phone.y1], [0, 1, 1]);
+});
+
+test('la arena tiene dos vistas: la mesa de los Vigilantes desde arriba y la cámara que sigue a tu tributo', () => {
+  const table = gamesViewPose('table', null, 1.6);
+  assert.deepEqual(table.target, [0, 0, 1]);
+  const focus = { x: 2, y: 0.5, z: -1 };
+  const follow = gamesViewPose('follow', focus, 1.6);
+  assert.deepEqual(follow.target, [2, 1.1, -1]);
+  assert.ok(table.position[1] > follow.position[1] + 5, 'la mesa se ve desde mucho más arriba');
+  assert.ok(Math.hypot(follow.position[0] - 2, follow.position[2] + 1) < 6, 'la cámara cercana está al lado del tributo');
+  assert.deepEqual(gamesViewPose('follow', null, 1.6), poseFor({ scene: 'games', chapter: 'arena' }, null, 1.6), 'sin tributo, la vista general');
+  assert.ok(gamesViewPose('table', null, 0.5).position[1] > table.position[1], 'en celular, más lejos para que entre la mesa');
+});
+
+test('el archivo de los Juegos ya no tiene panel: la vista no se corre', () => {
+  assert.deepEqual(viewShiftFor({ scene: 'games', chapter: 'arena' }, 1440, 800), { x: 0, y: 0 });
 });

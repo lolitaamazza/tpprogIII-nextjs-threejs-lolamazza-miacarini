@@ -32,7 +32,7 @@ function loadImage(src) {
 }
 
 // La señal que hay debajo: una red de nodos, una silueta escaneada y, al descubrirla, la transmisión del 13.
-// `u` son píxeles del lienzo por píxel de pantalla; `area` es lo que no tapa el panel y `win` la ventana que se abre.
+// `u` son píxeles del lienzo por píxel de pantalla; `area` es lo que no tapa el encabezado y `win` la ventana que se abre.
 function paintHidden(ctx, w, h, { seal, revealed, t = 0, u, area, win }) {
   const random = lcg(1313);
   const mono = (size, weight = 500) => `${weight} ${Math.round(size * u)}px ui-monospace, Menlo, monospace`;
@@ -63,7 +63,7 @@ function paintHidden(ctx, w, h, { seal, revealed, t = 0, u, area, win }) {
   }
   // ficha del distrito, arriba a la izquierda de la zona libre
   const left = X(area.x0) + 24 * u;
-  const top = Y(area.y0) + 44 * u;
+  const top = Y(area.y0) + 96 * u; // debajo de la etiqueta del HUD
   ctx.fillStyle = '#e8f6f8';
   ctx.font = mono(34, 700);
   ctx.fillText('DISTRICT 13', left, top);
@@ -229,13 +229,14 @@ export function createClassifiedGlitch({ renderer, scene, camera, reducedMotion 
   const overlay = new THREE.Scene();
   const ortho = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1);
 
-  // Lo que no tapa el panel, y en el medio de eso la ventana donde aparece la transmisión.
+  // Lo que no tapa el encabezado, y en el medio de eso la ventana donde aparece la transmisión.
   const area = openAreaFor(size.x, size.y);
-  const narrow = area.x1 - area.x0 > 0.9;
-  const below = area.y0 + 104 / Math.max(size.y, 1); // debajo de la ficha "DISTRICT 13"
-  const winW = (area.x1 - area.x0) * (narrow ? 0.9 : 0.72);
-  const winH = (area.y1 - below) * (narrow ? 0.84 : 0.5);
-  const winY = below + (area.y1 - below - winH) * (narrow ? 0.5 : 0.35);
+  // Sin panel, el área es toda la pantalla: la ventana tiene su propio tamaño (en celular, casi todo el ancho).
+  const narrow = size.x <= 720;
+  const below = area.y0 + 150 / Math.max(size.y, 1); // debajo de la etiqueta y de la ficha "DISTRICT 13"
+  const winW = narrow ? 0.9 : Math.min(0.52, 760 / Math.max(size.x, 1));
+  const winH = (area.y1 - below) * (narrow ? 0.36 : 0.5);
+  const winY = below + (area.y1 - below - winH) * 0.4;
   const win = { x0: (area.x0 + area.x1 - winW) / 2, x1: (area.x0 + area.x1 + winW) / 2, y0: winY, y1: winY + winH };
 
   // Capa de abajo: la señal del Distrito 13, al tamaño de la pantalla para que el texto se lea igual en celular.

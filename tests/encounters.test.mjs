@@ -13,7 +13,7 @@ test('la pregunta es estable al recargar y cambia con el turno',()=>{
 });
 test('las opciones tienen consecuencias reproducibles y consumen recursos una sola vez',()=>{
  let run=ready(42);run.turn=5; // Buscar una situación con opción que consume recursos.
- for(let i=1;i<9;i++){run.turn=i;if(encounterFor(run).options.some((o)=>o.cost))break;}
+ for(let i=2;i<18;i+=2){run.turn=i;if(encounterFor(run).options.some((o)=>o.cost))break;}
  const encounter=encounterFor(run),choice=encounter.options.find((o)=>o.cost);
  assert.ok(choice);
  const before=JSON.stringify(run);
@@ -36,5 +36,14 @@ test('200 partidas con preguntas mantienen invariantes y llegan al final',()=>{
    }
    assert.equal(run.phase,'ended');assert.equal(run.tributes.filter((t)=>t.alive).length,1);
    assert.ok(seen.size>=1);
+ }
+});
+test('la decisión aparece cada dos turnos: en los del medio la transmisión sigue sola',()=>{
+ let run=ready(7);
+ for(let turn=0;turn<10 && run.phase==='arena';turn++){
+   const encounter=encounterFor(run);
+   const alive=run.tributes.find((t)=>t.id===run.selectedId).alive; // caído, ya no hay preguntas
+   assert.equal(Boolean(encounter),alive && run.turn%2===0,`turno ${run.turn}`);
+   run=advanceRun(run,encounter?{encounterId:encounter.id,optionId:encounter.options[0].id}:'shelter');
  }
 });

@@ -8,11 +8,12 @@ export default function PanemStage() {
   const mountRef = useRef(null);
   const panem = usePanem();
   const { run } = useGames();
-  const { route, visibleLit, hovered, reducedMotion, stageApiRef, setWebglFailed, setMapFailed, finalePlaying, progress, classified } = panem;
+  const { route, visibleLit, hovered, reducedMotion, stageApiRef, setWebglFailed, setMapFailed, finalePlaying, progress, classified, burning } = panem;
   // Con el recorrido terminado, el Capitolio muestra Panem entero encendido (con el panel del final a un costado).
   const celebrating = route.scene === 'capitolio' && progress.completedAt !== null && !finalePlaying;
   const activeChapter = run?.phase || 'reaping';
-  const stageRoute = useMemo(() => (celebrating ? { scene: 'finale', districtId: null, panel: true } : route.scene === 'games' ? {...route,chapter:activeChapter} : route), [celebrating, route, activeChapter]);
+  // Mientras arde (al juntar el tercer emblema) la cámara muestra el mapa entero encendido detrás del fuego.
+  const stageRoute = useMemo(() => (burning ? { scene: 'mapa', districtId: null } : celebrating ? { scene: 'finale', districtId: null, panel: true } : route.scene === 'games' ? {...route,chapter:activeChapter} : route), [burning, celebrating, route, activeChapter]);
   const callbacksRef = useRef(null);
 
   useEffect(() => {
@@ -32,6 +33,8 @@ export default function PanemStage() {
         onBack: () => callbacksRef.current?.onBack(),
         onClassifiedProgress: (value) => callbacksRef.current?.onClassifiedProgress(value),
         onClassifiedReveal: () => callbacksRef.current?.onClassifiedReveal(),
+        // Tocar un tributo en 3D: el archivo de los Juegos abre su ficha (mismo canal que panem-arena-status).
+        onPickTribute: (id) => window.dispatchEvent(new CustomEvent('panem-pick-tribute', { detail: id })),
         onProgress: (id, value) => callbacksRef.current?.onProgress(id, value),
         onMatch: (id, match) => callbacksRef.current?.onMatch(id, match),
         onComplete: (id) => callbacksRef.current?.onComplete(id),

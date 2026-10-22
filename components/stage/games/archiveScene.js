@@ -2,6 +2,33 @@ import * as THREE from 'three';
 import { createTributeFigure } from './tributeFigure.js';
 import { loadArenaModel, instantiateArena, heightOnArena } from './arenaModel.js';
 
+const HOLO_VERTEX = /* glsl */`
+  varying vec3 vNormal;
+  varying vec3 vView;
+  varying float vHeight;
+  void main() {
+    vec4 world = modelMatrix * vec4(position, 1.0);
+    vHeight = world.y;
+    vec4 view = viewMatrix * world;
+    vView = -view.xyz;
+    vNormal = normalMatrix * normal;
+    gl_Position = projectionMatrix * view;
+  }
+`;
+const HOLO_FRAGMENT = /* glsl */`
+  uniform vec3 uColor;
+  uniform float uTime;
+  varying vec3 vNormal;
+  varying vec3 vView;
+  varying float vHeight;
+  void main() {
+    float rim = pow(1.0 - abs(dot(normalize(vNormal), normalize(vView))), 2.0);
+    float scan = 0.65 + 0.35 * sin(vHeight * 70.0 - uTime * 2.0);
+    // Poca opacidad: el bosque es denso y las capas se suman; el borde (rim) dibuja las formas.
+    gl_FragColor = vec4(uColor * (0.45 + rim * 0.8) * scan, 0.05 + rim * 0.2);
+  }
+`;
+
 // La arena usa el modelo de Flashness; la Cosecha conserva su escenografía propia.
 export function createArchiveScene(chapter, onAssetStatus = () => {}) {
   const group = new THREE.Group();
@@ -14,7 +41,7 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
   const gold = material('#cba85c', { metalness: 0.75, roughness: 0.25 });
   const light = material('#d8d3bd', { emissive: '#69562e', emissiveIntensity: 1.1 });
   const box = own(new THREE.BoxGeometry(1, 1, 1));
-  let ground = null, disposed = false, assetStatus = null;
+  let ground = null, disposed = false, assetStatus = null, arenaModel = null, view = 'follow';
   function terrainHeight(x,z) { return ground ? heightOnArena(ground,x,z) : .025; }
   function surfaceTexture(base, variation=25) {
     const size=128, data=new Uint8Array(size*size*4);let seed=17;
@@ -42,7 +69,9 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
     if (typeof window !== 'undefined') loadArenaModel().then(([asset,terrain])=>{
       if(disposed)return;
       ground=terrain;
-      group.add(instantiateArena(asset,ground,own));
+      arenaModel=instantiateArena(asset,ground,own);
+      group.add(arenaModel);
+      if(view==='table')hologram(true);
       assetStatus='ready';onAssetStatus(assetStatus);
       setRun(currentRun);
     }).catch(error=>{if(!disposed){assetStatus='error';onAssetStatus(assetStatus);console.warn('No se pudo cargar la arena:',error);}});
@@ -66,13 +95,64 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
       mesh(box, material('#772e31'), [.6, .02, 1.2], [1.2, .04, 5]);
     }
   }
+  // Caja invisible por persona: tocarla en 3D abre su ficha (también mientras el modelo todavía carga).
+  const hitGeometry=own(new THREE.CylinderGeometry(.55,.55,2.6,8));hitGeometry.translate(0,1.3,0);
+  const hitMaterial=own(new THREE.MeshBasicMaterial({visible:false}));
   const markers = Array.from({ length: 24 }, (_, i) => {
     const figure=createTributeFigure(i,own);
     const actor=figure.group;actor.scale.setScalar(.55);
+    const hit=new THREE.Mesh(hitGeometry,hitMaterial);hit.userData.tribute=i;actor.add(hit);
     const base = mesh(own(new THREE.TorusGeometry(.25,.012,8,32)), gold, [0,.025,0]);base.rotation.x=-Math.PI/2;
     group.add(actor);
-    return { actor, figure, coat:figure.coat, base, target:new THREE.Vector3(), alive:true };
+    return { actor, figure, coat:figure.coat, base, hit, target:new THREE.Vector3(), alive:true };
   });
+
+  // La mesa de los Vigilantes: la arena como holograma, los tributos como luces (la tuya dorada) y los caídos
+  // como cruces. Alrededor, la mesa y las siluetas de quienes miran.
+  const table=new THREE.Group();table.name='gamemakers-table';table.visible=false;group.add(table);
+  mesh(own(new THREE.CylinderGeometry(10,10.4,.3,72)),material('#0a1114',{roughness:.4,metalness:.3}),[0,-.5,0],[1,1,1],table);
+  const rim=new THREE.Mesh(own(new THREE.TorusGeometry(10,.045,8,160)),own(new THREE.MeshBasicMaterial({color:'#5fd3e0',transparent:true,opacity:.7})));
+  rim.rotation.x=-Math.PI/2;rim.position.y=-.34;table.add(rim);
+  const watcher=material('#05080a',{roughness:1});const head=own(new THREE.SphereGeometry(.32,16,12));const body=own(new THREE.CapsuleGeometry(.45,1.1,4,12));
+  for(let i=0;i<8;i+=1){const a=Math.PI*.15+i*Math.PI*.1;const x=Math.cos(a)*11.6,z=Math.sin(a)*11.6;mesh(body,watcher,[x,.4,z],[1,1,1],table);mesh(head,watcher,[x,1.45,z],[1,1,1],table);}
+  const lights=new THREE.InstancedMesh(own(new THREE.SphereGeometry(.17,12,8)),own(new THREE.MeshBasicMaterial({color:'#ffffff',toneMapped:false})),24);
+  own(lights);lights.name='table-lights';lights.visible=false;lights.frustumCulled=false;group.add(lights);
+  const halo=new THREE.Mesh(own(new THREE.TorusGeometry(.32,.025,8,32)),own(new THREE.MeshBasicMaterial({color:'#d4af37',toneMapped:false})));
+  halo.rotation.x=-Math.PI/2;halo.visible=false;group.add(halo);
+  const crossPositions=new Float32Array(24*4*3);
+  const crossGeometry=own(new THREE.BufferGeometry());crossGeometry.setAttribute('position',new THREE.BufferAttribute(crossPositions,3));
+  const crosses=new THREE.LineSegments(crossGeometry,own(new THREE.LineBasicMaterial({color:'#5fd3e0',transparent:true,opacity:.55})));
+  crosses.name='table-crosses';crosses.visible=false;crosses.frustumCulled=false;group.add(crosses);
+  const holo=own(new THREE.ShaderMaterial({uniforms:{uColor:{value:new THREE.Color('#4fc4d4')},uTime:{value:0}},vertexShader:HOLO_VERTEX,fragmentShader:HOLO_FRAGMENT,transparent:true,depthWrite:false,side:THREE.DoubleSide}));
+  function hologram(on){
+    arenaModel?.traverse((node)=>{
+      if(!node.isMesh)return;
+      if(on){node.userData.material??=node.material;node.material=holo;}
+      else if(node.userData.material){node.material=node.userData.material;}
+    });
+  }
+  const tmpMatrix=new THREE.Matrix4(),tmpColor=new THREE.Color();
+  function syncTable(){
+    const onTable=view==='table';
+    lights.visible=onTable;crosses.visible=onTable;table.visible=onTable;
+    halo.visible=false;
+    markers.forEach((marker,i)=>{
+      const t=currentRun?.tributes[i];
+      const {x,y,z}=marker.target;
+      const s=marker.alive?1:0;
+      tmpMatrix.makeScale(s,s,s).setPosition(x,y+.2,z);lights.setMatrixAt(i,tmpMatrix);
+      const mine=t&&t.id===currentRun?.selectedId;
+      lights.setColorAt(i,tmpColor.set(mine?'#d4af37':'#bfeff5'));
+      if(mine&&marker.alive&&onTable){halo.visible=true;halo.position.set(x,y+.05,z);}
+      const k=marker.alive?0:.16;
+      crossPositions.set([x-k,y+.1,z-k,x+k,y+.1,z+k,x-k,y+.1,z+k,x+k,y+.1,z-k],i*12);
+      marker.actor.visible=marker.alive&&!onTable&&(!isArena||!!ground);
+      marker.base.visible=marker.base.visible&&!onTable;
+    });
+    lights.instanceMatrix.needsUpdate=true;
+    if(lights.instanceColor)lights.instanceColor.needsUpdate=true;
+    crossGeometry.attributes.position.needsUpdate=true;
+  }
   let currentRun = null;
   let reduced = false;
   let low = false;
@@ -103,11 +183,30 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
       marker.base.visible=marker.base.visible && marker.alive && (!isArena || !!ground);
       if (!marker.actor.userData.placed || reduced) { marker.actor.position.copy(marker.target); marker.actor.userData.placed = true; }
     });
+    syncTable();
   }
   setRun(null);
   return {
     group, setRun,
     getAssetStatus() { return assetStatus; },
+    getView() { return view; },
+    // La mesa solo existe en la arena (y en el desenlace); en la Cosecha y la Preparación siempre se ve de cerca.
+    setView(value) {
+      const next=value==='table'&&isArena?'table':'follow';
+      if(next===view)return;
+      view=next;hologram(view==='table');setRun(currentRun); // setRun recalcula quién se ve y dónde
+    },
+    // Qué tributo hay bajo el rayo: en la mesa, las luces; en el resto, las personas (las cajas invisibles).
+    pick(raycaster) {
+      if(view==='table'){
+        const hit=raycaster.intersectObject(lights,false)[0];
+        return hit&&markers[hit.instanceId]?.alive?currentRun?.tributes[hit.instanceId]?.id??`tribute-${hit.instanceId+1}`:null;
+      }
+      const hit=raycaster.intersectObjects(markers.filter((m)=>m.actor.visible).map((m)=>m.hit),false)[0];
+      if(!hit)return null;
+      const i=hit.object.userData.tribute;
+      return currentRun?.tributes[i]?.id??`tribute-${i+1}`;
+    },
     focus(id) { const i = currentRun?.tributes.findIndex((t) => t.id === id); return i >= 0 ? markers[i].target.clone() : null; },
     setReducedMotion(value) { reduced = value; if (value) setRun(currentRun); },
     setQuality(value) { low = value === 'low'; weather.visible=!low; },
@@ -123,7 +222,8 @@ export function createArchiveScene(chapter, onAssetStatus = () => {}) {
         for(let i=0;i<180;i++){const speed=weatherKind==='rain'?-3:weatherKind==='fire'?1:.06;weatherPositions[i*3+1]=(weatherPositions[i*3+1]+dt*speed+6)%6;}
         weatherGeometry.attributes.position.needsUpdate=true;
       }
-      weather.visible=!reduced && !low && isArena;
+      weather.visible=!reduced && !low && isArena && view!=='table';
+      holo.uniforms.uTime.value=elapsed;
     },
     dispose() { disposed=true;group.removeFromParent(); resources.forEach((resource) => resource.dispose()); },
   };

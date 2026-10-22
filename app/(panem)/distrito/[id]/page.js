@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { DISTRICT_ROUTE_IDS, getDistrict } from '@/data/districts';
-import DistrictPanel from '@/components/panem/DistrictPanel';
+import DistrictHud from '@/components/panem/DistrictHud';
 
 export const dynamicParams = false;
 
@@ -19,5 +19,5 @@ export default async function DistrictPage({ params }) {
   const { id } = await params;
   const district = getDistrict(id);
   if (!district || district.id === 'c') notFound();
-  return <DistrictPanel district={district} />;
+  return <DistrictHud district={district} />;
 }

@@ -32,7 +32,7 @@ export default function EmblemsDialog({ onClose }) {
         {progress.finalMessage && <p>Mensaje transmitido: <strong>{MESSAGE_LABELS[progress.finalMessage]}</strong></p>}
         <p className="hint">Distritos explorados: {progress.visited.length}/13</p>
         {canEnterCapitol(progress) && (
-          <p><button type="button" onClick={() => { onClose(); setBurning(true); }}>🔥 Ver Panem arder otra vez</button></p>
+          <p><button type="button" onClick={() => { onClose(); setBurning(true); }}>Ver Panem arder otra vez</button></p>
         )}
         {confirming ? (
           <div className="confirm">

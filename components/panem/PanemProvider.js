@@ -174,7 +174,7 @@ export default function PanemProvider({ children }) {
   }, [sfx]);
 
   const resetAll = useCallback(async () => {
-    try { await progress.reset(); try { localStorage.removeItem('panem-rebellion-v1'); localStorage.removeItem(CLASSIFIED_KEY); } catch { /* El progreso principal ya se reinició. */ } notify('Panem volvió a apagarse.'); }
+    try { await progress.reset(); try { localStorage.removeItem(CLASSIFIED_KEY); } catch { /* El progreso principal ya se reinició. */ } notify('Panem volvió a apagarse.'); }
     catch { notify('No se pudo reiniciar en la nube; revisá tu conexión.'); }
     setFallbackCounts({});
     setClassified({ progress: 0, revealed: false });

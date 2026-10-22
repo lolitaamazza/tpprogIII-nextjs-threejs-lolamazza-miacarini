@@ -6,12 +6,15 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { createArchiveScene } from './games/archiveScene.js';
 import { loadPanemMap } from './mapMesh.js';
 import { createCameraRig } from './cameraRig.js';
-import { fogRangeFor, poseFor, viewShiftFor } from './cameraPoses.js';
+import { fogRangeFor, gamesViewPose, poseFor, viewShiftFor } from './cameraPoses.js';
 import { createSparks } from './effects.js';
 import { createBroadcastHall } from './broadcastHall.js';
 import { screenPoseFor } from '../../lib/broadcastHall.js';
 import { mapClickAction } from '../../lib/mapClick.js';
 import { createClassifiedGlitch } from './classifiedGlitch.js';
+import { createTiltShift } from './tiltShift.js';
+import { loadEnvironment } from './dioramas/assets.js';
+import { dioramaLook } from '../../lib/dioramaLook.js';
 import { DIORAMAS } from './dioramas/index.js';
 import { MAP_IDS } from '../../data/districts.js';
 
@@ -34,9 +37,15 @@ export function createPanemScene(mount, callbacks) {
   const scene = new THREE.Scene();
   scene.fog = new THREE.Fog(0x0b0b0c, 16, 34);
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambient);
   const sun = new THREE.DirectionalLight(0xfff1dc, 1.8);
   sun.position.set(4, 10, 6);
+  scene.add(sun.target);
+  // La luz del mapa; cada minijuego trae la suya (lib/dioramaLook.js) y al salir se vuelve a esta.
+  const mapLight = { color: sun.color.clone(), intensity: sun.intensity, position: sun.position.clone(), ambient: ambient.intensity };
+  const lightColor = new THREE.Color();
+  const lightPosition = new THREE.Vector3();
   sun.shadow.mapSize.set(1024,1024);
   Object.assign(sun.shadow.camera,{left:-10,right:10,top:10,bottom:-10,near:.5,far:40});
   sun.shadow.bias=-.001;
@@ -56,9 +65,20 @@ export function createPanemScene(mount, callbacks) {
     map: null, diorama: null, dioramaId: null, finaleLit: new Set(), finaleTimers: [],
     aspect: 1, disposed: false, frame: 0, down: null, running: false,
     shift: { x: 0, y: 0 }, finaleRunning: false, poseRoute: { scene: 'intro', districtId: null },
-    hall: null, hallLoading: null, portal: null, glitch: null, wantGlitch: false, classifiedRevealed: false,
+    hall: null, hallLoading: null, portal: null, glitch: null, wantGlitch: false, classifiedRevealed: false, gamesView: 'follow',
     archive: null, archiveChapter: null, run: null, gamesPaused: false, reducedMotion: false, quality: 'auto', composer: null, bloom: null, cinematic: null,
   };
+
+  // La arena se mira desde la mesa de los Vigilantes o siguiendo a tu tributo (si sigue en pie); el resto, como siempre.
+  function poseNow() {
+    const route = state.poseRoute ?? state.route;
+    if (route?.scene === 'games' && (route.chapter === 'arena' || route.chapter === 'ended')) {
+      const selected = state.run?.tributes.find((t) => t.id === state.run.selectedId);
+      const focus = state.gamesView === 'follow' && selected?.alive ? state.archive?.focus(selected.id) : null;
+      return gamesViewPose(state.gamesView, focus, state.aspect);
+    }
+    return poseFor(route, state.map?.centers, state.aspect);
+  }
 
   function resize() {
     const width = mount.clientWidth;
@@ -70,7 +90,7 @@ export function createPanemScene(mount, callbacks) {
     // La distancia de la cámara depende de la proporción de la pantalla: se reubica si cambia de verdad.
     const changed = Math.abs(state.aspect - camera.aspect) > 0.02;
     state.aspect = camera.aspect;
-    if (changed) rig.goTo(poseFor(state.poseRoute, state.map?.centers, state.aspect), 0.5);
+    if (changed) rig.goTo(poseNow(), 0.5);
     // La imagen rota del Distrito 13 se congela con el tamaño de pantalla: si cambia, se vuelve a romper.
     if (state.glitch) releaseGlitch();
   }
@@ -109,7 +129,41 @@ export function createPanemScene(mount, callbacks) {
     });
     state.dioramaId = id;
     scene.add(state.diorama.group);
+    // Sombras suaves del sol bajo: todo lo opaco del diorama proyecta y recibe.
+    state.diorama.group.traverse((node) => { if (node.isMesh) { node.castShadow = !node.material.transparent; node.receiveShadow = true; } });
+    state.lookEnv = null;
+    const look = dioramaLook(id);
+    if (look) loadEnvironment(renderer, look.env).then((env) => { if (state.dioramaId === id) state.lookEnv = env; });
     callbacks.onProgress(id, completed ? 1 : 0);
+  }
+
+  // Funde la luz hacia la del minijuego activo (o de vuelta a la del mapa) en menos de un segundo.
+  function applyLook(dt) {
+    const look = state.dioramaId ? dioramaLook(state.dioramaId) : null;
+    const k = 1 - Math.exp(-dt / 0.25);
+    const origin = state.diorama?.group.position;
+    lightColor.set(look ? look.sun.color : mapLight.color);
+    sun.color.lerp(lightColor, k);
+    sun.intensity += ((look ? look.sun.intensity : mapLight.intensity) - sun.intensity) * k;
+    ambient.intensity += ((look ? look.ambient : mapLight.ambient) - ambient.intensity) * k;
+    if (look && origin) lightPosition.set(...look.sun.position).add(origin); else lightPosition.copy(mapLight.position);
+    sun.position.lerp(lightPosition, k);
+    sun.target.position.lerp(look && origin ? origin : lightPosition.set(0, 0, 0), k);
+    // El entorno ilumina solo la maqueta (no el mapa de alrededor): se asigna a sus materiales cada medio segundo,
+    // así también alcanza a los modelos que llegan después.
+    state.envClock = (state.envClock ?? 0) - dt;
+    if (look && state.lookEnv && state.diorama && state.envClock <= 0) {
+      state.envClock = 0.5;
+      state.diorama.group.traverse((node) => {
+        if (!node.isMesh) return;
+        for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+          if (!material.isMeshStandardMaterial || (material.envMap === state.lookEnv && material.envMapIntensity === look.envIntensity)) continue;
+          if (material.envMap !== state.lookEnv) material.needsUpdate = true;
+          material.envMap = state.lookEnv;
+          material.envMapIntensity = look.envIntensity;
+        }
+      });
+    }
   }
 
   // La sala de la intro se arma al entrar a "/" y se libera al salir.
@@ -134,24 +188,35 @@ export function createPanemScene(mount, callbacks) {
   function releaseComposer() {
     if (!state.composer) return;
     state.composer.passes.forEach((pass) => pass.dispose?.());
-    state.composer.dispose(); state.composer = null; state.bloom = null;
+    state.composer.dispose(); state.composer = null; state.bloom = null; state.composerKind = null;
   }
 
   function configureQuality() {
     const low = state.quality === 'low' || (state.quality === 'auto' && mount.clientWidth < 721);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5));
-    renderer.shadowMap.enabled = Boolean(state.archive) && !low;
-    renderer.shadowMap.type = THREE.PCFShadowMap;
-    sun.castShadow = Boolean(state.archive) && !low;
+    const shadows = (Boolean(state.archive) || Boolean(state.diorama)) && !low;
+    renderer.shadowMap.enabled = shadows;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    sun.castShadow = shadows;
+    // En un diorama la sombra cubre solo la maqueta (más definida); en la arena, toda la escena.
+    const reach = state.diorama && !state.archive ? 1.8 : 10;
+    Object.assign(sun.shadow.camera, { left: -reach, right: reach, top: reach, bottom: -reach });
+    sun.shadow.camera.updateProjectionMatrix();
     state.archive?.setQuality(low ? 'low' : 'high');
-    if (!state.archive || low || state.reducedMotion) releaseComposer();
-    else if (!state.composer) {
+    // Postproceso: en la arena, brillo suave; en los minijuegos, solo el tilt-shift de maqueta (el brillo hacía
+    // resplandecer de más a los distritos encendidos del mapa alrededor).
+    const kind = state.archive ? 'archive' : state.diorama ? 'diorama' : null;
+    if (!kind || low || state.reducedMotion || kind !== state.composerKind) releaseComposer();
+    if (kind && !low && !state.reducedMotion && !state.composer) {
       try {
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
-        const bloom = new UnrealBloomPass(new THREE.Vector2(mount.clientWidth, mount.clientHeight), .22, .35, .8);
-        composer.addPass(bloom); composer.addPass(new OutputPass());
-        state.composer = composer; state.bloom = bloom;
+        const size = new THREE.Vector2(mount.clientWidth, mount.clientHeight);
+        const bloom = kind === 'archive' ? new UnrealBloomPass(size, .22, .35, .8) : null;
+        if (kind === 'diorama') composer.addPass(createTiltShift(size.x, size.y));
+        if (bloom) composer.addPass(bloom);
+        composer.addPass(new OutputPass());
+        state.composer = composer; state.bloom = bloom; state.composerKind = kind;
       } catch { releaseComposer(); }
     }
     state.composer?.setPixelRatio(renderer.getPixelRatio());
@@ -178,7 +243,9 @@ export function createPanemScene(mount, callbacks) {
         state.archive.setRun(state.run);
         state.archive.setReducedMotion(state.reducedMotion);
         state.archive.setQuality(state.quality);
+        state.archive.setView(state.gamesView);
         scene.add(state.archive.group);
+        rig.goTo(poseNow(), 1.6); // con la escena armada ya se sabe a quién seguir
       }
     }
     if (map) map.group.visible = !chapter;
@@ -187,6 +254,7 @@ export function createPanemScene(mount, callbacks) {
     if (wanted !== state.dioramaId) {
       disposeDiorama();
       if (wanted) buildDiorama(wanted);
+      configureQuality(); // sombras y postproceso según haya diorama o no
     }
     if (route.scene !== 'mapa' && state.hovered) { state.hovered = null; callbacks.onHover(null); }
   }
@@ -215,6 +283,8 @@ export function createPanemScene(mount, callbacks) {
     let cursor = 'default';
     if (state.diorama) {
       if (state.diorama.pointerMove(raycaster)) cursor = 'pointer';
+    } else if (state.route.scene === 'games') {
+      if (state.archive?.pick(raycaster)) cursor = 'pointer';
     } else if (state.route.scene === 'mapa') {
       const id = pickDistrict();
       if (id !== state.hovered) {
@@ -254,6 +324,11 @@ export function createPanemScene(mount, callbacks) {
     state.down = null;
     if (state.diorama && down?.onDiorama) { state.diorama.pointerUp(raycaster); return; }
     if (!down || Math.hypot(event.clientX - down.x, event.clientY - down.y) > CLICK_TOLERANCE_PX) return;
+    if (state.route.scene === 'games') {
+      const id = state.archive?.pick(raycaster);
+      if (id) callbacks.onPickTribute?.(id);
+      return;
+    }
     const action = mapClickAction({
       scene: state.route.scene, currentId: state.route.districtId, hasDiorama: Boolean(state.diorama), pickedId: pickDistrict(),
     });
@@ -327,7 +402,7 @@ export function createPanemScene(mount, callbacks) {
       if (state.cinematic) {
         state.cinematic.remaining -= dt;
         if (state.cinematic.remaining <= 0) {
-          rig.goTo(poseFor(state.route, state.map?.centers, state.aspect), 1.4);
+          rig.goTo(poseNow(), 1.4);
           state.cinematic = null;
         }
       }
@@ -347,9 +422,10 @@ export function createPanemScene(mount, callbacks) {
       if (state.portal) renderPortal(dt);
     }
     sparks.update(dt);
+    applyLook(dt);
     ensureGlitch();
     if (state.glitch) { state.glitch.update(dt, elapsed); state.glitch.render(); return; }
-    if (state.composer && state.route.scene === 'games') state.composer.render(dt);
+    if (state.composer && (state.route.scene === 'games' || state.diorama)) state.composer.render(dt);
     else renderer.render(scene, camera);
   }
 
@@ -413,7 +489,8 @@ export function createPanemScene(mount, callbacks) {
     setGamesRun(run) {
       const previous = state.run;
       state.run = run; state.archive?.setRun(run);
-      if (run && previous?.id === run.id && previous.turn !== run.turn && state.route.scene === 'games' && !state.reducedMotion) {
+      // En la mesa no hay planos de cerca: se ve todo desde arriba.
+      if (run && previous?.id === run.id && previous.turn !== run.turn && state.route.scene === 'games' && !state.reducedMotion && state.gamesView === 'follow') {
         const event = run.events.filter((e) => e.turn === run.turn).find((e) => e.type === 'decision' || e.type === 'elimination' || e.type === 'encounter');
         const point = state.archive?.focus(event?.actors[0] || run.selectedId);
         if (point) {
@@ -429,7 +506,14 @@ export function createPanemScene(mount, callbacks) {
       state.cinematic={remaining:3.5};
     },
     setGamesPaused(value) { state.gamesPaused = value; },
-    skipGamesIntro() { state.cinematic = null; if (state.route.scene === 'games') rig.goTo(poseFor(state.route, state.map?.centers, state.aspect), 0); },
+    skipGamesIntro() { state.cinematic = null; if (state.route.scene === 'games') rig.goTo(poseNow(), 0); },
+    // 'follow' (siguiendo a tu tributo) o 'table' (la mesa de los Vigilantes, solo en la arena y el desenlace).
+    setGamesView(view) {
+      state.gamesView = view === 'table' ? 'table' : 'follow';
+      state.archive?.setView(state.gamesView);
+      state.cinematic = null;
+      if (state.route.scene === 'games') rig.goTo(poseNow(), state.reducedMotion ? 0 : 1.2);
+    },
     setGamesQuality(value) {
       state.quality = value;
       configureQuality();
