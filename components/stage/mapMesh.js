@@ -19,8 +19,11 @@ function toMapShape(shape) {
   return result;
 }
 
-export async function loadPanemMap(url) {
+export async function loadPanemMap(url, { isCancelled = () => false } = {}) {
   const data = await new SVGLoader().loadAsync(url);
+  // React puede desmontar la primera escena antes de que llegue el SVG (modo estricto).
+  // Evitar extrusiones y búsqueda de anclas de un renderizador que ya se liberó.
+  if(isCancelled())return null;
   const group = new THREE.Group();
   const meshes = [];
   const centers = {};

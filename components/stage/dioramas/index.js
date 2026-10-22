@@ -8,3 +8,7 @@ export const DIORAMAS = {
   11: buildDistrict11,
   4: buildDistrict4,
 };
+
+import { buildWorkshop } from './workshop.js';
+import { WORKSHOPS } from '../../../data/workshops.js';
+for (const id of Object.keys(WORKSHOPS)) DIORAMAS[id] = (options) => buildWorkshop(id,options);

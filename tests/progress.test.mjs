@@ -17,7 +17,7 @@ test('el formato viejo (clues/ending) no rompe y queda vacío', () => {
 
 test('filtra ids no jugables, duplicados y ordena', () => {
   const p = normalizeProgress({ litDistricts: ['4', '7', '12', '12', 4], visited: ['13', 'c', '99', '13', '2'] });
-  assert.deepEqual(p.litDistricts, ['12', '4']);
+  assert.deepEqual(p.litDistricts, ['12', '4', '7']);
   assert.deepEqual(p.visited, ['13', '2']);
 });
 

@@ -25,7 +25,7 @@ export default function SiteHeader() {
         <span>PANEM</span>
       </Link>
       <div className="header-actions">
-        {progress.litDistricts.length === 3 && <Link className="chip" href={PHASE_PATH[run?.phase] || '/cosecha'}>Los Juegos</Link>}
+        {progress.litDistricts.length >= 3 && <Link className="chip" href={PHASE_PATH[run?.phase] || '/cosecha'}>Los Juegos</Link>}
         <span className="sync" title={progress.syncState === 'cloud' ? 'Progreso guardado en Firestore' : 'Progreso guardado en este navegador'}>
           {SYNC_LABEL[progress.syncState] ?? SYNC_LABEL.local}
         </span>
@@ -38,7 +38,7 @@ export default function SiteHeader() {
           </button>
         )}
         <button type="button" className="chip chip-accent" onClick={() => setEmblemsOpen(true)}>
-          Emblemas <b>{progress.litDistricts.length}/3</b>
+          Emblemas <b>{Math.min(progress.litDistricts.length, 3)}/3</b>
         </button>
       </div>
       {authOpen && (

@@ -3,8 +3,8 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function validProgress(d) {
       return d.userId == request.auth.uid
-        && d.litDistricts is list && d.litDistricts.size() <= 3
-        && d.litDistricts.hasOnly(['12', '11', '4'])
+        && d.litDistricts is list && d.litDistricts.size() <= 12
+        && d.litDistricts.hasOnly(['1','2','3','4','5','6','7','8','9','10','11','12'])
         && d.visited is list && d.visited.size() <= 13
         && (d.finalMessage == null || d.finalMessage in ['rebelion', 'memoria'])
         && (d.completedAt == null || d.completedAt is int);

@@ -64,7 +64,7 @@ export default function DistrictHud({ district }) {
     const onKey = (event) => {
       if (event.repeat || event.target.closest?.('input, textarea, select, [contenteditable="true"]')) return;
       const digit = /^Digit([1-4])$/.exec(event.code);
-      if (hud.birds && digit) { minigameInput(Number(digit[1]) - 1); return; }
+      if ((hud.birds || hud.inputs) && digit) { minigameInput(Number(digit[1]) - 1); return; }
       if (event.code !== 'Space' || event.target.closest?.('button, a')) return;
       event.preventDefault();
       if (!lost) performAction();
@@ -72,7 +72,7 @@ export default function DistrictHud({ district }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [hud.kind, hud.birds, lost, performAction, retryMinigame, minigameInput]);
+  }, [hud.kind, hud.birds, hud.inputs, lost, performAction, retryMinigame, minigameInput]);
 
   return (
     <>
@@ -107,6 +107,7 @@ export default function DistrictHud({ district }) {
             </>
           ) : (
             <>
+              {hud.inputs && <span className="bird-buttons" role="group" aria-label="Opciones del taller">{hud.inputs.map((label,i)=><button key={i} onClick={()=>minigameInput(i)}>{i+1} · {label}</button>)}</span>}
               {hud.birds && (
                 <span className="bird-buttons" role="group" aria-label="Sinsajos, de izquierda a derecha">
                   {[0, 1, 2, 3].map((i) => <button key={i} type="button" onClick={() => minigameInput(i)} aria-label={`Sinsajo ${i + 1}`}>{i + 1}</button>)}

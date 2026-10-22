@@ -1,21 +1,13 @@
 import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { createArchiveScene } from './games/archiveScene.js';
 import { loadPanemMap } from './mapMesh.js';
 import { createCameraRig } from './cameraRig.js';
 import { fogRangeFor, gamesViewPose, poseFor, viewShiftFor } from './cameraPoses.js';
 import { createSparks } from './effects.js';
-import { createBroadcastHall } from './broadcastHall.js';
 import { screenPoseFor } from '../../lib/broadcastHall.js';
 import { mapClickAction } from '../../lib/mapClick.js';
 import { createClassifiedGlitch } from './classifiedGlitch.js';
-import { createTiltShift } from './tiltShift.js';
-import { loadEnvironment } from './dioramas/assets.js';
 import { dioramaLook } from '../../lib/dioramaLook.js';
-import { DIORAMAS } from './dioramas/index.js';
+import { renderBudget, shouldRenderFrame } from '../../lib/renderBudget.js';
 import { MAP_IDS } from '../../data/districts.js';
 
 const CLICK_TOLERANCE_PX = 6;
@@ -29,7 +21,7 @@ function focusFor(route) {
 export function createPanemScene(mount, callbacks) {
   // WebGLRenderer lanza una excepción si el navegador no tiene WebGL: la atrapa PanemStage.
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setPixelRatio(renderBudget(mount.clientWidth,'auto',window.devicePixelRatio).pixelRatio);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
   renderer.setClearColor(0x000000, 0);
@@ -57,19 +49,39 @@ export function createPanemScene(mount, callbacks) {
   scene.add(rim);
 
   let sceneDisposed=false;
-  loadEnvironment(renderer,'/models/districts/day.hdr').then(env=>{if(!sceneDisposed&&env){scene.environment=env;scene.environmentIntensity=.45;}});
+  let archiveFactory=null,archiveLoading=false,dioramaBuilders=null,dioramasLoading=false,postFactory=null,postLoading=false,mapLoading=false;
+  // El mapa no necesita modelos, HDRI ni shaders de las escenas que todavía no se visitaron.
+  function environment(url){return import('./dioramas/assets.js').then(m=>m.loadEnvironment(renderer,url));}
+  function ensureMap(){
+    if(state.map||mapLoading)return;
+    mapLoading=true;
+    loadPanemMap('/assets/panem.svg',{isCancelled:()=>state.disposed}).then(map=>{
+      mapLoading=false;if(!map)return;if(state.disposed){map.dispose();return;}
+      state.map=map;scene.add(map.group);applyRoute();
+    }).catch(error=>{mapLoading=false;if(!state.disposed)callbacks.onError?.(error);});
+  }
+  function ensureRouteModules(){
+    if(state.route.scene==='games'&&!archiveFactory&&!archiveLoading){
+      archiveLoading=true;
+      import('./games/archiveScene.js').then(m=>{archiveLoading=false;if(state.disposed)return;archiveFactory=m.createArchiveScene;applyRoute();}).catch(error=>{archiveLoading=false;if(!state.disposed)callbacks.onError?.(error);});
+    }
+    if(state.route.scene==='distrito'&&state.route.districtId!=='13'&&!dioramaBuilders&&!dioramasLoading){
+      dioramasLoading=true;
+      import('./dioramas/index.js').then(m=>{dioramasLoading=false;if(state.disposed)return;dioramaBuilders=m.DIORAMAS;applyRoute();}).catch(error=>{dioramasLoading=false;if(!state.disposed)callbacks.onError?.(error);});
+    }
+  }
   const rig = createCameraRig(camera);
   const sparks = createSparks(scene);
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   const timer = new THREE.Timer();
   const state = {
-    route: { scene: 'intro', districtId: null }, lit: [], hovered: null, externalHover: null,
+    route: { scene: 'intro', districtId: null }, lit: [], earned: [], hovered: null, externalHover: null,
     map: null, diorama: null, dioramaId: null, finaleLit: new Set(), finaleTimers: [],
     aspect: 1, disposed: false, frame: 0, down: null, running: false,
     shift: { x: 0, y: 0 }, finaleRunning: false, poseRoute: { scene: 'intro', districtId: null },
     hall: null, hallLoading: null, portal: null, glitch: null, wantGlitch: false, classifiedRevealed: false, gamesView: 'follow',
-    gamesCovered:false, archive: null, archiveChapter: null, run: null, gamesPaused: false, reducedMotion: false, quality: 'auto', composer: null, bloom: null, cinematic: null,
+    gamesCovered:false, archive: null, archiveChapter: null, run: null, gamesPaused: false, reducedMotion: false, quality: 'auto', frameMs: renderBudget(mount.clientWidth).frameMs, lastFrame: -Infinity, composer: null, bloom: null, cinematic: null,
   };
 
   // La arena se mira desde la mesa de los Vigilantes o siguiendo a tu tributo (si sigue en pie); el resto, como siempre.
@@ -122,9 +134,9 @@ export function createPanemScene(mount, callbacks) {
   }
 
   function buildDiorama(id) {
-    const completed = state.lit.includes(id);
+    const completed = state.earned.includes(id);
     const centers = state.map.centers;
-    state.diorama = DIORAMAS[id]({
+    state.diorama = dioramaBuilders[id]({
       origin: centers[id], completed, sfx: callbacks.sfx, rig,
       onProgress: (value) => callbacks.onProgress(id, value),
       onMatch: (match) => callbacks.onMatch?.(id, match),
@@ -136,7 +148,7 @@ export function createPanemScene(mount, callbacks) {
     state.diorama.group.traverse((node) => { if (node.isMesh) { node.castShadow = !node.material.transparent; node.receiveShadow = true; } });
     state.lookEnv = null;
     const look = dioramaLook(id);
-    if (look) loadEnvironment(renderer, look.env).then((env) => { if (state.dioramaId === id) state.lookEnv = env; });
+    if (look) environment(look.env).then((env) => { if (state.dioramaId === id) state.lookEnv = env; });
     callbacks.onProgress(id, completed ? 1 : 0);
   }
 
@@ -172,9 +184,10 @@ export function createPanemScene(mount, callbacks) {
   // La sala de la intro se arma al entrar a "/" y se libera al salir.
   function ensureHall() {
     if (state.hall || state.hallLoading) return;
-    state.hallLoading = createBroadcastHall()
+    state.hallLoading = import('./broadcastHall.js').then(m => { if(state.disposed||state.route.scene!=='intro')return null; return m.createBroadcastHall(); })
       .then((hall) => {
         state.hallLoading = null;
+        if(!hall)return;
         if (state.disposed || state.route.scene !== 'intro') { hall.dispose(); return; }
         state.hall = hall;
         scene.add(hall.group);
@@ -195,8 +208,9 @@ export function createPanemScene(mount, callbacks) {
   }
 
   function configureQuality() {
-    const low = state.quality === 'low' || (state.quality === 'auto' && mount.clientWidth < 721);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : 1.5));
+    const {low,pixelRatio,frameMs}=renderBudget(mount.clientWidth,state.quality,window.devicePixelRatio);
+    state.frameMs=frameMs;
+    if(renderer.getPixelRatio()!==pixelRatio)renderer.setPixelRatio(pixelRatio);
     const shadows = (Boolean(state.archive) || Boolean(state.diorama)) && !low;
     renderer.shadowMap.enabled = shadows;
     renderer.shadowMap.type = THREE.PCFShadowMap;
@@ -210,15 +224,13 @@ export function createPanemScene(mount, callbacks) {
     // resplandecer de más a los distritos encendidos del mapa alrededor).
     const kind = state.archive ? 'archive' : state.diorama ? 'diorama' : null;
     if (!kind || low || state.reducedMotion || kind !== state.composerKind) releaseComposer();
-    if (kind && !low && !state.reducedMotion && !state.composer) {
+    if (kind && !low && !state.reducedMotion && !postFactory && !postLoading) {
+      postLoading=true;
+      import('./postprocessing.js').then(m=>{postLoading=false;if(state.disposed)return;postFactory=m.createPostprocessing;configureQuality();}).catch(error=>{postLoading=false;console.warn('Postproceso no disponible:',error);});
+    }
+    if (kind && !low && !state.reducedMotion && !state.composer && postFactory) {
       try {
-        const composer = new EffectComposer(renderer);
-        composer.addPass(new RenderPass(scene, camera));
-        const size = new THREE.Vector2(mount.clientWidth, mount.clientHeight);
-        const bloom = kind === 'archive' ? new UnrealBloomPass(size, .22, .35, .8) : null;
-        if (kind === 'diorama') composer.addPass(createTiltShift(size.x, size.y));
-        if (bloom) composer.addPass(bloom);
-        composer.addPass(new OutputPass());
+        const {composer,bloom}=postFactory(renderer,scene,camera,kind,mount.clientWidth,mount.clientHeight);
         state.composer = composer; state.bloom = bloom; state.composerKind = kind;
       } catch { releaseComposer(); }
     }
@@ -227,6 +239,8 @@ export function createPanemScene(mount, callbacks) {
   }
 
   function applyRoute() {
+    ensureRouteModules();
+    if(state.route.scene!=='games')ensureMap();
     const { route, map } = state;
     state.cinematic = null;
     // Al salir de la intro la cámara corta al mapa: volar desde la sala cruzaría 60 unidades de nada.
@@ -239,10 +253,11 @@ export function createPanemScene(mount, callbacks) {
     if (!classified) releaseGlitch();
     if (route.scene === 'intro') ensureHall(); else releaseHall();
     const chapter = route.scene === 'games' ? route.chapter : null;
-    if (chapter !== state.archiveChapter) {
+    if (chapter !== state.archiveChapter || (chapter && !state.archive && archiveFactory)) {
       state.archive?.dispose(); state.archive = null; state.archiveChapter = chapter;
-      if (chapter) {
-        state.archive = createArchiveScene(chapter, (status) => window.dispatchEvent(new CustomEvent('panem-arena-status', {detail:status})));
+      if (chapter && archiveFactory) {
+        environment('/models/districts/day.hdr').then(env=>{if(!sceneDisposed&&env){scene.environment=env;scene.environmentIntensity=.45;}});
+        state.archive = archiveFactory(chapter, (status) => window.dispatchEvent(new CustomEvent('panem-arena-status', {detail:status})));
         state.archive.setRun(state.run);
         state.archive.setReducedMotion(state.reducedMotion);
         state.archive.setQuality(state.quality);
@@ -253,7 +268,7 @@ export function createPanemScene(mount, callbacks) {
     }
     if (map) map.group.visible = !chapter;
     configureQuality();
-    const wanted = route.scene === 'distrito' && map && DIORAMAS[route.districtId] ? route.districtId : null;
+    const wanted = route.scene === 'distrito' && map && dioramaBuilders?.[route.districtId] ? route.districtId : null;
     if (wanted !== state.dioramaId) {
       disposeDiorama();
       if (wanted) buildDiorama(wanted);
@@ -397,6 +412,8 @@ export function createPanemScene(mount, callbacks) {
 
   function animate(timestamp) {
     state.frame = requestAnimationFrame(animate);
+    if(!shouldRenderFrame(timestamp,state.lastFrame,state.frameMs))return;
+    state.lastFrame=timestamp;
     timer.update(timestamp);
     const dt = Math.min(timer.getDelta(), 0.05);
     const elapsed = timer.getElapsed();
@@ -415,7 +432,7 @@ export function createPanemScene(mount, callbacks) {
     scene.fog.near = fog.near;
     scene.fog.far = fog.far;
     applyViewShift(dt);
-    state.map?.update(dt, elapsed, {
+    if(state.map?.group.visible || state.portal)state.map?.update(dt, elapsed, {
       hoveredId: state.hovered ?? state.externalHover, focusId: focusFor(state.route), hideSealId: state.dioramaId,
       lit: state.lit, finaleLit: state.finaleLit,
     });
@@ -436,7 +453,7 @@ export function createPanemScene(mount, callbacks) {
   function start() {
     if (state.running || state.disposed) return;
     state.running = true;
-    timer.reset();
+    timer.reset();state.lastFrame=-Infinity;
     state.frame = requestAnimationFrame(animate);
   }
 
@@ -468,20 +485,18 @@ export function createPanemScene(mount, callbacks) {
   document.addEventListener('visibilitychange', onVisibility);
   start();
 
-  loadPanemMap('/assets/panem.svg')
-    .then((map) => {
-      if (state.disposed) { map.dispose(); return; }
-      state.map = map;
-      scene.add(map.group);
-      applyRoute();
-    })
-    .catch((error) => callbacks.onError?.(error));
 
   return {
     setGamesCovered(value) {state.gamesCovered=value;renderer.domElement.style.visibility=value?'hidden':'';},
     getGamesAssetStatus() { return state.archive?.getAssetStatus() ?? null; },
     setRoute(route) { state.route = route; applyRoute(); },
-    setLit(ids) { state.lit = ids; },
+    setLit(ids, earned = ids) {
+      const active = state.dioramaId;
+      const wasComplete = state.earned.includes(active);
+      state.lit = ids; state.earned = earned;
+      // El final ilumina todo el mapa, pero solo los emblemas ganados completan un minijuego.
+      if (active && wasComplete !== earned.includes(active)) { disposeDiorama(); buildDiorama(active); configureQuality(); }
+    },
     setHovered(id) { state.externalHover = id; },
     // Quien ya descubrió la señal la encuentra abierta (lo guardado puede llegar con la rotura ya armada);
     // si se borra el progreso, el Distrito 13 se vuelve a romper.
@@ -576,6 +591,7 @@ export function createPanemScene(mount, callbacks) {
     },
     getInfo() {
       return {
+        pixelRatio:renderer.getPixelRatio(), targetFps:Math.round(1000/state.frameMs), drawCalls:renderer.info.render.calls,
         canvases: mount.querySelectorAll('canvas').length,
         geometries: renderer.info.memory.geometries,
         textures: renderer.info.memory.textures,

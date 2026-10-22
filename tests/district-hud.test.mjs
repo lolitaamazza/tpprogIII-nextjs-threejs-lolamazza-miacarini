@@ -63,12 +63,12 @@ test('encendido: solo el emblema', () => {
   assert.equal(hud.score, null);
 });
 
-test('un distrito sin juego muestra su cita', () => {
+test('Madera ahora ofrece su minijuego', () => {
   const wood = getDistrict('7');
   const hud = districtHud({ district: wood });
-  assert.equal(hud.kind, 'info');
+  assert.equal(hud.kind, 'play');
   assert.equal(hud.title, '7 · Madera');
-  assert.equal(hud.hint, wood.quote);
+  assert.equal(hud.hint, wood.instruction);
 });
 
 test('el Distrito 13 es solo la etiqueta y la señal', () => {

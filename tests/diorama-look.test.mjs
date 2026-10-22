@@ -11,7 +11,7 @@ test('cada minijuego tiene su luz; el mapa y los distritos sin juego vuelven a l
     for (const value of [look.envIntensity, look.sun.intensity, look.ambient, ...look.sun.position]) assert.ok(Number.isFinite(value), `${id}: ${value}`);
     assert.match(look.sun.color, /^#[0-9a-f]{6}$/i);
   }
-  for (const id of ['13', '7', null, undefined]) assert.equal(dioramaLook(id), null);
+  for (const id of ['13', 'c', null, undefined]) assert.equal(dioramaLook(id), null);
 });
 
 test('el carbón es de amanecer (sol cálido y bajo); la pesca y el campo, de día', () => {
@@ -20,3 +20,5 @@ test('el carbón es de amanecer (sol cálido y bajo); la pesca y el campo, de d�
   assert.equal(dioramaLook('4').env, '/models/districts/day.hdr');
   assert.equal(dioramaLook('11').env, '/models/districts/day.hdr');
 });
+
+test('los nueve talleres nuevos usan el entorno HDRI diurno',()=>{for(const id of [1,2,3,5,6,7,8,9,10])assert.equal(dioramaLook(String(id)).env,'/models/districts/day.hdr');});

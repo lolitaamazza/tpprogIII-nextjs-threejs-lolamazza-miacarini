@@ -61,7 +61,7 @@ export default function PanemStage() {
   }, [stageApiRef, setWebglFailed, setMapFailed]);
 
   useEffect(() => { stageApiRef.current?.setRoute(stageRoute); }, [stageRoute, stageApiRef]);
-  useEffect(() => { stageApiRef.current?.setLit(visibleLit); }, [visibleLit, stageApiRef]);
+  useEffect(() => { stageApiRef.current?.setLit(visibleLit, progress.litDistricts); }, [visibleLit, progress.litDistricts, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setHovered(hovered); }, [hovered, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setReducedMotion(reducedMotion); }, [reducedMotion, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setClassifiedRevealed(classified.revealed); }, [classified.revealed, stageApiRef]);

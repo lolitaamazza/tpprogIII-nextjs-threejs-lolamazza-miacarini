@@ -22,7 +22,7 @@ test('el incendio solo se dispara con el emblema que completa el tercero', () =>
 test('no se vuelve a disparar con los tres ya encendidos, ni con un distrito repetido o inválido', () => {
   assert.equal(completesEmblems(progress(['12', '11', '4']), '4'), false);
   assert.equal(completesEmblems(progress(['12', '11']), '11'), false);
-  assert.equal(completesEmblems(progress(['12', '11']), '7'), false, 'el 7 no es jugable: no cuenta como emblema');
+  assert.equal(completesEmblems(progress(['12', '11']), '13'), false, 'el 13 conserva su revelación secreta');
 });
 
 test('durante el incendio se encienden los distritos, pero no el Capitolio ni el 13', () => {
@@ -57,6 +57,8 @@ test('el fundido de volumen es lineal y queda dentro de los extremos', () => {
   assert.equal(volumeAt(300, 0, 1, 0), 0, 'sin duración, salta al destino');
 });
 
-test('la canción se busca en public/audio (el archivo lo pone cada quien: tiene derechos de autor)', () => {
+test('la canción se reproduce desde un archivo de audio propio', () => {
   assert.equal(BURN_AUDIO_SRC, '/audio/the-hanging-tree.mp3');
 });
+
+test('el ritmo es moderado: acciones entre 5 y 7 segundos y salida menor a un segundo',()=>{assert.ok(burnPlan().actionsAt>=5000&&burnPlan().actionsAt<=7000);assert.ok(BURN_TIMING.leaveMs<1000);});

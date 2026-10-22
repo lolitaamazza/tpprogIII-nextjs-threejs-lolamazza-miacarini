@@ -1,7 +1,9 @@
+import { WORKSHOPS } from './workshops.js';
+
 // Datos de las 14 piezas del mapa (13 distritos + Capitolio).
 // Sin imports con alias: este módulo también se prueba con `node --test`.
 
-export const PLAYABLE_IDS = ['12', '11', '4'];
+export const PLAYABLE_IDS = ['12', '11', '4', '1', '2', '3', '5', '6', '7', '8', '9', '10'];
 
 export const DISTRICTS = [
   { id: '1', number: '1', name: 'Distrito 1', industry: 'Lujo', color: '#5b5e64', litColor: '#ecdca8',
@@ -46,7 +48,7 @@ export const DISTRICTS = [
     quote: 'Según el Capitolio, acá no queda nada. Entonces, ¿quién sigue transmitiendo?', classified: true },
   { id: 'c', number: 'C', name: 'El Capitolio', industry: 'Gobierno', color: '#6a6a6a', litColor: '#ff3b3b',
     quote: 'Desde acá se transmite todo lo que Panem tiene permitido ver.' },
-].map((d) => ({ playable: false, classified: false, ...d }));
+].map((d) => ({ playable: false, classified: false, ...d, ...(WORKSHOPS[d.id] ? { playable:true, layer:WORKSHOPS[d.id].layer, actionsToComplete:WORKSHOPS[d.id].goal, actionLabel:WORKSHOPS[d.id].action, instruction:WORKSHOPS[d.id].hint, hud:{score:WORKSHOPS[d.id].score,lives:'Intentos'}, lostMessage:'El taller cerró. Podés volver a intentarlo.', helpNote:WORKSHOPS[d.id].mode==='sequence'?'Ahora las luces muestran el patrón más despacio.':WORKSHOPS[d.id].mode==='choice'?'Ahora el destino correcto se ilumina.':'Ahora tenés más tiempo y una zona de acierto más amplia.' } : {}) }));
 
 export const DISTRICT_ROUTE_IDS = Array.from({ length: 13 }, (_, i) => String(i + 1));
 export const MAP_IDS = [...DISTRICT_ROUTE_IDS, 'c'];

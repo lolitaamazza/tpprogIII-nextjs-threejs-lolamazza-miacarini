@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePanem } from '@/components/panem/PanemProvider';
 import { capitolGate } from '@/lib/progress';
-import { PHASE_PATH, TRAINING } from '@/lib/games/simulation';
+import { PHASE_PATH, TRAINING, trainingFor } from '@/lib/games/simulation';
 import { useGames } from './GamesProvider';
 import { encounterFor } from '@/lib/games/encounters';
 import { statusLine } from '@/lib/games/hud';
@@ -33,7 +33,7 @@ export default function GamesExperience({ chapter: requestedChapter }) {
   const [inspecting, setInspecting] = useState(null);
   const [drawer, setDrawer] = useState(null);
   const [view, setView] = useState('follow');
-  const [choices, setChoices] = useState({ '12': 'endurance', '11': 'plants', '4': 'fishing' });
+  const [choices, setChoices] = useState(() => Object.fromEntries(TRAINING.map(t => [t.district,t.options[0].id])));
   const [confirmNew, setConfirmNew] = useState(false);
   const [quality, setQuality] = useState('auto');
   const [arenaStatus, setArenaStatus] = useState(null);
@@ -126,7 +126,7 @@ export default function GamesExperience({ chapter: requestedChapter }) {
   const disabled = paused || !!games.conflict || games.status === 'saving';
   const status = run && chapter === 'arena' ? statusLine(run) : null;
 
-  if(chapter==='reaping' && run && !run.reapingComplete)return <ReapingDraw key={run.id} run={run} onDraw={games.draw} onContinue={games.revealStage} disabled={disabled}/>;
+  if(chapter==='reaping' && run && !run.reapingComplete)return <ReapingDraw key={run.id} run={run} onDraw={games.draw} onContinue={games.revealStage} onSkip={games.skipReaping} disabled={disabled}/>;
 
   return (
     <div className={`games-experience games-${chapter}`}>
@@ -162,7 +162,7 @@ export default function GamesExperience({ chapter: requestedChapter }) {
       {chapter === 'preparation' && selected && (
         <section className="games-card games-prep" aria-label={`Preparar a ${selected.name}`}>
           <h2>Prepará a {selected.name}.</h2>
-          {TRAINING.map((training) => (
+          {trainingFor(progress.litDistricts).map((training) => (
             <div key={training.district} className="prep-row" role="radiogroup" aria-label={training.label}>
               <span>{training.label}</span>
               {training.options.map((option) => (

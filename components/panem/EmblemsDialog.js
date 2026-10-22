@@ -15,7 +15,7 @@ export default function EmblemsDialog({ onClose }) {
       <div className="modal-panel">
         <button type="button" className="modal-close" onClick={onClose} aria-label="Cerrar">×</button>
         <p className="eyebrow">TU RECORRIDO</p>
-        <h2 id="emblems-title">Emblemas {progress.litDistricts.length}/3</h2>
+        <h2 id="emblems-title">Emblemas {Math.min(progress.litDistricts.length, 3)}/3</h2>
         <ul className="emblems">
           {PLAYABLE_IDS.map((id) => {
             const d = getDistrict(id);

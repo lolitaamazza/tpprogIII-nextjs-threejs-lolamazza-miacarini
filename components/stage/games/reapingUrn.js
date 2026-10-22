@@ -4,7 +4,7 @@ import {applyPolyMaterial} from '../polyHaven.js';
 import {loadEnvironment} from '../dioramas/assets.js';
 
 export function createReapingUrn(host,{onRequest,reduced=false}){
- const resources=new Set(),own=v=>{resources.add(v);return v;};let disposed=false,frame,active=null,drag=null,busy=false,timeline;
+ const resources=new Set(),own=v=>{resources.add(v);return v;};let disposed=false,frame,active=null,drag=null,busy=false,timeline,drawIndex=0;
  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setClearColor('#101312');renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;host.appendChild(renderer.domElement);
  const scene=new THREE.Scene();scene.fog=new THREE.Fog('#101312',9,20);
  const camera=new THREE.PerspectiveCamera(36,1,.1,30);
@@ -55,9 +55,14 @@ export function createReapingUrn(host,{onRequest,reduced=false}){
    const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=512;const ctx=canvas.getContext('2d');ctx.fillStyle='#e8e0cd';ctx.fillRect(0,0,1024,512);ctx.strokeStyle='#b5a78c';ctx.lineWidth=3;ctx.strokeRect(28,28,968,456);ctx.fillStyle='#544839';ctx.textAlign='center';ctx.font='25px Georgia';ctx.fillText('LA COSECHA · DISTRITO '+tribute.district,512,130);ctx.font='84px Georgia';ctx.fillText(tribute.name,512,305);ctx.font='22px Georgia';ctx.fillText('PANEM · REGISTRO DE TRIBUTOS',512,410);
    const texture=own(new THREE.CanvasTexture(canvas));texture.colorSpace=THREE.SRGBColorSpace;
    chosen.material=own(new THREE.MeshBasicMaterial({map:texture,side:THREE.DoubleSide,toneMapped:false}));
-   const euler=new THREE.Euler().setFromQuaternion(camera.quaternion);
+   const side=[-.8,.8,-.45,.5,0][drawIndex%5],roll=[-.12,.10,.16,-.14,0][drawIndex%5];drawIndex++;
+   const euler=new THREE.Euler().setFromQuaternion(camera.quaternion);euler.z+=roll;
+   const paperScale=camera.aspect<.8?3:4.1;
+   const safeOffset=Math.max(0,Math.min(.55,3*Math.tan(THREE.MathUtils.degToRad(18))*camera.aspect-paperScale*.125-.08));
+   const destination=camera.position.clone().add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(3)).add(new THREE.Vector3(side*safeOffset,(drawIndex%3)*.10,0).applyQuaternion(camera.quaternion));
+   const crest=new THREE.Vector3(0,2.75,0).add(new THREE.Vector3(side*.5,0,0).applyQuaternion(camera.quaternion));
    timeline=gsap.timeline({onComplete(){busy=false;onDone();}});
-   timeline.to(chosen.position,{x:.45,y:1.95,z:1.5,duration:reduced?0:.8,ease:'power2.inOut'}).to(chosen.rotation,{x:euler.x,y:euler.y,z:euler.z,duration:reduced?0:.7},0).to(chosen.scale,{x:4.1,y:4.1,z:4.1,duration:reduced?0:.65},reduced?0:.3);
+   timeline.to(chosen.position,{x:crest.x,y:crest.y,z:crest.z,duration:reduced?0:.45,ease:'power2.out'}).to(chosen.position,{x:destination.x,y:destination.y,z:destination.z,duration:reduced?0:.6,ease:'power2.inOut'}).to(chosen.rotation,{x:euler.x,y:euler.y,z:euler.z,duration:reduced?0:.7},0).to(chosen.scale,{x:paperScale,y:paperScale,z:paperScale,duration:reduced?0:.65},reduced?0:.3);
    return true;
   },
   clearPaper(){if(active?.userData.revealed){active.visible=false;active=null;}},

@@ -5,7 +5,7 @@ import { mapIntroCopy } from '../lib/mapCopy.js';
 test('sin emblemas: Panem sigue a oscuras', () => {
   const copy = mapIntroCopy({ litCount: 0, completed: false });
   assert.equal(copy.title, 'Panem está a oscuras.');
-  assert.match(copy.text, /Tres de ellos todavía guardan una chispa/);
+  assert.match(copy.text, /cualquiera de los doce.*tres emblemas/);
 });
 
 test('con 1 o 2 emblemas: cuenta cuántos faltan, en singular y plural', () => {

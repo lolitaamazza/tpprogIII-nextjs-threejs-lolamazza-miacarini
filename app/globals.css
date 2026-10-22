@@ -180,9 +180,9 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 body.is-burning .stage canvas { filter: sepia(0.9) saturate(2.6) hue-rotate(-20deg) brightness(1.1) contrast(1.08); }
 body.is-burning .overlay, body.is-burning .site-header { opacity: 0.12; filter: sepia(1) saturate(2) blur(1.5px); pointer-events: none; }
 .burn { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; overflow: hidden; outline: none; --burn: 0;
-  background: linear-gradient(to top, #030405 0%, #030405d9 30%, #03040559 62%, transparent 100%);
+  background: #030405a6;
   animation: burn-fade 2s ease-out both; }
-.burn.leaving { animation: burn-out 1.4s ease-in forwards; }
+.burn.leaving { animation: burn-out .85s ease-in forwards; }
 .burn-fire { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .burn-content { position: relative; z-index: 1; display: grid; gap: 18px; justify-items: center; max-width: 1000px; padding: 24px; text-align: center; }
 .burn-message { margin: 0; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;

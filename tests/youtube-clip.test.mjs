@@ -30,9 +30,9 @@ function fakeIframe() {
     remove() { this.removed = true; },
   };
 }
-function fakeContainer() {
+function fakeContainer(autoLoad = true) {
   const children = [];
-  return { children, appendChild(child) { children.push(child); } };
+  return { children, appendChild(child) { children.push(child); if(autoLoad)queueMicrotask(() => child.onload?.()); } };
 }
 
 let scriptBehaviour = 'error';
@@ -150,4 +150,23 @@ test('después de destroy() se quita el iframe y se ignoran los eventos', async 
   assert.deepEqual(events, []);
   assert.deepEqual(player.calls, [], 'tampoco ejecuta órdenes sobre un reproductor destruido');
   assert.equal(controller.getTime(), 0);
+});
+
+test('espera el origen real del iframe antes de conectar la API',async()=>{
+ const container=fakeContainer(false),previous=FakePlayer.last;
+ const controller=await createClipPlayer(container,{origin:'https://panem.example'});
+ assert.equal(FakePlayer.last,previous,'no crea el reproductor sobre about:blank');
+ controller.play();
+ container.children[0].onload();
+ const player=FakePlayer.last;
+ player.events.onReady();
+ assert.ok(player.calls.includes('play'));
+ controller.destroy();
+});
+test('salir antes de que cargue YouTube no crea un reproductor tardío',async()=>{
+ const container=fakeContainer(false),previous=FakePlayer.last;
+ const controller=await createClipPlayer(container,{origin:'https://panem.example'});
+ const lateLoad=container.children[0].onload;
+ controller.destroy();lateLoad();
+ assert.equal(FakePlayer.last,previous);assert.equal(container.children[0].removed,true);
 });

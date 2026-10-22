@@ -9,19 +9,19 @@ Next.js 16 + Three.js + GSAP + Firebase · JavaScript · App Router.
 
 ## Sinopsis
 
-En la sala de transmisión del Capitolio, una tele gigante rodeada de teles chicas y de un público de espaldas emite el anuncio oficial: Panem vive en paz. Al "encender la señal" la transmisión se corta (se ve el fragmento del video oficial en el que se rompe la señal) y la cámara entra en la pantalla hasta un mapa 3D de Panem, gris y apagado. La persona puede explorar los trece distritos; tres de ellos guardan una chispa:
+En la sala de transmisión del Capitolio, una tele gigante rodeada de teles chicas y de un público de espaldas emite el anuncio oficial: Panem vive en paz. Al "encender la señal" la transmisión se corta (se ve el fragmento del video oficial en el que se rompe la señal) y la cámara entra en la pantalla hasta un mapa 3D de Panem, gris y apagado. La persona puede explorar los trece distritos; los doce distritos productivos tienen un minijuego:
 
 - **Distrito 12 · Carbón:** una luz recorre la veta y hay que picar cuando pasa por la grieta. Tres capas hasta la brasa; cada error asusta al canario y, con tres, hay que salir a respirar.
 - **Distrito 11 · Agricultura:** cosechar el trigo sin que te alumbre el reflector de las torres (si te ve, se pierde lo cosechado en esa pasada) y después repetir el silbido que cantan los sinsajos.
 - **Distrito 4 · Pesca:** mantener apretado carga el alcance de la red y soltar la tira; la corriente la desvía un poco. Cinco redes para tres peces; el dorado vale por dos.
 
-Los tres se pueden perder y reintentar, pero no son difíciles: después de perder dos veces el juego ayuda (grieta más ancha, reflector más chico, agua calma). Los distritos no tienen panel: arriba a la izquierda quedan la flecha, el distrito y una pista que se va al empezar a jugar; abajo, el avance, las vidas, el botón alternativo y el de reintentar. Todo se juega también con ese botón o la barra espaciadora.
+Todos se pueden perder y reintentar, pero no son difíciles: después de perder dos veces el juego ayuda (grieta más ancha, reflector más chico, agua calma). Los distritos no tienen panel: arriba a la izquierda quedan la flecha, el distrito y una pista que se va al empezar a jugar; abajo, el avance, las vidas, el botón alternativo y el de reintentar. Todo se juega también con ese botón o la barra espaciadora.
 
 **Cómo se ven:** cada diorama usa piezas de los packs de **Kenney** (Nature, Survival, Pirate y Mini Characters, CC0) y un entorno de luz de **Poly Haven** (CC0): el carbón amanece y la pesca y el campo son de día. Hay una figurita que hace la acción (el minero pica, la pescadora tira la red, la cosechadora camina hasta las espigas), sombras suaves y un tilt-shift leve de maqueta. El entorno de luz ilumina solo la maqueta, no el mapa de alrededor. Vida: humo de la mina, polvo, brasas, agua con olas y espuma, peces que saltan, trigo y árboles con viento, polen y sinsajos que aletean. La paleta pastel del Nature Kit se pasa a tonos apagados al cargar. Los modelos se cargan al entrar a cada distrito (menos de 1,5 MB cada uno) y, si no llegan, el juego se juega igual con su geometría propia (`components/stage/dioramas/assets.js`, `lib/dioramaAssets.js`, `lib/dioramaLook.js`). Créditos en `public/models/CREDITS.md`.
 
 **Distrito 13 (secreto opcional):** al entrar, la imagen del mapa se rompe en fragmentos con señal corrupta y cajas de rastreo. Los pedazos se apartan del puntero y se pueden arrastrar; debajo transmite otra señal. Moviendo suficientes aparece el mensaje oculto, que queda guardado y cambia una frase del final.
 
-Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una capa a la música. Con los tres emblemas se desbloquea el Capitolio: allí se elige el mensaje (*Encender la rebelión* o *Recordar a los caídos*), se hackea la transmisión y Panem entero se enciende, incluido el Distrito 13, que el Capitolio declaraba inexistente.
+Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una capa a la música. Con tres emblemas de cualquier distrito se desbloquea el Capitolio: allí se elige el mensaje (*Encender la rebelión* o *Recordar a los caídos*), se hackea la transmisión y Panem entero se enciende, incluido el Distrito 13, que el Capitolio declaraba inexistente.
 
 ## Mapa de navegación
 
@@ -44,7 +44,7 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
 | --- | --- |
 | Premisa, inicio, progresión y cierre | Intro de la tele → mapa → 3 dioramas → Capitolio |
 | ≥ 3 escenas | `/`, `/mapa`, `/distrito/[id]`, `/capitolio` + 3 dioramas |
-| ≥ 3 coleccionables | Emblemas de los distritos 12, 11 y 4 |
+| ≥ 3 coleccionables | Emblemas de cualquiera de los distritos 1–12 |
 | Desbloqueo | El Capitolio se abre con 3/3; cada distrito suma su capa musical |
 | Feedback visual y sonoro | Elevación de las piezas, chispas, partículas, temblor, efectos y capas musicales |
 | Ruta dinámica | `app/(panem)/distrito/[id]/page.js` (`generateStaticParams` + `dynamicParams = false`) |
@@ -60,9 +60,9 @@ Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una
 
 - **Canvas persistente:** la escena y el audio viven en `app/(panem)/layout.js`. Los layouts no se re-renderizan al navegar, así que la cámara *vuela* entre rutas en lugar de recargar la escena. `usePathname()` traduce la URL a una pose de cámara (`lib/routes.js` + `components/stage/cameraPoses.js`).
 - **Mapa desde SVG:** `scripts/extract_map.py` extrae las piezas de la imagen de referencia (flood fill + contornos con OpenCV) y genera `public/assets/panem.svg`, ajustable en Figma. En el navegador, `SVGLoader` y `ExtrudeGeometry` convierten cada `path#district-{id}` en una pieza 3D seleccionable por raycasting.
-- **Audio procedural:** `lib/audio/` sintetiza todo con Web Audio: ambiente de viento y drone, un secuenciador a 80 BPM en re menor con tres capas (percusión, silbido y pad) sincronizadas por un único reloj, y los efectos. El ambiente y los efectos no requieren archivos de audio. La secuencia opcional «Panem arde» también puede intentar reproducir `/audio/the-hanging-tree.mp3`, que no se incluye: si falta, continúa sin esa grabación. El motivo de 4 notas es original.
+- **Audio procedural:** `lib/audio/` sintetiza todo con Web Audio: ambiente de viento y drone, un secuenciador a 80 BPM en re menor con tres capas (percusión, silbido y pad) sincronizadas por un único reloj, y los efectos. El ambiente y los efectos no requieren archivos de audio. La secuencia «Panem arde» usa audio nativo sin interfaz, configurado para `/audio/the-hanging-tree.mp3`. El archivo debe proporcionarlo la usuaria: todavía no está incluido. Respeta el silencio global, reintenta con el siguiente gesto si el navegador bloquea el inicio y libera el sonido al salir. El motivo de 4 notas es original.
 - **Intro de la sala de transmisión:** una escena 3D en el mismo canvas que el mapa, apartada 60 unidades (`components/stage/broadcastHall.js`, medidas y poses en `lib/broadcastHall.js`). Referencia: la sala de teles de los 10.º Juegos; estética años 50 y, dentro del mundo, textos en inglés. Todo es geometría propia (`InstancedMesh` para sillas, público, gabinetes y monitores) y texturas pintadas en canvas; la pantalla usa un shader de tubo (curvatura, corrimiento, aberración, ruido, línea de encendido). Al final la pantalla muestra el mapa como un portal (render a textura muestreado en coordenadas de pantalla) y, cuando la llena, la cámara corta a esa misma vista. El clip de YouTube va en un iframe ubicado sobre la pantalla proyectada; sin WebGL queda la tele dibujada con CSS (`components/panem/TvIntro.js` + `tv-intro.css`). El guion, el clip y la regla de destellos del corte propio son lógica pura en `lib/introTimeline.js`; el reproductor, en `lib/youtubeClip.js`. YouTube muestra su interfaz unos segundos al empezar, así que el clip arranca 7 s antes del corte, oculto y con volumen 0, y se muestra al llegar al segundo 29. Si no carga, una señal pirata propia ocupa su lugar.
-- **Dioramas desmontables:** cada distrito jugable se construye al entrar y se libera al salir (`components/stage/dioramas/`), con un contrato común (`build → { update, pointer*, performAction, retry, getState, dispose }`). La partida (objetivo, vidas, ganar, perder, reintentar y ayuda) es común a los tres: `lib/minigame.js`.
+- **Dioramas desmontables:** cada distrito jugable se construye al entrar y se libera al salir (`components/stage/dioramas/`), con un contrato común (`build → { update, pointer*, performAction, retry, getState, dispose }`). La partida (objetivo, vidas, ganar, perder, reintentar y ayuda) es común a los doce: `lib/minigame.js`.
 - **Distrito 13:** la vista del mapa se congela en un render target y se parte en fragmentos dibujados con un solo `InstancedBufferGeometry` y un shader de señal rota (separación RGB, pixelado, barrido). Los resortes, el arrastre y cuánto se descubrió están en `lib/glitchShards.js`; la escena, en `components/stage/classifiedGlitch.js`. Se guarda en `panem-d13-v1`.
 - **Íconos:** las flechas de volver son de `react-icons` (Phosphor), sin texto al lado.
 - **Lógica testeable:** datos, progreso, rutas, poses, partitura, reglas de los minijuegos y los fragmentos del Distrito 13 son módulos puros, probados con `node --test` (`npm test`).
@@ -203,8 +203,26 @@ Modelo integrado: [The Hunger Games Arena, Flashness](https://sketchfab.com/3d-m
 
 ### La extracción y los eventos visibles
 
-Antes del escenario de selección, la Cosecha abre una urna de vidrio con papeles interactivos. Se puede hacer clic, arrastrar un papel o usar el botón con teclado. Cada papel revela uno de los 24 nombres sin repetir; «Revelar los nombres restantes» permite completar la ceremonia. Al terminar se pasa al escenario existente para elegir al tributo. `drawnCount` y `reapingComplete` viajan dentro de la partida local/exportada/nube; no alteran la semilla, los turnos ni la revisión del motor de la arena. Los snapshots anteriores siguen siendo válidos.
+Antes del escenario de selección, la Cosecha abre una urna de vidrio con papeles interactivos. Se puede hacer clic, arrastrar un papel o usar el botón con teclado. Cada papel revela uno de los 24 nombres sin repetir; «Saltear la Cosecha» revela los nombres restantes y pasa directamente al escenario. Al terminar se pasa al escenario existente para elegir al tributo. `drawnCount` y `reapingComplete` viajan dentro de la partida local/exportada/nube; no alteran la semilla, los turnos ni la revisión del motor de la arena. Los snapshots anteriores siguen siendo válidos.
 
 `visualCueFor` conecta la pregunta pendiente con `arenaEffects`: fuego volumétrico simulado en planos cruzados con ruido, humo y luz cálida; niebla tóxica; lluvia; regalos en paracaídas; cajas y ondas de agua; brasas nocturnas y señales. El efecto comienza antes de responder y se conserva durante el turno de resolución. La mesa de los Vigilantes también muestra los peligros; el modo ligero reduce el humo y el movimiento reducido congela la animación.
 
 Poly Haven aporta materiales PBR 1K de madera, concreto y suelo, además de una roca fotogramétrica. Se sirven localmente y se reutilizan entre escenas. La urna tiene vidrio físico e iluminación HDRI. La arena de Sketchfab conserva su diseño original de Minecraft/Mineways; aplicar nuevos materiales y objetos no convierte todo ese escenario en fotogrametría. Fuentes y licencias en `public/models/CREDITS.md`.
+
+### Talleres y Cosecha (22 de octubre)
+
+Nuevos talleres: 1 pulido de gemas; 2 mampostería; 3 memoria de circuitos; 5 regulación de generadores; 6 clasificación de vías; 7 corte de madera; 8 memoria de tejidos; 9 clasificación de cereales; 10 cuidado de animales. Usan ratón, pantalla táctil y teclado (Espacio y 1–4). Perder dos veces amplía las ventanas de precisión y reduce la velocidad. La preparación elige tres talleres de los distritos ganados y conserva las partidas antiguas. El 13 sigue siendo la revelación secreta.
+
+La urna permite saltear toda la extracción en una sola actualización, sin modificar el azar de la arena. Los papeles alternan trayectorias y giros dentro del encuadre. El contador inicial muestra únicamente 0/24, con los controles debajo.
+
+«Panem arde» espacia las palabras 0,42 s y muestra las acciones a los 6,12 s; Escape y saltar siguen disponibles. El fuego integra doce capas de densidad, absorción, turbulencia, humo y brasas sobre un fondo sin degradado.
+
+**Firebase:** `firestore.rules` ahora admite los doce IDs de emblemas (hasta doce). Este cambio está preparado localmente y requiere desplegar esas reglas en el proyecto Firebase configurado para sincronizar los nuevos emblemas; el guardado local funciona sin despliegue. No se modificaron reglas remotas.
+
+### Carga y renderizado
+
+El mapa carga sin la arena, la sala de transmisión, los minijuegos, el reproductor de la rebelión ni los pases de postproceso: sus módulos se solicitan cuando se entra a la escena correspondiente. La iluminación HDRI también se prepara al entrar a una escena que la necesita. En las rutas de los Juegos no se descarga el mapa SVG con sus catorce sellos hasta volver al mapa. La escena oculta deja de actualizarse.
+
+El modo automático usa un máximo de un píxel por píxel CSS y 30 cuadros por segundo en pantallas menores de 721 px; escritorio conserva hasta 1,5 y 60 cuadros. Se evitan cuadros adicionales en pantallas de 120 Hz. La pausa al ocultar la pestaña se conserva. El indicador «Rendering…» pertenece al servidor de desarrollo de Next; para revisar la experiencia sin compilaciones, se puede ejecutar `npm run build` y luego `npm run start -- --hostname 127.0.0.1 --port 3001`.
+
+El reproductor de la intro espera la carga del iframe en su origen de YouTube antes de conectar la API, y cancela una carga pendiente si se abandona la secuencia. La animación de la rebelión no usa YouTube ni iframes.

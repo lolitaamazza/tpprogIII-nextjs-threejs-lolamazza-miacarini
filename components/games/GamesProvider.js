@@ -113,6 +113,7 @@ export default function GamesProvider({ children }) {
   const start = () => update(() => createRun(crypto.getRandomValues(new Uint32Array(1))[0], crypto.randomUUID()));
   const draw = (all = false) => update((run) => drawPaper(run, all));
   const revealStage = () => update(finishReaping);
+  const skipReaping = () => update((run) => finishReaping(drawPaper(run, true)));
   const select = (id) => update((run) => run && selectTribute(run, id));
   const prepare = (choices) => update((run) => run && prepareRun(run, choices, progress.litDistricts));
   const advance = (strategy) => update((run) => run && advanceRun(run, strategy));
@@ -133,5 +134,5 @@ export default function GamesProvider({ children }) {
       else publish({ run: incoming, status: 'local', error: store(incoming) });
     } catch { publish({ error: 'El archivo no contiene una partida válida de esta versión.' }); }
   };
-  return <Context.Provider value={{ ...state, ready: state.ready && state.account === uid, run: state.account === uid ? state.run : null, uid, start, draw, revealStage, select, prepare, advance, saveCloud, resolveConflict, exportRun, importRun }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ ...state, ready: state.ready && state.account === uid, run: state.account === uid ? state.run : null, uid, start, draw, revealStage, skipReaping, select, prepare, advance, saveCloud, resolveConflict, exportRun, importRun }}>{children}</Context.Provider>;
 }
