@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useDismiss } from '@/hooks/useDismiss';
 const messages = {
   'auth/email-already-in-use': 'Este correo ya tiene una cuenta.',
   'auth/invalid-credential': 'Correo o contraseña incorrectos.',
@@ -11,11 +12,13 @@ export default function AuthPanel({ user, authError, authLoading, onClose, onGoo
   const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const panelRef = useRef(null);
+  useDismiss([panelRef], onClose);
   async function submit(e) { e.preventDefault(); try { await onSubmitEmail({ email, password, mode }); onClose(); } catch {} }
   async function google() { try { await onGoogle(); onClose(); } catch {} }
   async function guest() { try { await onContinueAsGuest(); onClose(); } catch {} }
   return <div className="auth-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-    <div className="auth-panel">
+    <div ref={panelRef} className="auth-panel">
       <button className="auth-close" onClick={onClose} aria-label="Cerrar acceso">×</button>
       <p className="eyebrow">IDENTIFICACIÓN / ARCHIVO PANEM</p>
       <h2 id="auth-title">Identificar operador</h2>
@@ -32,7 +35,7 @@ export default function AuthPanel({ user, authError, authLoading, onClose, onGoo
         <button className="outline auth-google" onClick={google} disabled={authLoading}>Continuar con Google ↗</button>
         <p className="save-note">Para invitados, Firebase utiliza autenticación anónima.</p>
       </>}
-      {!!authError && <p role="alert" className="auth-error">{messages[authError] || `Error: ${authError}`}</p>}
+      {!!authError && <p role="alert" className="auth-error">{messages[authError] || `Algo salió mal (${authError}).`}</p>}
     </div>
   </div>;
 }

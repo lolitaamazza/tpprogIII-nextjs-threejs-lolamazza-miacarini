@@ -8,7 +8,8 @@ import { mapClickAction } from '../../lib/mapClick.js';
 import { createClassifiedGlitch } from './classifiedGlitch.js';
 import { dioramaLook } from '../../lib/dioramaLook.js';
 import { renderBudget, shouldRenderFrame } from '../../lib/renderBudget.js';
-import { MAP_IDS } from '../../data/districts.js';
+import { MAP_IDS, PLAYABLE_IDS } from '../../data/districts.js';
+import { fragmentsFor } from '../../lib/fragments.js';
 
 const CLICK_TOLERANCE_PX = 6;
 
@@ -76,7 +77,7 @@ export function createPanemScene(mount, callbacks) {
   const pointer = new THREE.Vector2();
   const timer = new THREE.Timer();
   const state = {
-    route: { scene: 'intro', districtId: null }, lit: [], earned: [], hovered: null, externalHover: null,
+    route: { scene: 'intro', districtId: null }, lit: [], earned: [], playable: null, found: [], practice: null, hovered: null, externalHover: null,
     map: null, diorama: null, dioramaId: null, finaleLit: new Set(), finaleTimers: [],
     aspect: 1, disposed: false, frame: 0, down: null, running: false,
     shift: { x: 0, y: 0 }, finaleRunning: false, poseRoute: { scene: 'intro', districtId: null },
@@ -133,14 +134,27 @@ export function createPanemScene(mount, callbacks) {
     state.dioramaId = null;
   }
 
+  // Solo se juega la jornada del día; `playable` null = todavía no se sabe (la historia no se leyó).
+  const isLocked = (id) => state.playable !== null && !state.playable.includes(id) && !state.earned.includes(id);
+  // Un día ya jugado que se vuelve a jugar: la maqueta vuelve a empezar (la historia no cambia).
+  const isCompleted = (id) => state.earned.includes(id) && state.practice !== id;
+
   function buildDiorama(id) {
-    const completed = state.earned.includes(id);
+    const completed = isCompleted(id);
     const centers = state.map.centers;
     state.diorama = dioramaBuilders[id]({
-      origin: centers[id], completed, sfx: callbacks.sfx, rig,
+      origin: centers[id], completed, locked: isLocked(id), sfx: callbacks.sfx, rig,
+      // Los nueve talleres se exploran; en todas las maquetas hay un fragmento para encontrar.
+      explore: !PLAYABLE_IDS.includes(id), fragments: fragmentsFor(id), found: state.found,
+      onFragment: (fragmentId) => callbacks.onFragment?.(fragmentId),
       onProgress: (value) => callbacks.onProgress(id, value),
       onMatch: (match) => callbacks.onMatch?.(id, match),
-      onComplete: () => { callbacks.onComplete(id); sparks.emit(centers[id], centers.c); },
+      // Perfecta si se ganó sin perder vidas: alcanza con una tesela.
+      onComplete: () => {
+        const match = state.diorama?.getState?.().match;
+        callbacks.onComplete(id, { perfect: match ? match.livesLeft === match.lives : true });
+        sparks.emit(centers[id], centers.c);
+      },
     });
     state.dioramaId = id;
     scene.add(state.diorama.group);
@@ -417,7 +431,7 @@ export function createPanemScene(mount, callbacks) {
     timer.update(timestamp);
     const dt = Math.min(timer.getDelta(), 0.05);
     const elapsed = timer.getElapsed();
-    if(state.gamesCovered && state.route.scene==='games')return;
+    if(state.gamesCovered)return; // tapado por la urna o por una escena de distrito con su propio renderer
     if (!state.gamesPaused || state.route.scene !== 'games') {
       rig.update(dt);
       if (state.cinematic) {
@@ -492,11 +506,24 @@ export function createPanemScene(mount, callbacks) {
     setRoute(route) { state.route = route; applyRoute(); },
     setLit(ids, earned = ids) {
       const active = state.dioramaId;
-      const wasComplete = state.earned.includes(active);
+      const wasComplete = isCompleted(active);
       state.lit = ids; state.earned = earned;
       // El final ilumina todo el mapa, pero solo los emblemas ganados completan un minijuego.
-      if (active && wasComplete !== earned.includes(active)) { disposeDiorama(); buildDiorama(active); configureQuality(); }
+      if (active && wasComplete !== isCompleted(active)) { disposeDiorama(); buildDiorama(active); configureQuality(); }
     },
+    setPlayable(ids) {
+      const active = state.dioramaId;
+      const wasLocked = active ? isLocked(active) : false;
+      state.playable = ids;
+      if (active && wasLocked !== isLocked(active)) { disposeDiorama(); buildDiorama(active); configureQuality(); }
+    },
+    setPractice(id) {
+      const active = state.dioramaId;
+      const wasComplete = active ? isCompleted(active) : false;
+      state.practice = id;
+      if (active && wasComplete !== isCompleted(active)) { disposeDiorama(); buildDiorama(active); configureQuality(); }
+    },
+    setFragmentsFound(ids) { state.found = ids; state.diorama?.setFragmentsFound?.(ids); },
     setHovered(id) { state.externalHover = id; },
     // Quien ya descubrió la señal la encuentra abierta (lo guardado puede llegar con la rotura ya armada);
     // si se borra el progreso, el Distrito 13 se vuelve a romper.

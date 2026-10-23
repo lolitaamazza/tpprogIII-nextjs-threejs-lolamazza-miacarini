@@ -1,6 +1,5 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import { createFire } from '@/components/stage/fire';
 import {
@@ -11,7 +10,6 @@ import { usePanem } from './PanemProvider';
 
 // La chispa abre la historia de la rebelión. Fuego, audio, GSAP y foco se liberan al salir.
 export default function Burning() {
-  const router = useRouter();
   const { setBurning, reducedMotion, sfx } = usePanem();
   const [plan] = useState(() => burnPlan({ reducedMotion }));
   const [actionsShown, setActionsShown] = useState(false);
@@ -59,19 +57,17 @@ export default function Burning() {
 
   useEffect(() => { if (actionsShown && !leaving) primaryRef.current?.focus(); }, [actionsShown, leaving]);
 
-  const close = useCallback((toCapitol) => {
+  // Al final de la transmisión: el fuego se apaga y el Capitolio sigue con Panem encendido.
+  const close = useCallback(() => {
     if (leaveRef.current) return;
     setLeaving(true);
     fireRef.current?.setTarget(0);
-    leaveRef.current = setTimeout(() => {
-      setBurning(false);
-      if (toCapitol) router.push('/capitolio');
-    }, BURN_TIMING.leaveMs);
-  }, [router, setBurning]);
+    leaveRef.current = setTimeout(() => setBurning(false), BURN_TIMING.leaveMs);
+  }, [setBurning]);
 
   useEffect(() => {
     const onKey = (event) => {
-      if (event.key === 'Escape') close(true);
+      if (event.key === 'Escape') close();
       if (event.key === 'Tab') {
         const buttons=[...rootRef.current.querySelectorAll('button, a')].filter(el=>!el.disabled&&!el.closest('[inert]'));
         const first=buttons[0],last=buttons.at(-1);
@@ -88,7 +84,7 @@ export default function Burning() {
       ref={rootRef} className={`burn${leaving ? ' leaving' : ''}`} role="dialog" aria-modal="true"
       aria-labelledby="burn-message" tabIndex={-1}
     >
-      <button type="button" className="burn-skip" onClick={() => close(true)} aria-label="Saltar e ir al Capitolio">saltar</button>
+      <button type="button" className="burn-skip" onClick={close} aria-label="Saltar">saltar</button>
       {plan.animated && <canvas ref={canvasRef} className="burn-fire" aria-hidden="true" />}
       <BurnSong leaving={leaving}/>
       <div className="burn-content">
@@ -99,11 +95,10 @@ export default function Burning() {
           ))}
         </p>
         <p className="burn-sub" style={{ animationDelay: `${plan.subtitleAt}ms` }}>
-          Tres distritos encendidos. Ahora responden todos.
+          Doce distritos encendidos. Falta uno.
         </p>
         <div className="burn-actions" data-show={actionsShown ? 'true' : 'false'} inert={!actionsShown}>
-          <button ref={primaryRef} type="button" className="primary" onClick={() => close(true)}>Ir al Capitolio →</button>
-          <button type="button" onClick={() => close(false)}>Seguir explorando</button>
+          <button ref={primaryRef} type="button" className="primary" onClick={close}>Seguir →</button>
         </div>
       </div>
     </div>

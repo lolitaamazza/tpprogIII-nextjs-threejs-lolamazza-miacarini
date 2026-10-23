@@ -1,20 +1,21 @@
 'use client';
 import Image from 'next/image';
 import { DISTRICTS } from '@/data/districts';
-import { canEnterCapitol } from '@/lib/progress';
+import { capitolGate } from '@/lib/progress';
 import { usePanem } from './PanemProvider';
 
 export default function DistrictDial() {
-  const { progress, visibleLit, hovered, setHovered, selectDistrict } = usePanem();
-  const capitolOpen = canEnterCapitol(progress);
+  const { progress, story, day, visibleLit, hovered, setHovered, selectDistrict } = usePanem();
+  const capitolOpen = capitolGate({ ready: true, synced: true, progress, story }) === 'allowed';
+  const today = story.pending?.district ?? day?.district;
   return (
     <nav className="dial" aria-label="Distritos de Panem">
       <ol>
         {DISTRICTS.map((d, i) => {
           const lit = visibleLit.includes(d.id);
           const status = d.id === 'c' ? (capitolOpen ? 'abierto' : 'blindado')
-            : lit ? 'encendido' : d.classified ? 'clasificado' : d.playable ? 'guarda una chispa' : 'apagado';
-          const classes = [lit && 'lit', d.playable && 'playable', d.classified && 'classified', hovered === d.id && 'hover'].filter(Boolean).join(' ');
+            : today === d.id ? 'hoy' : lit ? 'encendido' : d.classified ? 'clasificado' : d.playable ? 'todavía no' : 'apagado';
+          const classes = [lit && 'lit', today === d.id && 'playable', d.classified && 'classified', hovered === d.id && 'hover'].filter(Boolean).join(' ');
           return (
             <li key={d.id} style={{ '--i': i, '--n': DISTRICTS.length }}>
               <button

@@ -61,3 +61,24 @@ test('validación rechaza guardados rotos, versiones nuevas y datos fuera de ran
   const invalid = structuredClone(run); invalid.tributes[0].health = NaN;
   assert.equal(validateRun(invalid), false);
 });
+
+test('con protagonista: los otros dos de la historia no van a la arena y su lugar lo ocupa otro nombre del distrito', () => {
+  const run = createRun(77, 'story', { protagonist: 'tribute-21' });
+  const names = Object.fromEntries(run.tributes.map((t) => [t.id, t.name]));
+  assert.equal(names['tribute-21'], 'Oliva');
+  assert.equal(names['tribute-24'], 'Cardo');
+  assert.equal(names['tribute-7'], 'Coral');
+  assert.equal(run.protagonist, 'tribute-21');
+  assert.ok(validateRun(run));
+  assert.ok(validateRun(prepareRun(selectTribute(run, 'tribute-21'), choices, ['12', '11', '4'])));
+  const plain = createRun(77, 'story');
+  assert.equal(plain.protagonist, undefined);
+  assert.deepEqual(plain.tributes.map((t) => t.name).filter((n, i) => n !== run.tributes[i].name), ['Marin', 'Ash']);
+});
+
+test('una edición con nombres cambiados sin protagonista (o con uno que no es de la historia) no es válida', () => {
+  const run = createRun(5, 'story', { protagonist: 'tribute-24' });
+  assert.equal(validateRun({ ...run, protagonist: undefined }), false);
+  assert.equal(validateRun({ ...run, protagonist: 'tribute-3' }), false);
+  assert.equal(createRun(5, 'x', { protagonist: 'tribute-3' }).protagonist, undefined, 'solo Ash, Oliva o Marin');
+});

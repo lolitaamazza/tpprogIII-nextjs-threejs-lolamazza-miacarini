@@ -1,14 +1,17 @@
 'use client';
 import { getDistrict } from '@/data/districts';
-import { canEnterCapitol } from '@/lib/progress';
+import { capitolGate } from '@/lib/progress';
+import { PROTAGONISTS } from '@/lib/story';
 import { usePanem } from './PanemProvider';
 
-function statusOf(district, { visibleLit, progress }) {
-  if (district.id === 'c') return canEnterCapitol(progress) ? 'Abierto · la señal está lista' : `Blindado · ${progress.litDistricts.length}/3 emblemas`;
+function statusOf(district, { visibleLit, progress, story, day }) {
+  if (district.id === 'c') return capitolGate({ ready: true, synced: true, progress, story }) === 'allowed' ? 'Abierto · la señal está lista' : 'Blindado';
+  if (story.pending?.district === district.id) return `${PROTAGONISTS[district.id].name} tiene que decidir`;
+  if (day?.district === district.id && !story.pending) return `Hoy · ${PROTAGONISTS[district.id].name}`;
   if (visibleLit.includes(district.id)) return 'Encendido';
   if (district.classified) return 'SEÑAL NO ENCONTRADA';
-  if (district.playable) return 'Todavía guarda una chispa';
-  return 'Apagado';
+  if (district.playable) return 'Todavía no';
+  return district.explore ? 'Para explorar' : 'Apagado';
 }
 
 export default function MapHud() {

@@ -5,7 +5,8 @@ import { createDioramaBase, growIn, disposeObject, createBurst, mat } from './co
 import { applyPolyMaterial } from '../polyHaven.js';
 
 // Una estación física por industria. Cuatro reglas: precisión, carga, memoria y clasificación.
-export function buildWorkshop(id,{origin,completed,onProgress,onComplete,onMatch=()=>{},sfx,rig}){
+// Con `explore` es solo la maqueta (sin pista ni estaciones): se recorre y se buscan fragmentos.
+export function buildWorkshop(id,{origin,completed,explore=false,onProgress,onComplete,onMatch=()=>{},sfx,rig}){
  const w=WORKSHOPS[id],{group}=createDioramaBase(origin,w.color);
  const steel=mat('#87918e',{metalness:.75,roughness:.32,flatShading:false});
  const timber=applyPolyMaterial(mat('#c5a47a',{flatShading:false}),'wood',2);
@@ -46,7 +47,7 @@ export function buildWorkshop(id,{origin,completed,onProgress,onComplete,onMatch
   for(let i=0;i<12;i++){const trace=add(new THREE.BoxGeometry(.035,.015,.25),gold,-.34+i*.06,.08,0,piece);trace.rotation.y=(i%2)*Math.PI/2;}
  }
  const laneY=.30,laneZ=.58;
- add(new THREE.BoxGeometry(1.5,.035,.10),steel,0,laneY,laneZ);
+ const lane=add(new THREE.BoxGeometry(1.5,.035,.10),steel,0,laneY,laneZ);
  const target=add(new THREE.BoxGeometry(.20,.05,.14),gold,0,laneY+.01,laneZ);
  const cursor=add(new THREE.OctahedronGeometry(.055,0),accent,0,laneY+.08,laneZ);
  const pads=Array.from({length:4},(_,i)=>{const m=add(new THREE.CylinderGeometry(.12,.13,.055,32),accent.clone(),(i-1.5)*.38,.13,-.65);m.userData.choice=i;return m;});
@@ -80,7 +81,8 @@ export function buildWorkshop(id,{origin,completed,onProgress,onComplete,onMatch
   holding=false;result(workshopHit(position,targetAt(),!!helpLevel(match)));
  }
  function hit(ray){return ray.intersectObjects(pads.filter(p=>p.visible),false)[0]?.object;}
- report();
+ if(explore){lane.visible=target.visible=cursor.visible=false;pads.forEach(p=>p.visible=false);}
+ else report();
  let wasMemory=memorizing();
  return {group,
   update(dt){clock+=dt;growIn(group,dt);burst.update(dt);cooldown=Math.max(0,cooldown-dt);feedback*=Math.exp(-dt*5);
@@ -92,12 +94,12 @@ export function buildWorkshop(id,{origin,completed,onProgress,onComplete,onMatch
    if(w.shape==='train')piece.position.x=Math.sin(clock*.65)*.14;
    piece.position.y=.38+Math.abs(feedback)*.08;
    pads.forEach((pad,i)=>{const t=clock-roundAt,beat=Math.floor(t/beatDuration()),lit=isMemory&&t>=0&&beat<sequence().length&&t%beatDuration()<beatDuration()*.7&&sequence()[beat]===i;const scan=isChoice&&(helpLevel(match)?workshopTarget(id,match.score)===i:Math.floor(position*4)===i);pad.material.emissive.set(lit||scan?w.color:'#000000');pad.material.emissiveIntensity=lit?3:scan?.5:0;pad.scale.y=lit?2:1;});
-   if(isMemory&&wasMemory!==memorizing()){wasMemory=memorizing();report();}
+   if(!explore&&isMemory&&wasMemory!==memorizing()){wasMemory=memorizing();report();}
   },
-  performAction:action,input,
-  pointerDown(ray){if(isMemory||isChoice){const p=hit(ray);if(p)input(p.userData.choice);}else action();},
-  pointerUp(){if(w.mode==='hold'&&holding)action();},
-  pointerMove(ray){return isMemory||isChoice?!!hit(ray):match.phase==='playing';},
+  performAction(){if(!explore)action();},input(i){if(!explore)input(i);},
+  pointerDown(ray){if(explore)return;if(isMemory||isChoice){const p=hit(ray);if(p)input(p.userData.choice);}else action();},
+  pointerUp(){if(!explore&&w.mode==='hold'&&holding)action();},
+  pointerMove(ray){if(explore)return false;return isMemory||isChoice?!!hit(ray):match.phase==='playing';},
   retry(){if(match.phase!=='lost')return;match=retryMatch(match);inputIndex=0;holding=false;position=0;roundAt=clock;cooldown=0;onProgress(0);report();},
   getState(){return {match,cursor:position,target:targetAt(),sequence:sequence(),memorizing:memorizing(),inputIndex};},
   dispose(){disposeObject(group);},

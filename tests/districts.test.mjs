@@ -10,9 +10,10 @@ test('hay 14 piezas con ids únicos (1–13 y c)', () => {
   assert.equal(new Set(DISTRICTS.map((d) => d.id)).size, 14);
 });
 
-test('los doce distritos tienen juego, capa y acción', () => {
-  assert.equal(PLAYABLE_IDS.length,12);
-  assert.deepEqual(DISTRICTS.filter((d) => d.playable).map((d) => Number(d.id)),Array.from({length:12},(_,i)=>i+1));
+test('los tres días tienen juego, capa y acción; los otros nueve distritos se exploran', () => {
+  assert.deepEqual(PLAYABLE_IDS, ['12', '11', '4']);
+  assert.deepEqual(DISTRICTS.filter((d) => d.playable).map((d) => d.id).sort(), ['11', '12', '4']);
+  assert.deepEqual(DISTRICTS.filter((d) => d.explore).map((d) => Number(d.id)).sort((a, b) => a - b), [1, 2, 3, 5, 6, 7, 8, 9, 10]);
 
   for (const id of PLAYABLE_IDS) {
     const d = getDistrict(id);

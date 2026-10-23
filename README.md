@@ -9,7 +9,7 @@ Next.js 16 + Three.js + GSAP + Firebase · JavaScript · App Router.
 
 ## Sinopsis
 
-En la sala de transmisión del Capitolio, una tele gigante rodeada de teles chicas y de un público de espaldas emite el anuncio oficial: Panem vive en paz. Al "encender la señal" la transmisión se corta (se ve el fragmento del video oficial en el que se rompe la señal) y la cámara entra en la pantalla hasta un mapa 3D de Panem, gris y apagado. La persona puede explorar los trece distritos; los doce distritos productivos tienen un minijuego:
+En la sala de transmisión del Capitolio, una tele gigante rodeada de teles chicas y de un público de espaldas emite el anuncio oficial: Panem vive en paz. Al "encender la señal" la transmisión se corta (se ve el fragmento del video oficial en el que se rompe la señal) y la cámara entra en la pantalla hasta un mapa 3D de Panem, gris y apagado. Faltan tres días para la Cosecha. La historia sigue a tres chicos cuyos nombres están en la urna: **Ash** (16, Distrito 12), **Oliva** (15, Distrito 11) y **Marin** (14, Distrito 4). Cada día se juega la jornada de uno de ellos:
 
 - **Distrito 12 · Carbón:** una luz recorre la veta y hay que picar cuando pasa por la grieta. Tres capas hasta la brasa; cada error asusta al canario y, con tres, hay que salir a respirar.
 - **Distrito 11 · Agricultura:** cosechar el trigo sin que te alumbre el reflector de las torres (si te ve, se pierde lo cosechado en esa pasada) y después repetir el silbido que cantan los sinsajos.
@@ -19,33 +19,38 @@ Todos se pueden perder y reintentar, pero no son difíciles: después de perder 
 
 **Cómo se ven:** cada diorama usa piezas de los packs de **Kenney** (Nature, Survival, Pirate y Mini Characters, CC0) y un entorno de luz de **Poly Haven** (CC0): el carbón amanece y la pesca y el campo son de día. Hay una figurita que hace la acción (el minero pica, la pescadora tira la red, la cosechadora camina hasta las espigas), sombras suaves y un tilt-shift leve de maqueta. El entorno de luz ilumina solo la maqueta, no el mapa de alrededor. Vida: humo de la mina, polvo, brasas, agua con olas y espuma, peces que saltan, trigo y árboles con viento, polen y sinsajos que aletean. La paleta pastel del Nature Kit se pasa a tonos apagados al cargar. Los modelos se cargan al entrar a cada distrito (menos de 1,5 MB cada uno) y, si no llegan, el juego se juega igual con su geometría propia (`components/stage/dioramas/assets.js`, `lib/dioramaAssets.js`, `lib/dioramaLook.js`). Créditos en `public/models/CREDITS.md`.
 
-**Distrito 13 (secreto opcional):** al entrar, la imagen del mapa se rompe en fragmentos con señal corrupta y cajas de rastreo. Los pedazos se apartan del puntero y se pueden arrastrar; debajo transmite otra señal. Moviendo suficientes aparece el mensaje oculto, que queda guardado y cambia una frase del final.
+**Pedir comida:** al terminar cada jornada, en la casa no alcanza la comida. La pregunta es simple: «¿Ash pide comida al Capitolio?». Si la pide, la familia come, pero su nombre entra más veces en la urna de la Cosecha (dos más, o una si la jornada salió sin perder vidas); si no la pide, esa noche no cena y su nombre queda igual. En el libro esto se llama «teselas»; en la interfaz no se usa la palabra. Ninguna opción es la correcta. Después, la tele del Capitolio muestra su versión feliz del distrito (4 s, se puede saltear) y el mapa pasa al día siguiente. Los días futuros se pueden visitar, pero muestran la maqueta quieta («Mañana.»).
 
-Cada distrito encendido otorga su emblema, cambia de color en el mapa y suma una capa a la música. Con tres emblemas de cualquier distrito se desbloquea el Capitolio: allí se elige el mensaje (*Encender la rebelión* o *Recordar a los caídos*), se hackea la transmisión y Panem entero se enciende, incluido el Distrito 13, que el Capitolio declaraba inexistente.
+**Fragmentos:** en cada uno de los doce distritos productivos hay un objeto con un anillo dorado que late: lo que la tele corta (la viga de la mina con nombres tallados, el cuenco vacío de Marin, el afiche del Capitolio, el castigo en la plaza…). Tocarlo abre una tarjeta de documento del Capitolio tachado. Los otros nueve distritos se recorren como maquetas sin juego (los talleres de Lola, sin la pista). El **archivo pirata** del encabezado («Día 2/3 · Fragmentos 4/13») muestra los papeles de cada uno y lo encontrado (`lib/story.js`, `lib/fragments.js`).
+
+**Distrito 13 (secreto opcional):** al entrar, la imagen del mapa se rompe en fragmentos con señal corrupta y cajas de rastreo. Los pedazos se apartan del puntero y se pueden arrastrar; debajo transmite otra señal. Moviendo suficientes aparece el mensaje oculto, que queda guardado, cuenta como el fragmento número 13 y cambia una frase del final.
+
+Cada día jugado enciende su distrito en el mapa y suma una capa a la música. Hecho el tercer día, el mapa ofrece ir a la plaza: **la Cosecha**. La urna saca a uno de los tres según sus papeles (cuantas más veces pidió comida, más probable), y el archivo de los Juegos sigue a quien salió; los otros dos no van a la arena y su lugar lo ocupa otro nombre de su distrito. Terminados los Juegos se abre el Capitolio: se elige el mensaje (*Encender la rebelión* o *Recordar a los caídos*), se toma la transmisión y, si se encontraron cuatro fragmentos o más, salen al aire uno por uno. Después arde Panem («If we burn») y se enciende todo, incluido el Distrito 13, que el Capitolio declaraba inexistente. El cierre dice quién fue a la arena, con cuántos papeles, y cuántos fragmentos salieron al aire.
 
 ## Mapa de navegación
 
 ```text
 /  (Transmisión oficial: la tele del Capitolio)
  └─ "Encender la señal" → anuncio → corte de señal → /mapa   ("Saltar la intro" o Esc → /mapa)
-      ├─ /distrito/12  diorama jugable → emblema 1
-      ├─ /distrito/11  diorama jugable → emblema 2
-      ├─ /distrito/4   diorama jugable → emblema 3
-      ├─ /distrito/13  la imagen se rompe: secreto opcional
-      ├─ /distrito/1…10 (resto)  ficha del distrito
+      ├─ /distrito/12  día 1 · Ash → pedir comida → Capitol TV → mapa
+      ├─ /distrito/11  día 2 · Oliva → pedir comida → Capitol TV → mapa
+      ├─ /distrito/4   día 3 · Marin → pedir comida → Capitol TV → mapa ("Ir a la plaza")
+      ├─ /distrito/13  la imagen se rompe: secreto opcional (fragmento 13)
+      ├─ /distrito/1…10 (resto)  maqueta para explorar y su fragmento
       │   (tocar el mapa fuera del diorama vuelve al mapa; tocar otro distrito va a ese)
-      └─ C → /capitolio  (requiere 3/3; si no, aviso y vuelta al mapa)
-              └─ decisión → transmisión → Panem encendido → fin
+      ├─ /cosecha  (hechos los tres días) urna → /capitolio/preparacion → /arena → /desenlace
+      └─ C → /capitolio  (terminados los Juegos; si no, aviso y vuelta al mapa)
+              └─ mensaje → toma de la señal → fragmentos al aire → If we burn → Panem encendido → cierre
 ```
 
 ## Requisitos de la consigna y dónde se cumplen
 
 | Requisito | Implementación |
 | --- | --- |
-| Premisa, inicio, progresión y cierre | Intro de la tele → mapa → 3 dioramas → Capitolio |
+| Premisa, inicio, progresión y cierre | Intro de la tele → tres días (jornada + pedir comida) → Cosecha → Juegos → Capitolio |
 | ≥ 3 escenas | `/`, `/mapa`, `/distrito/[id]`, `/capitolio` + 3 dioramas |
-| ≥ 3 coleccionables | Emblemas de cualquiera de los distritos 1–12 |
-| Desbloqueo | El Capitolio se abre con 3/3; cada distrito suma su capa musical |
+| ≥ 3 coleccionables | 13 fragmentos (uno por distrito productivo y la señal del 13), guardados en el archivo pirata |
+| Desbloqueo | Cada día abre el siguiente; los tres abren la Cosecha; los Juegos abren el Capitolio; 4 fragmentos o más salen al aire en el final |
 | Feedback visual y sonoro | Elevación de las piezas, chispas, partículas, temblor, efectos y capas musicales |
 | Ruta dinámica | `app/(panem)/distrito/[id]/page.js` (`generateStaticParams` + `dynamicParams = false`) |
 | Server / Client Components | Las páginas (server) validan y generan metadata; el escenario, el audio y los overlays son client |
@@ -143,14 +148,14 @@ npm run build   # build de producción
 
 ## Archivo interactivo de los Juegos
 
-Con los tres emblemas, el enlace **Los Juegos** y el Capitolio abren una edición alternativa. Es el archivo de los Juegos del Capitolio, interceptado por la resistencia a través de la frecuencia del Distrito 13: al entrar, una secuencia corta niega el acceso, lo fuerza y tacha el sello del Capitolio (una vez por sesión; se saltea con un clic o una tecla, y con movimiento reducido se muestra quieta). En pantalla queda la etiqueta «Señal pirata · FREQ 13» y los expedientes llevan el sello «Property of the Capitol» tachado. La secuencia está en `lib/games/intercept.js` y `components/games/ArchiveIntercept.js`.
+Hechos los tres días (y decidido si Marin pide comida), el enlace **Los Juegos** y la plaza del mapa abren una edición alternativa, que sigue a quien salió de la urna. Es el archivo de los Juegos del Capitolio, interceptado por la resistencia a través de la frecuencia del Distrito 13: al entrar, una secuencia corta niega el acceso, lo fuerza y tacha el sello del Capitolio (una vez por sesión; se saltea con un clic o una tecla, y con movimiento reducido se muestra quieta). En pantalla queda la etiqueta «Señal pirata · FREQ 13» y los expedientes llevan el sello «Property of the Capitol» tachado. La secuencia está en `lib/games/intercept.js` y `components/games/ArchiveIntercept.js`.
 
 ```text
 /cosecha → /capitolio/preparacion → /arena → /desenlace → /capitolio
 ```
 
 - La Cosecha presenta 24 personajes originales, dos por cada distrito del 1 al 12. Se los toca en el escenario 3D (o desde la lista de tributos) y cada uno abre un expediente con retrato 3D, atributos y estado antes de elegir a quién acompañar como mentora.
-- Cada emblema permite una elección de preparación (+8 a un atributo). El entrenamiento se aplica una sola vez y funciona igual con botones o interacción 3D.
+- Cada uno de los tres días (Carbón, Agricultura, Pesca) permite una elección de preparación (+8 a un atributo). El entrenamiento se aplica una sola vez y funciona igual con botones o interacción 3D.
 - Una pregunta cada dos turnos (la apertura incluida): en los turnos del medio la transmisión sigue sola a los 6 s, o a los 3,5 s si el tributo ya cayó. «Pausar escena» o abrir una ficha frena el avance y «Seguir la transmisión» lo adelanta. Cada pregunta presenta una situación con opciones propias: Cornucopia, niebla tóxica, incendio, señales, río, patrocinadores o necesidades del personaje. Los atributos y recursos modifican riesgos y consecuencias; los demás tributos actúan mediante reglas y azar reproducible.
 - Salud, energía, hambre, sed, recursos, zonas y alianzas determinan los eventos. Si cae el tributo elegido se puede seguir como observadora.
 - La partida termina con un sobreviviente, como máximo en 24 turnos (12 jornadas), y conserva la crónica completa. El epílogo de rebelión/memoria permanece disponible.
@@ -193,7 +198,7 @@ El análisis de dependencias reporta cinco alertas altas en la cadena de desarro
 
 ### «If we burn, you burn with us»
 
-Al juntar el tercer emblema, la cámara se aleja al mapa entero, con todos los distritos encendidos, y desde abajo sube un fuego procedural WebGL (turbulencia, humo y brasas; transparente donde no hay llamas, para que se vea el mapa). Encima, la frase animada con GSAP, una línea («Tres distritos encendidos. Ahora responden todos.») y dos acciones: «Ir al Capitolio» y «Seguir explorando». «saltar» (chico, abajo a la derecha, como en la intro) y Escape van a `/capitolio`. Movimiento reducido omite el fuego y las entradas animadas.
+Al final de la transmisión del Capitolio (después de los fragmentos), la cámara se aleja al mapa entero, con los doce distritos encendidos, y desde abajo sube un fuego procedural WebGL (turbulencia, humo y brasas; transparente donde no hay llamas, para que se vea el mapa). Encima, la frase animada con GSAP, una línea («Doce distritos encendidos. Falta uno.») y «Seguir →»; «saltar» (chico, abajo a la derecha, como en la intro) y Escape también siguen. Después se enciende todo Panem y responde el 13. Se puede volver a ver desde el archivo pirata. Movimiento reducido omite el fuego y las entradas animadas.
 
 Al terminar la arena, «Volver a jugar» muestra su confirmación junto al botón.
 
@@ -211,7 +216,7 @@ Poly Haven aporta materiales PBR 1K de madera, concreto y suelo, además de una 
 
 ### Talleres y Cosecha (22 de octubre)
 
-Nuevos talleres: 1 pulido de gemas; 2 mampostería; 3 memoria de circuitos; 5 regulación de generadores; 6 clasificación de vías; 7 corte de madera; 8 memoria de tejidos; 9 clasificación de cereales; 10 cuidado de animales. Usan ratón, pantalla táctil y teclado (Espacio y 1–4). Perder dos veces amplía las ventanas de precisión y reduce la velocidad. La preparación elige tres talleres de los distritos ganados y conserva las partidas antiguas. El 13 sigue siendo la revelación secreta.
+Nuevos talleres: 1 pulido de gemas; 2 mampostería; 3 memoria de circuitos; 5 regulación de generadores; 6 clasificación de vías; 7 corte de madera; 8 memoria de tejidos; 9 clasificación de cereales; 10 cuidado de animales. Usan ratón, pantalla táctil y teclado (Espacio y 1–4). Perder dos veces amplía las ventanas de precisión y reduce la velocidad. Con la historia de los tres días, los talleres quedan como maquetas para explorar (sin pista ni estaciones; el código del juego se conserva por si alguno se rehace) y la preparación usa los tres días; las partidas antiguas siguen siendo válidas. El 13 sigue siendo la revelación secreta.
 
 La urna permite saltear toda la extracción en una sola actualización, sin modificar el azar de la arena. Los papeles alternan trayectorias y giros dentro del encuadre. El contador inicial muestra únicamente 0/24, con los controles debajo.
 

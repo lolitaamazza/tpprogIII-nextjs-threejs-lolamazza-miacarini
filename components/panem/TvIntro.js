@@ -19,7 +19,7 @@ const forward = (next) => (current) => (ORDER.indexOf(next) > ORDER.indexOf(curr
 const STATUS = {
   boot: 'Se enciende la tele del Capitolio.',
   logo: 'Transmisión oficial del Capitolio.',
-  address: 'Anuncio del Capitolio: Panem vive en paz. Toda señal no autorizada será eliminada.',
+  address: 'El Capitolio anuncia que Panem vive en paz. Toda señal no autorizada será eliminada.',
   break: 'La señal se corta.',
   clip: 'La transmisión está interferida. Se emite un fragmento del video oficial.',
   enter: 'Entrando al mapa de Panem.',

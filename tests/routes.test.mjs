@@ -15,3 +15,8 @@ test('rutas inválidas caen en el mapa', () => {
     assert.deepEqual(routeFromPathname(p), { scene: 'mapa', districtId: null }, String(p));
   }
 });
+
+test('la escena de prueba del Distrito 12 tiene su ruta; las demás escenas todavía no existen', () => {
+  assert.deepEqual(routeFromPathname('/escena/12'), { scene: 'escena', districtId: '12' });
+  for (const p of ['/escena/99', '/escena/4', '/escena']) assert.deepEqual(routeFromPathname(p), { scene: 'mapa', districtId: null }, p);
+});

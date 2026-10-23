@@ -33,14 +33,12 @@ for(const id of ['1','3','5','6'])test(`D${id}: perder y reintentar no entrega e
  }
  assert.equal(d.getState().match.phase,'lost');assert.equal(h.done(),0);d.retry();assert.equal(d.getState().match.phase,'playing');assert.equal(d.getState().match.score,0);d.dispose();
 });
-test('cualquier combinación de tres distritos desbloquea y entrena una partida válida',()=>{
- for(const ids of [['1','5','8'],['2','6','10'],['3','7','9'],['12','11','4']]){
-  assert.ok(canEnterCapitol(normalizeProgress({litDistricts:ids})));
-  assert.equal(canEnterCapitol({litDistricts:[ids[0],ids[0],ids[1],'13','c']}),false);
-  const choices=Object.fromEntries(trainingFor(ids).map(t=>[t.district,t.options[0].id]));
-  const run=prepareRun(selectTribute(createRun(51,'new-districts'),'tribute-1'),choices,ids);
-  assert.equal(run.phase,'arena');assert.ok(validateRun(run));assert.ok(validateRun(advanceRun(run)));
- }
+test('solo los tres días (12, 11 y 4) abren la Cosecha; los talleres se exploran',()=>{
+ assert.ok(canEnterCapitol(normalizeProgress({litDistricts:['12','11','4']})));
+ for(const ids of [['1','5','8'],['2','6','10'],['12','11','7']])assert.equal(canEnterCapitol(normalizeProgress({litDistricts:ids})),false);
+ const ids=['12','11','4'],choices=Object.fromEntries(trainingFor(ids).map(t=>[t.district,t.options[0].id]));
+ const run=prepareRun(selectTribute(createRun(51,'three-days'),'tribute-1'),choices,ids);
+ assert.equal(run.phase,'arena');assert.ok(validateRun(run));assert.ok(validateRun(advanceRun(run)));
 });
 test('con más de tres emblemas solo se aplican tres mejoras; no hay ventajas acumuladas',()=>{
  const ids=Object.keys(WORKSHOPS),choices=Object.fromEntries(trainingFor(ids).map(t=>[t.district,t.options[0].id]));

@@ -259,3 +259,75 @@ test('distrito 11: si ya estaba encendido muestra el campo cosechado y no cuenta
   assert.deepEqual(calls.match, []);
   diorama.dispose();
 });
+
+test('un día que todavía no llegó muestra la maqueta quieta: no hay jugadas ni partida en los tres dioramas', async () => {
+  const { DIORAMAS } = await import('../components/stage/dioramas/index.js');
+  for (const id of ['12', '11', '4']) {
+    const calls = { progress: [], complete: 0, match: [] };
+    const diorama = DIORAMAS[id]({
+      origin: { x: 0, z: 0 }, completed: false, locked: true,
+      onProgress: (value) => calls.progress.push(value),
+      onComplete: () => { calls.complete += 1; },
+      onMatch: (match) => calls.match.push(match),
+      sfx: { play() {} }, rig: { shake() {} },
+    });
+    diorama.group.scale.setScalar(1);
+    diorama.group.updateMatrixWorld(true);
+    for (let t = 0; t < 1; t += 0.016) diorama.update(0.016, t);
+    assert.equal(diorama.performAction(), false, id);
+    diorama.pointerDown(rayDown(0.15, 0.15));
+    diorama.pointerUp(rayDown(0.15, 0.15));
+    diorama.input?.(0);
+    for (let t = 0; t < 1; t += 0.016) diorama.update(0.016, 1 + t);
+    assert.equal(diorama.pointerMove(rayDown(0.15, 0.15)), false, id);
+    assert.deepEqual(calls.match, [], id);
+    assert.deepEqual(calls.progress, [], id);
+    assert.equal(calls.complete, 0, id);
+    diorama.dispose();
+  }
+});
+
+test('tocar el fragmento lo encuentra y no cuenta como jugada (también en un día que no llegó)', async () => {
+  const { DIORAMAS } = await import('../components/stage/dioramas/index.js');
+  const { fragmentsFor } = await import('../lib/fragments.js');
+  for (const [id, locked] of [['12', false], ['4', true], ['7', true]]) {
+    const calls = { found: [], match: [], sfx: [] };
+    const [fragment] = fragmentsFor(id);
+    const diorama = DIORAMAS[id]({
+      origin: { x: 0, z: 0 }, completed: false, locked, explore: id === '7', fragments: fragmentsFor(id), found: [],
+      onFragment: (fid) => calls.found.push(fid),
+      onProgress() {}, onComplete() {}, onMatch: (match) => calls.match.push(match),
+      sfx: { play: (name) => calls.sfx.push(name) }, rig: { shake() {} },
+    });
+    diorama.group.scale.setScalar(1);
+    diorama.group.updateMatrixWorld(true);
+    diorama.update(0.016, 0.016);
+    const before = calls.match.length;
+    const [x, , z] = fragment.position;
+    assert.equal(diorama.pointerMove(rayDown(x, z)), true, `${id}: el cursor avisa`);
+    diorama.pointerDown(rayDown(x, z));
+    diorama.pointerUp(rayDown(x, z));
+    assert.deepEqual(calls.found, [fragment.id], id);
+    assert.equal(calls.match.length, before, `${id}: no es una jugada`);
+    assert.ok(!calls.sfx.includes('pick') && !calls.sfx.includes('miss'), id);
+    diorama.dispose();
+  }
+});
+
+test('un taller para explorar no tiene pista ni juego (en los nueve, aunque pase el tiempo)', async () => {
+  const { buildWorkshop } = await import('../components/stage/dioramas/workshop.js');
+  const { WORKSHOPS } = await import('../data/workshops.js');
+  for (const id of Object.keys(WORKSHOPS)) {
+    const calls = { match: [], complete: 0 };
+    const diorama = buildWorkshop(id, { origin: { x: 0, z: 0 }, explore: true, onProgress() {}, onComplete() { calls.complete += 1; }, onMatch: (m) => calls.match.push(m), sfx: { play() {} } });
+    for (let t = 0; t < 6; t += 0.016) diorama.update(0.016, t);
+    diorama.performAction();
+    diorama.input(0);
+    diorama.pointerDown(rayDown(0, 0));
+    for (let t = 0; t < 2; t += 0.016) diorama.update(0.016, 6 + t);
+    assert.deepEqual(calls.match, [], id);
+    assert.equal(calls.complete, 0, id);
+    assert.equal(diorama.pointerMove(rayDown(0, 0)), false, id);
+    diorama.dispose();
+  }
+});

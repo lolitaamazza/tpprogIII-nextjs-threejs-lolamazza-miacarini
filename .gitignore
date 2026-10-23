@@ -22,3 +22,6 @@ yarn-error.log*
 
 # herramientas locales
 /.venv-tools/
+
+# Originales pesados de los modelos 3D (se optimizan a public/models/)
+assets-src/

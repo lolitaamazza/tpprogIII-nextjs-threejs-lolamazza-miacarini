@@ -2,8 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   EMPTY_PROGRESS, normalizeProgress, mergeProgress, canEnterCapitol,
-  withLitDistrict, withVisited, withFinalMessage, sameProgress, capitolGate,
+  withLitDistrict, withVisited, withFinalMessage, sameProgress, capitolGate, archiveGate,
 } from '../lib/progress.js';
+import { createStory, completeDay, markGamesEnded } from '../lib/story.js';
 
 const full = { litDistricts: ['12', '11', '4'], visited: [], finalMessage: null, completedAt: null };
 
@@ -17,7 +18,7 @@ test('el formato viejo (clues/ending) no rompe y queda vacío', () => {
 
 test('filtra ids no jugables, duplicados y ordena', () => {
   const p = normalizeProgress({ litDistricts: ['4', '7', '12', '12', 4], visited: ['13', 'c', '99', '13', '2'] });
-  assert.deepEqual(p.litDistricts, ['12', '4', '7']);
+  assert.deepEqual(p.litDistricts, ['12', '4'], 'los talleres se exploran: ya no se encienden');
   assert.deepEqual(p.visited, ['13', '2']);
 });
 
@@ -73,8 +74,21 @@ test('capitolGate: no se echa a nadie antes de conocer su progreso real (local y
   assert.equal(capitolGate({ ready: true, synced: true, progress: EMPTY_PROGRESS }), 'blocked');
 });
 
-test('capitolGate: con los 3 emblemas ya a la vista no hace falta esperar la nube', () => {
-  assert.equal(capitolGate({ ready: true, synced: false, progress: full }), 'allowed');
-  assert.equal(capitolGate({ ready: true, synced: true, progress: full }), 'allowed');
-  assert.equal(capitolGate({ ready: false, synced: false, progress: full }), 'loading', 'ni siquiera se leyó el guardado');
+test('capitolGate: el Capitolio se abre al terminar los Juegos, sin esperar la nube', () => {
+  const ended = markGamesEnded(createStory());
+  assert.equal(capitolGate({ ready: true, synced: false, progress: full, story: ended }), 'allowed');
+  assert.equal(capitolGate({ ready: true, synced: true, progress: full, story: ended }), 'allowed');
+  assert.equal(capitolGate({ ready: false, synced: false, progress: full, story: ended }), 'loading', 'ni siquiera se leyó el guardado');
+  assert.equal(capitolGate({ ready: true, synced: true, progress: full, story: createStory() }), 'blocked', 'con los tres días todavía falta la Cosecha');
+  assert.equal(capitolGate({ ready: true, synced: true, progress: { ...full, finalMessage: 'memoria', completedAt: 1 }, story: createStory() }), 'allowed', 'quien ya terminó puede volver');
+});
+
+test('archiveGate: los Juegos se abren hechos los tres días y decidida la última ración', () => {
+  const story = createStory();
+  assert.equal(archiveGate({ ready: true, synced: true, progress: full, story }), 'allowed');
+  assert.equal(archiveGate({ ready: true, synced: true, progress: { litDistricts: ['12', '11'] }, story }), 'blocked');
+  const waiting = completeDay(story, '4', { lit: ['12', '11'] });
+  assert.equal(archiveGate({ ready: true, synced: true, progress: full, story: waiting }), 'blocked', 'falta decidir las teselas de Marin');
+  assert.equal(archiveGate({ ready: true, synced: false, progress: { litDistricts: ['12'] }, story }), 'loading', 'falta la nube');
+  assert.equal(archiveGate({ ready: false, synced: false, progress: full, story }), 'loading');
 });

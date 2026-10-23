@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePanem } from '@/components/panem/PanemProvider';
-import { capitolGate } from '@/lib/progress';
+import { archiveGate } from '@/lib/progress';
 import { PHASE_PATH, TRAINING, trainingFor } from '@/lib/games/simulation';
 import { useGames } from './GamesProvider';
 import { encounterFor } from '@/lib/games/encounters';
@@ -25,7 +25,7 @@ const STAT = { strength: 'fuerza', stealth: 'sigilo', survival: 'supervivencia',
 // derecha los íconos (lo demás está en cajones) y abajo solo lo que hay que decidir.
 export default function GamesExperience({ chapter: requestedChapter }) {
   const games = useGames();
-  const { progress, sfx, startAudio, webglFailed, stageApiRef, reducedMotion } = usePanem();
+  const { progress, story, storyReady, markGamesEnded, sfx, startAudio, webglFailed, stageApiRef, reducedMotion } = usePanem();
   const { run } = games;
   const router = useRouter();
   const restartRef = useRef(null);
@@ -35,14 +35,18 @@ export default function GamesExperience({ chapter: requestedChapter }) {
   const [view, setView] = useState('follow');
   const [choices, setChoices] = useState(() => Object.fromEntries(TRAINING.map(t => [t.district,t.options[0].id])));
   const [confirmNew, setConfirmNew] = useState(false);
-  const [quality, setQuality] = useState('auto');
   const [arenaStatus, setArenaStatus] = useState(null);
-  const gate = capitolGate({ ready: progress.ready, synced: progress.synced, progress });
+  const gate = archiveGate({ ready: progress.ready && storyReady, synced: progress.synced, progress, story });
   const { chapter, canShow, redirect } = gamesView({ chapter: requestedChapter, run, ready: games.ready, gate });
   const turn = run?.turn ?? 0;
   const arena = chapter === 'arena' || chapter === 'ended';
 
   useEffect(() => { if (redirect) router.replace(redirect); }, [redirect, router]);
+
+  // La historia: terminada la urna, se sigue a quien salió (sin elegir); terminados los Juegos, el Capitolio se abre.
+  const protagonistDrawn = canShow && run?.phase === 'reaping' && run.reapingComplete && run.protagonist ? run.protagonist : null;
+  useEffect(() => { if (protagonistDrawn) select(protagonistDrawn); }, [protagonistDrawn]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (run?.phase === 'ended') markGamesEnded(); }, [run?.phase, markGamesEnded]);
 
   useEffect(()=>{
     const stage=stageApiRef.current;
@@ -56,7 +60,6 @@ export default function GamesExperience({ chapter: requestedChapter }) {
     return () => stage?.setGamesPaused(false);
   }, [paused, inspecting, stageApiRef]);
 
-  useEffect(() => { stageApiRef.current?.setGamesQuality(quality); }, [quality, stageApiRef]);
   // La mesa solo existe en la arena y el desenlace; en el resto la escena se ve de cerca.
   useEffect(() => { stageApiRef.current?.setGamesView(arena ? view : 'follow'); }, [arena, view, stageApiRef]);
 
@@ -117,7 +120,7 @@ export default function GamesExperience({ chapter: requestedChapter }) {
   const encounterId = encounter?.id;
   const decide = useCallback((optionId) => advanceRef.current({ encounterId, optionId }), [encounterId]);
 
-  if (gate === 'blocked') return <section className="panel"><p className="eyebrow">ARCHIVO CLASIFICADO</p><h1>Tres señales para entrar.</h1><p>Completá Carbón, Agricultura y Pesca para intervenir la transmisión del Capitolio.</p><Link className="primary" href="/mapa">Volver a los distritos</Link></section>;
+  if (gate === 'blocked') return <section className="panel"><p className="eyebrow">ARCHIVO CLASIFICADO</p><h1>Todavía no es la Cosecha.</h1><p>{story.pending ? 'Marin todavía tiene que decidir si pide comida.' : 'Primero se juegan los tres días de Ash, Oliva y Marin.'}</p><Link className="primary" href="/mapa">Volver al mapa</Link></section>;
   if (!canShow) return <section className="panel" aria-busy="true"><p>Recuperando el archivo…</p><p className="hint">La partida guardada se conserva.</p><button onClick={() => window.location.reload()}>Reintentar carga</button><BackLink /></section>;
 
   const selected = run?.tributes.find((t) => t.id === run.selectedId);
@@ -143,18 +146,25 @@ export default function GamesExperience({ chapter: requestedChapter }) {
         )}
         <p className="pirate-tag"><span aria-hidden="true">●</span> Señal pirata · FREQ 13</p>
         {chapter === 'reaping' && run && <p className="games-hint">Tocá un tributo en el escenario para conocerlo, <button type="button" className="link" onClick={() => setDrawer('tributes')}>o elegí de la lista</button>.</p>}
-        {webglFailed && <p className="games-hint">Vista 3D no disponible: elegí y seguí desde los íconos de arriba.</p>}
+        {games.conflict && (
+          <div className="save-conflict" role="alert">
+            <p>Hay dos versiones de esta edición (actual: turno {run?.turn ?? 0}; la otra: turno {games.conflict.turn}). Elegí cuál seguir.</p>
+            <button type="button" onClick={() => games.resolveConflict(false)}>Esta</button>
+            <button type="button" onClick={() => games.resolveConflict(true)}>La otra</button>
+          </div>
+        )}
+        {webglFailed && <p className="games-hint">La vista 3D no está disponible. Podés seguir desde los íconos de arriba.</p>}
         {arena && arenaStatus === 'loading' && <p className="games-hint" role="status">Cargando el bosque y la Cornucopia…</p>}
         {arena && arenaStatus === 'error' && <p className="games-hint" role="alert">No se pudo cargar la arena. <button type="button" className="link" onClick={() => window.location.reload()}>Reintentar</button></p>}
       </header>
 
       <ArchiveBar chapter={chapter} run={run} view={view} onView={setView} paused={paused} onPause={() => setPaused((v) => !v)}
-        drawer={drawer} onDrawer={setDrawer} onInspect={inspect} games={games} quality={quality} onQuality={setQuality} />
+        drawer={drawer} onDrawer={setDrawer} onInspect={inspect} />
 
       {chapter === 'reaping' && !run && (
         <section className="games-card">
           <h2>Entramos.</h2>
-          <p>Así guarda el Capitolio cada edición de los Juegos. Reconstruí una y acompañá a un tributo: esta vez, la crónica es nuestra.</p>
+          <p>Así guarda el Capitolio cada edición de los Juegos. Reconstruí una y acompañá a un tributo. Esta vez la crónica es nuestra.</p>
           <button type="button" className="primary" onClick={() => { startAudio(); newRun(); }} disabled={disabled}>Abrir una edición</button>
         </section>
       )}
@@ -191,7 +201,7 @@ export default function GamesExperience({ chapter: requestedChapter }) {
             <Link className="primary" href="/capitolio">Transmitir el mensaje final</Link>
             <button type="button" disabled={disabled} onClick={() => setConfirmNew(true)}>Volver a jugar</button>
           </div>
-          {confirmNew && <section ref={restartRef} tabIndex={-1} className="restart-confirm" aria-label="Reiniciar los Juegos"><p>¿Abrir una nueva edición? Los emblemas se conservan.</p><button type="button" onClick={games.exportRun}>Descargar esta partida</button><button type="button" className="primary" onClick={newRun} disabled={disabled}>Crear nueva edición</button><button type="button" onClick={() => setConfirmNew(false)}>Cancelar</button></section>}
+          {confirmNew && <section ref={restartRef} tabIndex={-1} className="restart-confirm" aria-label="Reiniciar los Juegos"><p>¿Abrir una nueva edición? La urna vuelve a sacar un nombre; los días y los fragmentos quedan.</p><button type="button" className="primary" onClick={newRun} disabled={disabled}>Crear nueva edición</button><button type="button" onClick={() => setConfirmNew(false)}>Cancelar</button></section>}
         </section>
       )}
 

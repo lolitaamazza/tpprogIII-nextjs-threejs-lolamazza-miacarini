@@ -27,11 +27,22 @@ test('eventos del compás', () => {
   assert.equal(eventsForStep(16, 'memoria').find((e) => e.layer === 'silbido').length, 0.7);
 });
 
-test('volúmenes por capa', () => {
-  assert.deepEqual(layerTargets({ lit: [] }), { percusion: 0, silbido: 0, pad: 0 });
-  assert.deepEqual(layerTargets({ lit: ['12'] }), { percusion: 1, silbido: 0, pad: 0 });
-  assert.deepEqual(layerTargets({ lit: ['12'], previewDistrict: '4' }), { percusion: 1, silbido: 0, pad: 0.25 });
-  assert.deepEqual(layerTargets({ lit: ['12'], previewDistrict: '12' }), { percusion: 1, silbido: 0, pad: 0 });
-  assert.deepEqual(layerTargets({ lit: ['12', '11', '4'], finale: 'memoria' }), { percusion: 0, silbido: 1, pad: 1 });
-  assert.deepEqual(layerTargets({ lit: [], finale: 'rebelion' }), { percusion: 1, silbido: 1, pad: 1 });
+test('la música cambia con la escena: no es la misma intensidad en todo el recorrido', () => {
+  const silent = { percusion: 0, silbido: 0, pad: 0 };
+  assert.deepEqual(layerTargets({ scene: 'intro' }), silent);
+  // El mapa es tranquilo: solo el colchón (y el silbido si ya se jugó el 11), nunca la percusión.
+  assert.deepEqual(layerTargets({ scene: 'mapa', lit: [] }), { percusion: 0, silbido: 0, pad: 0.35 });
+  assert.deepEqual(layerTargets({ scene: 'mapa', lit: ['12', '11'] }), { percusion: 0, silbido: 0.3, pad: 0.5 });
+  // La jornada del día suena con su capa; un distrito que se recorre, casi nada; decidir las teselas, en silencio.
+  assert.deepEqual(layerTargets({ scene: 'distrito', district: '12', today: '12' }), { percusion: 0.7, silbido: 0, pad: 0.3 });
+  assert.deepEqual(layerTargets({ scene: 'distrito', district: '4', today: '4' }), { percusion: 0, silbido: 0, pad: 0.7 });
+  assert.deepEqual(layerTargets({ scene: 'distrito', district: '7', today: '12' }), { percusion: 0, silbido: 0, pad: 0.25 });
+  assert.deepEqual(layerTargets({ scene: 'distrito', district: '12', deciding: true }), silent);
+  // Los Juegos: tambores en la Cosecha, tensión en la arena, calma en el desenlace.
+  assert.deepEqual(layerTargets({ scene: 'games', chapter: 'reaping' }), { percusion: 0.45, silbido: 0, pad: 0 });
+  assert.deepEqual(layerTargets({ scene: 'games', chapter: 'arena' }), { percusion: 0.8, silbido: 0, pad: 0.5 });
+  assert.deepEqual(layerTargets({ scene: 'games', chapter: 'ended' }), { percusion: 0, silbido: 0.5, pad: 0.6 });
+  // El final, como antes.
+  assert.deepEqual(layerTargets({ scene: 'capitolio', finale: 'memoria' }), { percusion: 0, silbido: 1, pad: 1 });
+  assert.deepEqual(layerTargets({ scene: 'capitolio', finale: 'rebelion' }), { percusion: 1, silbido: 1, pad: 1 });
 });

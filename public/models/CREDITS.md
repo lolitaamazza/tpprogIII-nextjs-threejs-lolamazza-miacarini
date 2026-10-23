@@ -27,6 +27,18 @@ Archivo: tribute-woman.glb. CC BY 4.0.
 
 Adaptaciones: escala, proporciones, tintes de vestuario y cabello, accesorios originales, pose de reposo y movimiento de extremidades. Cada actor tiene su propio esqueleto y materiales. Son dos bases humanas con 24 variantes, no 24 escaneos independientes. Las caras y la piel conservan sus texturas originales. El modelo Soldier/robot anterior fue retirado.
 
+## Distrito 12 (escena)
+
+Descargados desde Sketchfab como GLB por Mia (sesión iniciada). Licencia CC BY 4.0. Cambios: texturas a WebP 1K (2K en la boca de la mina), geometría cuantizada, escala y posición en la escena (`scripts/optimize-d12.sh`).
+
+- Abandoned Mine — Miguel-Angel · https://sketchfab.com/3d-models/none-382f59cf6d9d457fb3f03b4807d80e9c · Archivo: d12/tunel.glb
+- Mine Cart · 3December 2022 — watermelon256 · https://sketchfab.com/3d-models/none-1102bfd8b5144ce98f6eab294fd3a77a · Archivo: d12/boca-mina.glb
+- Abandoned House — Sengchor · https://sketchfab.com/3d-models/none-a0c01ce35a474545b805c0739806aace · Archivo: d12/casa-vecina.glb
+- Abandoned House — DMC_RELAX · https://sketchfab.com/3d-models/none-ade10f5a52fc494d8da9db46e944132b · Archivo: d12/casa-ash.glb
+- Copper And Glass Hand Lamp — Portland Museum · https://sketchfab.com/3d-models/none-991c65a148c34c8183a84fecc2c9f99b · Archivo: d12/farol-minero.glb
+
+De Poly Haven (CC0, sin crédito obligatorio): pico, maza, dos faroles, cajón, tambor, postes de luz (simplificados), rocas, las texturas del piso, el barro y la chapa, y el cielo nocturno `satara_night`.
+
 Los mismos créditos y enlaces están disponibles en «Créditos de los modelos 3D» dentro del juego.
 
 ## Dioramas de los distritos 12, 11 y 4

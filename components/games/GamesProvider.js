@@ -4,6 +4,7 @@ import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore
 import { usePanem } from '@/components/panem/PanemProvider';
 import { getFirebaseServices } from '@/lib/firebase';
 import { advanceRun, createRun, prepareRun, sameRun, selectTribute, validateRun } from '@/lib/games/simulation';
+import { PROTAGONISTS, reapedDistrict } from '@/lib/story';
 
 import {drawPaper,finishReaping} from '@/lib/games/reaping';
 
@@ -12,7 +13,7 @@ const keyFor = (uid) => `panem-games-v1:${uid || 'guest'}`;
 export const useGames = () => useContext(Context);
 
 export default function GamesProvider({ children }) {
-  const { progress } = usePanem();
+  const { progress, story, resetEpoch } = usePanem();
   const uid = progress.authUser?.uid || null;
   const [state, setState] = useState({ account: undefined, run: null, ready: false, status: 'local', error: '', conflict: null });
   const stateRef = useRef(state);
@@ -71,6 +72,13 @@ export default function GamesProvider({ children }) {
     return () => { generation.current += 1; clearTimeout(timer); window.removeEventListener('storage', changed); };
   }, [uid, publish, store]);
 
+  // Olvidar la edición de este navegador: desde el archivo pirata ("Reiniciar los Juegos") o al reiniciar Panem.
+  const clear = useCallback(() => {
+    try { window.localStorage.removeItem(keyFor(uid)); } catch { /* sin storage */ }
+    publish({ run: null, conflict: null, status: 'local', error: '' });
+  }, [uid, publish]);
+  useEffect(() => { if (resetEpoch) clear(); }, [resetEpoch, clear]);
+
   const update = useCallback((recipe) => {
     if (stateRef.current.account !== uid || !stateRef.current.ready || stateRef.current.conflict || saving.current) return null;
     const next = recipe(stateRef.current.run);
@@ -105,34 +113,28 @@ export default function GamesProvider({ children }) {
     finally { if (epoch === generation.current) saving.current = false; }
   }, [uid, publish]);
 
+  // Con cuenta, la edición se sube sola a la nube un momento después de cada cambio (ya no hay botón).
+  useEffect(() => {
+    if (!uid || !state.run || state.conflict) return undefined;
+    const timer = setTimeout(() => { if (stateRef.current.status === 'local') saveCloud(); }, 1500);
+    return () => clearTimeout(timer);
+  }, [uid, state.run, state.conflict, saveCloud]);
+
   const resolveConflict = useCallback((useIncoming) => {
     const chosen = useIncoming ? stateRef.current.conflict : stateRef.current.run;
     const error = store(chosen);
     publish({ run: chosen, conflict: null, status: 'local', error });
   }, [store, publish]);
-  const start = () => update(() => createRun(crypto.getRandomValues(new Uint32Array(1))[0], crypto.randomUUID()));
+  // La urna saca a uno de los tres según sus papeles (con la misma semilla de la edición: recargar no cambia quién salió).
+  const start = () => update(() => {
+    const seed = crypto.getRandomValues(new Uint32Array(1))[0];
+    return createRun(seed, crypto.randomUUID(), { protagonist: PROTAGONISTS[reapedDistrict(story.papers, seed)].tributeId });
+  });
   const draw = (all = false) => update((run) => drawPaper(run, all));
   const revealStage = () => update(finishReaping);
   const skipReaping = () => update((run) => finishReaping(drawPaper(run, true)));
   const select = (id) => update((run) => run && selectTribute(run, id));
   const prepare = (choices) => update((run) => run && prepareRun(run, choices, progress.litDistricts));
   const advance = (strategy) => update((run) => run && advanceRun(run, strategy));
-  const exportRun = () => {
-    if (!stateRef.current.run) return;
-    const url = URL.createObjectURL(new Blob([JSON.stringify(stateRef.current.run, null, 2)], { type: 'application/json' }));
-    const link = document.createElement('a'); link.href = url; link.download = `panem-${stateRef.current.run.id}.json`; link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
-  const importRun = async (file) => {
-    if (!file || file.size > 1000000 || saving.current || stateRef.current.conflict) return;
-    const epoch = generation.current;
-    try {
-      const incoming = JSON.parse(await file.text());
-      if (epoch !== generation.current) return;
-      if (!validateRun(incoming)) throw new Error('invalid');
-      if (stateRef.current.run && !sameRun(stateRef.current.run, incoming)) publish({ conflict: incoming, status: 'conflict', error: 'La copia importada es diferente. Elegí cuál conservar.' });
-      else publish({ run: incoming, status: 'local', error: store(incoming) });
-    } catch { publish({ error: 'El archivo no contiene una partida válida de esta versión.' }); }
-  };
-  return <Context.Provider value={{ ...state, ready: state.ready && state.account === uid, run: state.account === uid ? state.run : null, uid, start, draw, revealStage, skipReaping, select, prepare, advance, saveCloud, resolveConflict, exportRun, importRun }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ ...state, ready: state.ready && state.account === uid, run: state.account === uid ? state.run : null, uid, start, clear, draw, revealStage, skipReaping, select, prepare, advance, saveCloud, resolveConflict }}>{children}</Context.Provider>;
 }

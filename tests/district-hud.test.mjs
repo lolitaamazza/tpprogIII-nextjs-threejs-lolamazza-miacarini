@@ -63,14 +63,6 @@ test('encendido: solo el emblema', () => {
   assert.equal(hud.score, null);
 });
 
-test('Madera ahora ofrece su minijuego', () => {
-  const wood = getDistrict('7');
-  const hud = districtHud({ district: wood });
-  assert.equal(hud.kind, 'play');
-  assert.equal(hud.title, '7 · Madera');
-  assert.equal(hud.hint, wood.instruction);
-});
-
 test('el Distrito 13 es solo la etiqueta y la señal', () => {
   const d13 = getDistrict('13');
   const hidden = districtHud({ district: d13, progress: 0.4 });
@@ -82,4 +74,43 @@ test('el Distrito 13 es solo la etiqueta y la señal', () => {
   assert.deepEqual(found.tag, { text: 'Señal recuperada', live: true });
   assert.equal(found.signal, null);
   assert.equal(districtHud({ district: d13, webgl: false }).signal, null);
+});
+
+test('con la decisión de teselas pendiente, el distrito muestra la decisión', async () => {
+  const { createStory, completeDay } = await import('../lib/story.js');
+  const story = completeDay(createStory(), '12', { perfect: false });
+  const hud = districtHud({ district: coal, lit: true, story, day: null });
+  assert.equal(hud.kind, 'decision');
+  assert.equal(hud.who, 'Ash');
+  assert.deepEqual(hud.papers, { from: 5, to: 7 });
+  assert.equal(hud.cost, 2);
+});
+
+test('un día jugado dice cuántos papeles quedaron; uno que todavía no llegó dice "Mañana."', async () => {
+  const { createStory } = await import('../lib/story.js');
+  const story = createStory();
+  assert.match(districtHud({ district: coal, lit: true, story, day: { index: 1, district: '11' } }).hint, /El nombre de Ash está 5 veces en la urna/);
+  const fish = getDistrict('4');
+  const later = districtHud({ district: fish, lit: false, story, day: { index: 0, district: '12' } });
+  assert.equal(later.kind, 'tomorrow');
+  assert.equal(later.hint, 'En dos días.');
+  assert.equal(districtHud({ district: fish, lit: false, story, day: { index: 1, district: '11' } }).hint, 'Mañana.');
+});
+
+test('los otros distritos se exploran: sin contadores ni jornada', () => {
+  const wood = getDistrict('7');
+  const hud = districtHud({ district: wood });
+  assert.equal(hud.kind, 'explore');
+  assert.equal(hud.title, '7 · Madera');
+  assert.equal(hud.score, null);
+  assert.equal(hud.action, null);
+});
+
+test('un día ya jugado se puede volver a jugar (sin cambiar la historia): vuelve el minijuego', async () => {
+  const { createStory } = await import('../lib/story.js');
+  const story = createStory();
+  const again = districtHud({ district: coal, lit: true, practice: true, story, day: { index: 1, district: '11' }, match: start() });
+  assert.equal(again.kind, 'play');
+  assert.deepEqual(again.score, { label: 'Bloques', value: 0, total: 6 });
+  assert.equal(districtHud({ district: coal, lit: true, story, day: { index: 1, district: '11' } }).kind, 'done');
 });

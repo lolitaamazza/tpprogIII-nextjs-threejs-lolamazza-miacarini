@@ -3,7 +3,8 @@ import { WORKSHOPS } from './workshops.js';
 // Datos de las 14 piezas del mapa (13 distritos + Capitolio).
 // Sin imports con alias: este módulo también se prueba con `node --test`.
 
-export const PLAYABLE_IDS = ['12', '11', '4', '1', '2', '3', '5', '6', '7', '8', '9', '10'];
+// Los tres días de la historia; los talleres de los otros distritos se exploran (ver WORKSHOPS).
+export const PLAYABLE_IDS = ['12', '11', '4'];
 
 export const DISTRICTS = [
   { id: '1', number: '1', name: 'Distrito 1', industry: 'Lujo', color: '#5b5e64', litColor: '#ecdca8',
@@ -16,7 +17,7 @@ export const DISTRICTS = [
     quote: 'El mar no le pertenece al Capitolio. Solo lo que sale de él en las redes.',
     playable: true, layer: 'pad', actionsToComplete: 3, actionLabel: 'Lanzar red',
     instruction: 'Mantené apretado sobre el agua y soltá sobre los peces.',
-    hud: { score: 'Peces', lives: 'Redes' }, keyHint: 'Con el botón o la barra espaciadora: una vez carga la red, otra vez la tira.',
+    hud: { score: 'Peces', lives: 'Redes' }, keyHint: 'Con el botón o la barra espaciadora. La primera vez carga la red y la segunda la tira.',
     lostMessage: 'Se terminaron las redes. Los peces siguen ahí.', helpNote: 'Ahora el agua está calma y la red es más grande.' },
   { id: '5', number: '5', name: 'Distrito 5', industry: 'Energía', color: '#6b6a45', litColor: '#e8e46c',
     quote: 'Las turbinas no descansan. Cuando se detienen, Panem entero se queda a oscuras.' },
@@ -35,20 +36,20 @@ export const DISTRICTS = [
     playable: true, layer: 'silbido', actionsToComplete: 4, actionLabel: 'Cosechar',
     instruction: 'Cosechá lejos del reflector.',
     songInstruction: 'Repetí el silbido tocando a los sinsajos.', songActionLabel: 'Escuchar de nuevo',
-    hud: { score: 'Espigas', song: 'Silbido', lives: 'Sigilo' }, keyHint: 'Con el botón o la barra espaciadora se cosecha de a tres espigas: esperá que pase la luz.',
+    hud: { score: 'Espigas', song: 'Silbido', lives: 'Sigilo' }, keyHint: 'Con el botón o la barra espaciadora se cosechan tres espigas por vez. Esperá a que pase la luz.',
     songKeyHint: 'También con las teclas 1 a 4.',
-    lostMessage: 'Te vieron tres veces: los Agentes de la Paz cerraron el campo por hoy.', helpNote: 'Ahora el reflector es más chico y más lento.' },
+    lostMessage: 'Te vieron tres veces. Los Agentes de la Paz cerraron el campo por hoy.', helpNote: 'Ahora el reflector es más chico y más lento.' },
   { id: '12', number: '12', name: 'Distrito 12', industry: 'Carbón', color: '#5b5049', litColor: '#ff7a2f',
     quote: 'Bajo el polvo del carbón siempre queda una brasa.',
     playable: true, layer: 'percusion', actionsToComplete: 6, actionLabel: 'Picar',
     instruction: 'Picá cuando la luz pase por la grieta.',
     hud: { score: 'Bloques', lives: 'Canario' }, keyHint: 'También con el botón o la barra espaciadora.',
-    lostMessage: 'El canario dejó de cantar: hay que salir a respirar.', helpNote: 'Ahora la grieta es más ancha y la luz va más lenta.' },
+    lostMessage: 'El canario dejó de cantar. Hay que salir a respirar.', helpNote: 'Ahora la grieta es más ancha y la luz va más lenta.' },
   { id: '13', number: '13', name: 'Distrito 13', industry: 'Clasificado', color: '#6d6d6d', litColor: '#ffffff',
     quote: 'Según el Capitolio, acá no queda nada. Entonces, ¿quién sigue transmitiendo?', classified: true },
   { id: 'c', number: 'C', name: 'El Capitolio', industry: 'Gobierno', color: '#6a6a6a', litColor: '#ff3b3b',
     quote: 'Desde acá se transmite todo lo que Panem tiene permitido ver.' },
-].map((d) => ({ playable: false, classified: false, ...d, ...(WORKSHOPS[d.id] ? { playable:true, layer:WORKSHOPS[d.id].layer, actionsToComplete:WORKSHOPS[d.id].goal, actionLabel:WORKSHOPS[d.id].action, instruction:WORKSHOPS[d.id].hint, hud:{score:WORKSHOPS[d.id].score,lives:'Intentos'}, lostMessage:'El taller cerró. Podés volver a intentarlo.', helpNote:WORKSHOPS[d.id].mode==='sequence'?'Ahora las luces muestran el patrón más despacio.':WORKSHOPS[d.id].mode==='choice'?'Ahora el destino correcto se ilumina.':'Ahora tenés más tiempo y una zona de acierto más amplia.' } : {}) }));
+].map((d) => ({ playable: false, classified: false, explore: Boolean(WORKSHOPS[d.id]), ...d }));
 
 export const DISTRICT_ROUTE_IDS = Array.from({ length: 13 }, (_, i) => String(i + 1));
 export const MAP_IDS = [...DISTRICT_ROUTE_IDS, 'c'];

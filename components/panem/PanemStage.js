@@ -20,7 +20,7 @@ export default function PanemStage() {
     callbacksRef.current = {
       onHover: panem.setHovered, onSelect: panem.selectDistrict, onBack: panem.goToMap,
       onClassifiedProgress: panem.classifiedProgress, onClassifiedReveal: panem.revealClassified,
-      onProgress: panem.handleProgress, onMatch: panem.handleMatch, onComplete: panem.handleComplete, sfx: panem.sfx,
+      onProgress: panem.handleProgress, onMatch: panem.handleMatch, onComplete: panem.handleComplete, onFragment: panem.handleFragment, sfx: panem.sfx,
     };
   });
 
@@ -37,7 +37,8 @@ export default function PanemStage() {
         onPickTribute: (id) => window.dispatchEvent(new CustomEvent('panem-pick-tribute', { detail: id })),
         onProgress: (id, value) => callbacksRef.current?.onProgress(id, value),
         onMatch: (id, match) => callbacksRef.current?.onMatch(id, match),
-        onComplete: (id) => callbacksRef.current?.onComplete(id),
+        onComplete: (id, result) => callbacksRef.current?.onComplete(id, result),
+        onFragment: (id) => callbacksRef.current?.onFragment(id),
         sfx: { play: (name) => callbacksRef.current?.sfx.play(name) },
         onError: (error) => {
           console.error('No se pudo cargar el mapa 3D:', error);
@@ -62,6 +63,11 @@ export default function PanemStage() {
 
   useEffect(() => { stageApiRef.current?.setRoute(stageRoute); }, [stageRoute, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setLit(visibleLit, progress.litDistricts); }, [visibleLit, progress.litDistricts, stageApiRef]);
+  // La jornada que se puede jugar ahora: la del día, y solo después de decidir las teselas del anterior.
+  const playableKey = !panem.storyReady ? null : panem.story.pending || !panem.day ? '' : panem.day.district;
+  useEffect(() => { if (playableKey !== null) stageApiRef.current?.setPlayable(playableKey ? [playableKey] : []); }, [playableKey, stageApiRef]);
+  useEffect(() => { stageApiRef.current?.setFragmentsFound(panem.story.fragments); }, [panem.story.fragments, stageApiRef]);
+  useEffect(() => { stageApiRef.current?.setPractice(panem.practice); }, [panem.practice, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setHovered(hovered); }, [hovered, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setReducedMotion(reducedMotion); }, [reducedMotion, stageApiRef]);
   useEffect(() => { stageApiRef.current?.setClassifiedRevealed(classified.revealed); }, [classified.revealed, stageApiRef]);
