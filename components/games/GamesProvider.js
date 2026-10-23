@@ -136,5 +136,23 @@ export default function GamesProvider({ children }) {
   const select = (id) => update((run) => run && selectTribute(run, id));
   const prepare = (choices) => update((run) => run && prepareRun(run, choices, progress.litDistricts));
   const advance = (strategy) => update((run) => run && advanceRun(run, strategy));
-  return <Context.Provider value={{ ...state, ready: state.ready && state.account === uid, run: state.account === uid ? state.run : null, uid, start, clear, draw, revealStage, skipReaping, select, prepare, advance, saveCloud, resolveConflict }}>{children}</Context.Provider>;
+  // Descargar e importar la edición (de Lola). Sin botones por ahora: Mia los sacó del archivo; el código queda.
+  const exportRun = () => {
+    if (!stateRef.current.run) return;
+    const url = URL.createObjectURL(new Blob([JSON.stringify(stateRef.current.run, null, 2)], { type: 'application/json' }));
+    const link = document.createElement('a'); link.href = url; link.download = `panem-${stateRef.current.run.id}.json`; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+  const importRun = async (file) => {
+    if (!file || file.size > 1000000 || saving.current || stateRef.current.conflict) return;
+    const epoch = generation.current;
+    try {
+      const incoming = JSON.parse(await file.text());
+      if (epoch !== generation.current) return;
+      if (!validateRun(incoming)) throw new Error('invalid');
+      if (stateRef.current.run && !sameRun(stateRef.current.run, incoming)) publish({ conflict: incoming, status: 'conflict', error: 'La copia importada es diferente. Elegí cuál conservar.' });
+      else publish({ run: incoming, status: 'local', error: store(incoming) });
+    } catch { publish({ error: 'El archivo no contiene una partida válida de esta versión.' }); }
+  };
+  return <Context.Provider value={{ ...state, ready: state.ready && state.account === uid, run: state.account === uid ? state.run : null, uid, start, clear, draw, revealStage, skipReaping, select, prepare, advance, saveCloud, resolveConflict, exportRun, importRun }}>{children}</Context.Provider>;
 }

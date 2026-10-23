@@ -14,11 +14,11 @@ test('cada día cuenta cuánto falta para la Cosecha y a quién le toca', () => 
 test('con una decisión pendiente, lleva de vuelta al distrito', () => {
   const copy = mapIntroCopy({ phase: 'decision', pending: { district: '11', cost: 2 } });
   assert.match(copy.text, /Oliva/);
-  assert.deepEqual(copy.action, { label: 'Volver al Distrito 11', href: '/distrito/11' });
+  assert.deepEqual(copy.action, { label: 'Volver al Distrito 11', href: '/escena/11' });
 });
 
 test('hecho el tercer día: a la plaza; terminados los Juegos: al Capitolio; terminado todo, sin oscuridad', () => {
-  assert.deepEqual(mapIntroCopy({ phase: 'cosecha' }).action, { label: 'Ir a la plaza', href: '/cosecha' });
+  assert.deepEqual(mapIntroCopy({ phase: 'cosecha' }).action, { label: 'Ir a la plaza', href: '/plazas' });
   assert.equal(mapIntroCopy({ phase: 'cosecha' }).title, 'Hoy es la Cosecha.');
   assert.deepEqual(mapIntroCopy({ phase: 'games-ended' }).action, { label: 'Ir al Capitolio', href: '/capitolio' });
   const done = mapIntroCopy({ phase: 'games-ended', completed: true });

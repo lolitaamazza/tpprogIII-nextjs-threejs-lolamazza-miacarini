@@ -249,6 +249,12 @@ body.is-burning .overlay, body.is-burning .site-header { opacity: 0.12; filter: 
 .fragment-stamp { position: absolute; top: 40px; right: 18px; padding: 2px 8px; border: 2px solid #7b000199; color: #7b000199; font: 600 12px/1 var(--font-display); letter-spacing: .2em; text-transform: uppercase; transform: rotate(-9deg); text-decoration: line-through; pointer-events: none; }
 .fragment-close { position: absolute; top: 4px; right: 6px; padding: 2px 8px; border: 0; color: #2a181099; font: 18px/1 var(--font-body); }
 .fragment-close:hover, .fragment-close:focus-visible { color: #2a1810; }
+/* Herramientas, marcas y pistas usan la misma tarjeta, sin el sello de "Classified". */
+.fragment-card:not(.fragment-card-fragment) h2 { padding-right: 24px; }
+.fragment-card-tool .fragment-meta { color: #7a4a10; }
+.fragment-card-mark { border-top: 3px solid var(--gold); }
+.fragment-card-mark .fragment-meta { color: #6b5208; }
+.fragment-card-hint .fragment-meta { color: #4a4036; }
 @keyframes fragment-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 16px)) rotate(-3deg) scale(.96); } }
 @media (prefers-reduced-motion: reduce) { .fragment-card { animation: none; } }
 
@@ -266,6 +272,7 @@ body.is-burning .overlay, body.is-burning .site-header { opacity: 0.12; filter: 
 .archive-fragments li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 6px 0; border-bottom: 1px solid #ffffff10; color: #ffffff4d; font-size: 13px; }
 .archive-fragments li > span { font-family: var(--font-display); color: inherit; }
 .archive-fragments li.found { color: var(--ink); }
+.archive-empty { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
 .archive-fragments li.found > span { color: var(--gold); }
 .archive-fragments strong { font-family: var(--font-display); font-weight: 400; letter-spacing: .06em; text-transform: uppercase; }
 .archive-fragments p { margin: 2px 0 0; color: var(--muted); font: 12.5px/1.45 ui-monospace, 'SFMono-Regular', Menlo, monospace; }
@@ -298,3 +305,13 @@ body.is-burning .overlay, body.is-burning .site-header { opacity: 0.12; filter: 
 .location-fade.on { opacity: 1; }
 @media (max-width: 720px) { .location-place { top: 160px; left: 16px; right: 16px; transform: none; text-align: center; } .location-spots { left: 16px; right: 16px; transform: none; max-width: none; } }
 .location .location-hud { bottom: calc(max(20px, env(safe-area-inset-bottom, 0px)) + 62px); z-index: 2; }
+/* El tren: a dónde va, arriba; saltear, abajo a la derecha. */
+.train-label { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); margin: 0; font: 500 15px/1.2 var(--font-display); letter-spacing: 0.18em; text-transform: uppercase; text-shadow: 0 1px 12px #000; pointer-events: none; z-index: 2; }
+.plaza-card { z-index: 2; display: grid; gap: 8px; justify-items: center; }
+.plaza-card p { margin: 0; }
+.plaza-name { font: 600 34px/1 var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+.plaza-line { color: var(--muted); font-size: 13px; }
+.train-skip { position: absolute; right: 24px; bottom: max(24px, env(safe-area-inset-bottom, 0px)); z-index: 2; }
+/* Mantener presionado: una barra fina justo debajo de donde se apoyó el dedo (o el puntero). */
+.hold-meter { position: absolute; left: 50%; top: calc(50% + 34px); width: 96px; height: 3px; transform: translateX(-50%); background: #ffffff26; pointer-events: none; }
+.hold-meter span { position: absolute; inset: 0; background: var(--gold); transform-origin: left; transition: transform .08s linear; }

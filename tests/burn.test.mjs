@@ -1,12 +1,28 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  BURN_AUDIO_SRC, BURN_LIT_IDS, BURN_MESSAGE, BURN_TIMING, burnPlan, volumeAt,
+  BURN_AUDIO_SRC, BURN_LIT_IDS, BURN_MESSAGE, BURN_TIMING, burnPlan, completesEmblems, volumeAt,
 } from '../lib/burn.js';
+import { EMPTY_PROGRESS } from '../lib/progress.js';
+
+const progress = (litDistricts) => ({ ...EMPTY_PROGRESS, litDistricts });
 
 test('el mensaje es exactamente el pedido y se parte en palabras', () => {
   assert.equal(BURN_MESSAGE, 'If we burn, you burn with us');
   assert.deepEqual(burnPlan().words, ['If', 'we', 'burn,', 'you', 'burn', 'with', 'us']);
+});
+
+test('el incendio solo se dispara con el emblema que completa el tercero', () => {
+  assert.equal(completesEmblems(progress([]), '12'), false);
+  assert.equal(completesEmblems(progress(['12']), '11'), false);
+  assert.equal(completesEmblems(progress(['12', '11']), '4'), true);
+  assert.equal(completesEmblems(progress(['11', '4']), '12'), true, 'el orden de los distritos no importa');
+});
+
+test('no se vuelve a disparar con los tres ya encendidos, ni con un distrito repetido o inválido', () => {
+  assert.equal(completesEmblems(progress(['12', '11', '4']), '4'), false);
+  assert.equal(completesEmblems(progress(['12', '11']), '11'), false);
+  assert.equal(completesEmblems(progress(['12', '11']), '13'), false, 'el 13 conserva su revelación secreta');
 });
 
 test('durante el incendio se encienden los distritos, pero no el Capitolio ni el 13', () => {

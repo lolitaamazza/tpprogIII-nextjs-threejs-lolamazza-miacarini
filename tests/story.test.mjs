@@ -63,6 +63,34 @@ test('un fragmento encontrado cuenta una sola vez', () => {
   assert.deepEqual(story.fragments, ['12-viga']);
 });
 
+test('herramientas, marcas y pistas se guardan una sola vez', async () => {
+  const { takeTool, findMark, findHint } = await import('../lib/story.js');
+  let story = takeTool(takeTool(createStory(), 'farol'), 'farol');
+  assert.deepEqual(story.tools, ['farol']);
+  story = findMark(findMark(story, 'm-7-bosque'), 'm-7-bosque');
+  assert.deepEqual(story.marks, ['m-7-bosque']);
+  story = findHint(findHint(story, 'p-12-cartel'), 'p-12-cartel');
+  assert.deepEqual(story.hints, ['p-12-cartel']);
+  assert.equal(takeTool(story, 'farol'), story, 'lo que ya está no cambia la historia');
+});
+
+test('recargar conserva herramientas, marcas y pistas conocidas y descarta lo inventado', async () => {
+  const { takeTool } = await import('../lib/story.js');
+  const story = { ...takeTool(createStory(), 'farol'), marks: ['m-2-cueva', 'm-99'], hints: ['p-12-libreta', 'farol'] };
+  const back = normalizeStory(JSON.parse(JSON.stringify({ ...story, tools: ['farol', 'inventada', 'farol'] })));
+  assert.deepEqual(back.tools, ['farol']);
+  assert.deepEqual(back.marks, ['m-2-cueva']);
+  assert.deepEqual(back.hints, ['p-12-libreta'], 'una herramienta no vale como pista');
+});
+
+test('una historia guardada antes de las pistas queda con las listas vacías', () => {
+  const old = { version: 1, papers: { 12: 5, 11: 4, 4: 3 }, tesserae: {}, pending: null, fragments: ['12-viga'], gamesEnded: false };
+  const back = normalizeStory(old);
+  assert.deepEqual([back.tools, back.marks, back.hints], [[], [], []]);
+  assert.deepEqual(back.fragments, ['12-viga']);
+  assert.deepEqual([createStory().tools, createStory().marks, createStory().hints], [[], [], []]);
+});
+
 test('la urna siempre saca a uno de los tres, más seguido a quien tiene más papeles, y igual con la misma semilla', () => {
   const papers = { 12: 9, 11: 1, 4: 1 };
   assert.equal(reapedDistrict(papers, 1234), reapedDistrict(papers, 1234));
@@ -106,4 +134,16 @@ test('el cierre dice quién fue a la arena, con cuántos papeles, y cuántos fra
   ]);
   assert.deepEqual(endingLines({ ...story, fragments: ['12-viga'] }, null), ['Los fragmentos no alcanzaron para una transmisión. Quedan en el archivo.']);
   assert.equal(endingLines({ ...story, fragments: [] }, '12')[1], 'Ningún fragmento salió al aire.');
+});
+
+test('con seis marcas del sinsajo o más, el final suma la voz de la resistencia', async () => {
+  const { endingLines } = await import('../lib/story.js');
+  const { MARKS } = await import('../lib/clues.js');
+  const base = { ...createStory(), fragments: ['12-viga', '4-cuenco', '7-tronco', '13-signal'] };
+  const six = endingLines({ ...base, marks: MARKS.slice(0, 6).map((m) => m.id) }, '12');
+  assert.equal(six.at(-1), 'La resistencia habló en la transmisión. Se encontraron 6 de 9 marcas del sinsajo.');
+  assert.equal(six.length, 3);
+  const five = endingLines({ ...base, marks: MARKS.slice(0, 5).map((m) => m.id) }, '12');
+  assert.equal(five.length, 2);
+  assert.ok(!five.some((line) => line.includes('resistencia')));
 });

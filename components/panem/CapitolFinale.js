@@ -162,6 +162,9 @@ export default function CapitolFinale() {
           {' '}<a href="https://sketchfab.com/3d-models/rigged-t-pose-human-male-w-50-face-blendshapes-cc7e4596bcd145208a6992c757854c07" target="_blank" rel="noreferrer">humano masculino</a> · Mike Alger / Doob / High Fidelity;
           {' '}<a href="https://sketchfab.com/3d-models/valery-tpose-blender-rigged-woman-1cce3c0410634a9497fec3afc1fb8eda" target="_blank" rel="noreferrer">Valery</a> · xander.dice (Sketchfab, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>).
           Distrito 12 (Sketchfab, CC BY 4.0): Abandoned Mine · Miguel-Angel; Mine Cart 3December 2022 · watermelon256; Abandoned House · Sengchor; Abandoned House · DMC_RELAX; Copper And Glass Hand Lamp · Portland Museum.
+          {' '}Distrito 11 (Sketchfab, CC BY 4.0): Old Wooden Watchtower · Blenderust; Wooden Cabin · donnichols; Crate of Pears · Meerschaum Digital; Ladder Wooden y Scarecrow · Mehdi Shahsavan; Wooden Wheelbarrow · Peter Nox.
+          {' '}Distrito 4 (Sketchfab, CC BY 4.0): Old Lighthouse · Nirved Kamble; Fishing boat · Aurélien Duval; Fishing boat · Pabooklas; Fishing net · Alex Martire; Fishing Supplies Set · FrodoUndead; Skipskranen · Tidvis; Glass Bowl · Juan Carlos.
+          {' '}El tren y las plazas (Sketchfab, CC BY 4.0): Train&apos;s Compartments · ROY; Utrecht Stadhuis · Dybo; Classical Pillar · Samuel F. Angrick-Johanns; RCA 44-BX Microphone · Tom Seddon.
           Packs de Kenney (CC0); materiales, roca e iluminación de <a href="https://polyhaven.com" target="_blank" rel="noreferrer">Poly Haven</a> (CC0). Detalle en <code>public/models/CREDITS.md</code>.
         </p>
       </details>

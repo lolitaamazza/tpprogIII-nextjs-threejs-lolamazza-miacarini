@@ -3,20 +3,25 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { usePathname, useRouter } from 'next/navigation';
 import { useProgress } from '@/hooks/useProgress';
 import { AudioEngine } from '@/lib/audio/AudioEngine';
-import { routeFromPathname } from '@/lib/routes';
+import { districtPath, routeFromPathname } from '@/lib/routes';
 import { canEnterCapitol } from '@/lib/progress';
 import { BURN_LIT_IDS } from '@/lib/burn';
 import * as Story from '@/lib/story';
 import CapitolBulletin from './CapitolBulletin';
 import FragmentCard from './FragmentCard';
 import { SIGNAL_FRAGMENT } from '@/lib/fragments';
+import { clueById } from '@/lib/clues';
 import { MAP_IDS, getDistrict } from '@/data/districts';
 
 const PanemContext = createContext(null);
 const SOUND_KEY = 'panem-sound';
 const CLASSIFIED_KEY = 'panem-d13-v1'; // si ya se descubrió la señal oculta del Distrito 13
-const STORY_KEY = 'panem-cosecha-v1'; // la historia: papeles, teselas, la decisión pendiente y los fragmentos
+const STORY_KEY = 'panem-cosecha-v1'; // la historia: papeles, teselas, la decisión pendiente, los fragmentos y las pistas
 const GAMES_PREFIX = 'panem-games-v1:'; // la edición de los Juegos (la guarda GamesProvider)
+
+// Cómo se guarda y cómo suena cada tipo de pista al encontrarla.
+const CLUE_SAVE = { fragment: Story.findFragment, tool: Story.takeTool, mark: Story.findMark, hint: Story.findHint };
+const CLUE_SOUND = { fragment: 'tvOn', tool: 'pick', mark: 'whistle', hint: 'tick' };
 
 // Lo que ya se sabía del minijuego, si sigue siendo el mismo distrito.
 const sameDistrict = (current, districtId) => (current.districtId === districtId ? current : {});
@@ -57,7 +62,7 @@ export default function PanemProvider({ children }) {
   const [storyReady, setStoryReady] = useState(false);
   const [resetEpoch, setResetEpoch] = useState(0); // GamesProvider lo escucha para olvidar su edición
   const [bulletin, setBulletin] = useState(null); // la tele del Capitolio después de decidir las teselas (id del día)
-  const [shownFragment, setShownFragment] = useState(null); // la tarjeta del fragmento recién tocado
+  const [shownFragment, setShownFragment] = useState(null); // la tarjeta de lo recién encontrado (fragmento, herramienta, marca o pista)
   const [practice, setPractice] = useState(null); // un día ya jugado que se vuelve a jugar por gusto (no cambia la historia)
   // Salir del distrito termina la práctica.
   const [practiceRoute, setPracticeRoute] = useState(route.districtId);
@@ -164,7 +169,7 @@ export default function PanemProvider({ children }) {
     }
     if (!getDistrict(id)) return;
     sfx.play('click');
-    router.push(`/distrito/${id}`);
+    router.push(districtPath(id)); // en tren a la escena del distrito, o a su maqueta
   }, [progress, story.gamesEnded, notify, sfx, router]);
 
   // Tocar el mapa fuera del minijuego cierra el panel del distrito.
@@ -198,6 +203,9 @@ export default function PanemProvider({ children }) {
 
   const decideTesserae = useCallback((accept) => setStory((current) => Story.decideTesserae(current, accept)), []);
   const findFragment = useCallback((id) => setStory((current) => Story.findFragment(current, id)), []);
+  const takeTool = useCallback((id) => setStory((current) => Story.takeTool(current, id)), []);
+  const findMark = useCallback((id) => setStory((current) => Story.findMark(current, id)), []);
+  const findHint = useCallback((id) => setStory((current) => Story.findHint(current, id)), []);
   const markGamesEnded = useCallback(() => setStory(Story.markGamesEnded), []);
   const closeBulletin = useCallback(() => setBulletin(null), []);
   const closeFragment = useCallback(() => setShownFragment(null), []);
@@ -216,12 +224,16 @@ export default function PanemProvider({ children }) {
     if (next >= district.actionsToComplete) handleComplete(district.id);
   }, [route, progress.litDistricts, story.pending, day, practice, fallbackCounts, sfx, handleProgress, handleComplete]);
 
-  // Tocar un fragmento en una maqueta: se guarda (una sola vez) y aparece su tarjeta.
-  const handleFragment = useCallback((id) => {
-    setStory((current) => Story.findFragment(current, id));
+  // Encontrar algo (un fragmento en una maqueta o en una escena, una herramienta, una marca o una pista):
+  // se guarda en la historia una sola vez y aparece su tarjeta.
+  const handleClue = useCallback((id) => {
+    const clue = clueById(id);
+    if (!clue) return;
+    setStory((current) => CLUE_SAVE[clue.kind](current, id));
     setShownFragment(id);
-    sfx.play('tvOn');
+    sfx.play(CLUE_SOUND[clue.kind]);
   }, [sfx]);
+  const handleFragment = handleClue;
 
   const classifiedProgress = useCallback((value) => setClassified((current) => (current.revealed ? current : { ...current, progress: value })), []);
   const revealClassified = useCallback(() => {
@@ -253,7 +265,7 @@ export default function PanemProvider({ children }) {
   }, [progress, notify, router]);
 
   const value = {
-    route, progress, story, storyReady, day, phase, decideTesserae, findFragment, markGamesEnded, resetEpoch, bulletin, showBulletin: setBulletin, closeBulletin, shownFragment, closeFragment, handleFragment, practice, replayDay, audioState, startAudio, toggleSound, sfx, hovered, setHovered,
+    route, progress, story, storyReady, day, phase, decideTesserae, findFragment, takeTool, findMark, findHint, handleClue, markGamesEnded, resetEpoch, bulletin, showBulletin: setBulletin, closeBulletin, shownFragment, closeFragment, handleFragment, practice, replayDay, audioState, startAudio, toggleSound, sfx, hovered, setHovered,
     interaction, performAction, retryMinigame, minigameInput, selectDistrict, goToMap, classified, classifiedProgress, revealClassified, handleProgress, handleMatch, handleComplete,
     stageApiRef, webglFailed, setWebglFailed, mapFailed, setMapFailed, finalePlaying, setFinalePlaying,
     burning, setBurning, visibleLit, reducedMotion, notify, resetAll,

@@ -41,6 +41,45 @@ De Poly Haven (CC0, sin crédito obligatorio): pico, maza, dos faroles, cajón, 
 
 Los mismos créditos y enlaces están disponibles en «Créditos de los modelos 3D» dentro del juego.
 
+## Distrito 11 (escena)
+
+Descargados desde Sketchfab como GLB por Mia (sesión iniciada). Licencia CC BY 4.0. Cambios: texturas a WebP 1K, geometría cuantizada, escala y posición en la escena (`scripts/optimize-d11.sh`).
+
+- Old Wooden Watchtower (House 3) — Blenderust · https://sketchfab.com/3d-models/49b77f82b0944d5188c04c3fc205a499 · Archivo: d11/torre.glb
+- Wooden Cabin — donnichols · https://sketchfab.com/3d-models/c90674a377864ac1b8fd141ad1917ee3 · Archivos: d11/cabana.glb y d4/casa.glb
+- Crate of Pears (Game Ready / 4K PBR) — Meerschaum Digital · https://sketchfab.com/3d-models/f4c3ab39ce8b429082a6f0f598e6b2cf · Archivo: d11/cajon-peras.glb
+- Ladder Wooden — Mehdi Shahsavan · https://sketchfab.com/3d-models/ac0f3a019aa94649bc9a24904e8be4b8 · Archivo: d11/escalera.glb
+- Wooden Wheelbarrow — Peter Nox · https://sketchfab.com/3d-models/48314bafaffc4593ba1d7a5af31810c6 · Archivo: d11/carretilla.glb
+- Scarecrow — Mehdi Shahsavan · https://sketchfab.com/3d-models/38b41b2deeb24b1d877c2551526d5654 · Archivo: d11/espantapajaros.glb
+
+De Poly Haven (CC0): el peral (simplificado), las peras, la canasta, el alambrado, el reflector, el pasto, la textura de barro con hojas y el cielo `citrus_orchard_road_puresky`. La chapa del galpón es la del 12.
+
+## Distrito 4 (escena)
+
+Descargados desde Sketchfab como GLB por Mia (sesión iniciada). Licencia CC BY 4.0. Cambios: texturas a WebP 1K (512 en el cuenco), geometría cuantizada, materiales pasados a metal y rugosidad en el pesquero y el cuenco, escala y posición en la escena (`scripts/optimize-d4.sh`).
+
+- Old Lighthouse — Nirved Kamble · https://sketchfab.com/3d-models/19e1ff049db74dc8b6173976417c1048 · Archivo: d4/faro.glb
+- Fishing boat — Aurélien Duval · https://sketchfab.com/3d-models/2f894eb760ca49eca14c38c2d49058a1 · Archivo: d4/bote-grande.glb
+- Fishing boat — Pabooklas · https://sketchfab.com/3d-models/f4b38ccf5ffb46018aa7931c0e106654 · Archivo: d4/bote-marin.glb
+- Fishing net (Rede de pesca) — Alex Martire · https://sketchfab.com/3d-models/cab12e62c8dd46cdbb6b250c2a3c1306 · Archivo: d4/red.glb
+- Fishing Supplies Set — FrodoUndead · https://sketchfab.com/3d-models/8742c7af23584443a42c24e52d25b60c · Archivo: d4/aparejos.glb
+- Skipskranen — Tidvis · https://sketchfab.com/3d-models/bac9cbe7113c447b8705c6e894744ff3 · Archivo: d4/grua.glb
+- Glass Bowl — Juan Carlos · https://sketchfab.com/3d-models/bcf3a4e49ee14eeda2faca7c7455161d · Archivo: d4/cuenco.glb
+
+De Poly Haven (CC0): el muelle, las rocas de la costa (simplificadas), la boya, el salvavidas, los barriles, el balde, la arena y el cielo `kiara_1_dawn`.
+
+## El tren y las plazas de la Cosecha
+
+Descargados desde Sketchfab como GLB por Mia (sesión iniciada). Licencia CC BY 4.0. Cambios: texturas a WebP (512 en el vagón y el micrófono), geometría cuantizada, las vías del vagón escondidas y sus ventanas como vidrio, materiales pasados a metal y rugosidad en la urna y la columna (`scripts/optimize-cosecha.sh`).
+
+- Train's Compartments — ROY · https://sketchfab.com/3d-models/1294e12d347741d9a920669b9db663ad · Archivo: tren/vagon.glb
+- Utrecht Stadhuis/City Hall — Dybo · https://sketchfab.com/3d-models/4853a41f3ef4437d812bd80571fc4d67 · Archivo: plaza/edificio.glb (el Edificio de Justicia)
+- Classical Pillar — Samuel F. Angrick-Johanns (Oneironauticus) · https://sketchfab.com/3d-models/986de1bfeeb643a4bde9e09a49668d5a · Archivo: plaza/columna.glb
+- RCA 44-BX Microphone — Tom Seddon · https://sketchfab.com/3d-models/c6b0d7c071964652be6aa900b146ed53 · Archivo: plaza/microfono.glb
+- Glass Bowl — Juan Carlos · https://sketchfab.com/3d-models/bcf3a4e49ee14eeda2faca7c7455161d · Archivo: plaza/urna.glb (la urna)
+
+Los adoquines, los carteles del Capitolio, el escenario, la gente en silueta y el paisaje del tren están hechos con código. El cielo es el del 11.
+
 ## Dioramas de los distritos 12, 11 y 4
 
 Modelos de **Kenney** (www.kenney.nl), licencia Creative Commons Zero (CC0): https://creativecommons.org/publicdomain/zero/1.0/

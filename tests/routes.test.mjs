@@ -16,7 +16,16 @@ test('rutas inválidas caen en el mapa', () => {
   }
 });
 
-test('la escena de prueba del Distrito 12 tiene su ruta; las demás escenas todavía no existen', () => {
-  assert.deepEqual(routeFromPathname('/escena/12'), { scene: 'escena', districtId: '12' });
-  for (const p of ['/escena/99', '/escena/4', '/escena']) assert.deepEqual(routeFromPathname(p), { scene: 'mapa', districtId: null }, p);
+test('las escenas de los tres días tienen su ruta; las demás todavía no existen', () => {
+  for (const id of ['12', '11', '4']) assert.deepEqual(routeFromPathname(`/escena/${id}`), { scene: 'escena', districtId: id });
+  for (const p of ['/escena/99', '/escena/7', '/escena']) assert.deepEqual(routeFromPathname(p), { scene: 'mapa', districtId: null }, p);
+});
+
+test('el tren a un distrito con escena y la Cosecha por plazas tienen su ruta', async () => {
+  const { districtPath } = await import('../lib/routes.js');
+  for (const id of ['12', '11', '4']) assert.deepEqual(routeFromPathname(`/tren/${id}`), { scene: 'tren', districtId: id });
+  assert.deepEqual(routeFromPathname('/tren/7'), { scene: 'mapa', districtId: null });
+  assert.deepEqual(routeFromPathname('/plazas'), { scene: 'plazas', districtId: null });
+  assert.equal(districtPath('12'), '/tren/12', 'los distritos con escena se viajan en tren');
+  assert.equal(districtPath('7'), '/distrito/7', 'los demás siguen yendo a su maqueta');
 });

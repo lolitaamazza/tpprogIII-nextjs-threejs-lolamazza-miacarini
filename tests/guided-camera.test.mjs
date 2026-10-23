@@ -60,3 +60,11 @@ test('las teclas 1 a 5 eligen un lugar', () => {
   assert.equal(spotForKey('9', DISTRICT12.spots), null);
   assert.equal(spotForKey('a', DISTRICT12.spots), null);
 });
+
+test('un lugar que pide una herramienta aparece en la fila recién cuando se tiene', async () => {
+  const { visibleSpots, spotForKey } = await import('../lib/guidedCamera.js');
+  const spots = [{ id: 'a' }, { id: 'sotano', requires: 'farol' }, { id: 'b' }];
+  assert.deepEqual(visibleSpots(spots, []).map((s) => s.id), ['a', 'b']);
+  assert.deepEqual(visibleSpots(spots, ['farol']).map((s) => s.id), ['a', 'sotano', 'b']);
+  assert.equal(spotForKey('2', visibleSpots(spots, [])), 'b', 'las teclas siguen el orden de lo que se ve');
+});
