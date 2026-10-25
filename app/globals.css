@@ -292,19 +292,27 @@ body.is-burning .overlay, body.is-burning .site-header { opacity: 0.12; filter: 
 .location { position: fixed; inset: 0; z-index: 1; pointer-events: auto; background: #07080b; }
 .location-mount, .location-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 .location-mount { touch-action: none; }
+.location-exit { border: 0; background: transparent; padding: 0; }
 .location-top { z-index: 2; }
-.location-loading { position: absolute; left: 50%; bottom: max(32px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); margin: 0; padding: 10px 16px; background: #0b0b0ccc; font-family: var(--font-display); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); text-align: center; max-width: calc(100vw - 32px); }
+.location-loading { z-index: 6; position: absolute; left: 50%; bottom: max(32px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); margin: 0; padding: 10px 16px; background: #0b0b0ccc; font-family: var(--font-display); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); text-align: center; max-width: calc(100vw - 32px); }
 .location-place { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); margin: 0; display: grid; justify-items: center; gap: 4px; font: 500 15px/1.2 var(--font-display); letter-spacing: 0.18em; text-transform: uppercase; text-shadow: 0 1px 12px #000; pointer-events: none; }
 .location-place span { font: 13px/1.4 var(--font-body); letter-spacing: 0; text-transform: none; color: var(--muted); }
-.location-spots { position: absolute; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; gap: 6px; max-width: calc(100vw - 32px); overflow-x: auto; padding: 6px; background: #07080bb3; backdrop-filter: blur(6px); scrollbar-width: none; }
-.location-spots button { display: flex; align-items: baseline; gap: 8px; padding: 8px 14px; border: 0; border-bottom: 1px solid transparent; background: transparent; color: var(--muted); font-size: 13px; letter-spacing: 0.1em; white-space: nowrap; }
-.location-spots button span { font-family: var(--font-body); font-size: 11px; opacity: 0.6; }
-.location-spots button:hover, .location-spots button:focus-visible { color: var(--ink); }
-.location-spots button.active { color: var(--ink); border-bottom-color: var(--gold); }
-.location-fade { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+ .location-keyboard-nav { position: absolute; left: 16px; right: 16px; bottom: max(16px, env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; overflow-x: auto; padding: 8px; background: #101512e8; border: 1px solid #b8a77c55; border-radius: 8px; z-index: 8; }
+.location-keyboard-nav button { flex: 0 0 auto; background: #262c27; border: 1px solid #b8a77c66; border-radius: 5px; color: #eee8d8; padding: 12px 14px; min-height: 44px; font: 14px var(--font-body); cursor: pointer; }
+.location-keyboard-nav button.active { background: #dac48c; color: #161912; }
+.location-keyboard-nav button:hover { border-color: #ead5a1; }
+.location-discoveries { position: absolute; right: 20px; top: 120px; display: grid; gap: 8px; max-width: min(300px, calc(100vw - 40px)); z-index: 3; padding: 12px; background: #101512e8; border-radius: 8px; }
+.location-discoveries > span { color: #b9b3a2; font-size: 12px; }
+.location-discoveries button { text-align: left; padding: 12px; min-height: 44px; border: 1px solid #b8a77c66; background: #262c27; color: #eee8d8; border-radius: 5px; cursor: pointer; }
+.location .location-exit { width: auto; display: inline-flex; gap: 8px; padding: 8px 12px; font-size: 14px; }
+@media (max-width: 600px) { .location-discoveries { top: auto; bottom: 100px; right: 16px; } }
+.location-keyboard-nav button:focus-visible { outline: 2px solid #e7ca83; outline-offset: 3px; }
+.location-intro-hint { animation: location-hint-away 1s 7s both; }
+@keyframes location-hint-away { to { opacity: 0; visibility: hidden; } }
+.location-fade { z-index: 5; position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 .location-fade.on { opacity: 1; }
-@media (max-width: 720px) { .location-place { top: 160px; left: 16px; right: 16px; transform: none; text-align: center; } .location-spots { left: 16px; right: 16px; transform: none; max-width: none; } }
-.location .location-hud { bottom: calc(max(20px, env(safe-area-inset-bottom, 0px)) + 62px); z-index: 2; }
+@media (max-width: 720px) { .location-place { top: 160px; left: 16px; right: 16px; transform: none; text-align: center; } }
+.location .location-hud { bottom: calc(100px + env(safe-area-inset-bottom, 0px)); z-index: 2; }
 /* El tren: a dónde va, arriba; saltear, abajo a la derecha. */
 .train-label { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); margin: 0; font: 500 15px/1.2 var(--font-display); letter-spacing: 0.18em; text-transform: uppercase; text-shadow: 0 1px 12px #000; pointer-events: none; z-index: 2; }
 .plaza-card { z-index: 2; display: grid; gap: 8px; justify-items: center; }

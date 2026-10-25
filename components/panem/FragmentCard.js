@@ -14,7 +14,7 @@ export default function FragmentCard() {
   const cardRef = useRef(null);
   useDismiss([cardRef], closeFragment, { enabled: Boolean(shownFragment), consume: true });
   useEffect(() => {
-    if (!shownFragment) return undefined;
+    if (!shownFragment || clueById(shownFragment)?.detail) return undefined;
     const timer = window.setTimeout(closeFragment, CARD_MS);
     return () => clearTimeout(timer);
   }, [shownFragment, closeFragment]);
@@ -26,7 +26,7 @@ export default function FragmentCard() {
       <p className="fragment-meta">{clueMeta(clue, story)}</p>
       {clue.kind === 'fragment' && <span className="fragment-stamp" aria-hidden="true">Classified</span>}
       <h2>{clue.title}</h2>
-      <p className="fragment-line">{clue.line}</p>
+      <p className="fragment-line">{clue.detail ?? clue.line}</p>
     </aside>
   );
 }

@@ -18,5 +18,5 @@ export async function generateMetadata({ params }) {
 export default async function LocationPage({ params }) {
   const { id } = await params;
   if (!LOCATION_IDS.includes(id)) notFound();
-  return <LocationExperience id={id} />;
+  return <LocationExperience key={id} id={id} />;
 }

@@ -231,3 +231,16 @@ El mapa carga sin la arena, la sala de transmisión, los minijuegos, el reproduc
 El modo automático usa un máximo de un píxel por píxel CSS y 30 cuadros por segundo en pantallas menores de 721 px; escritorio conserva hasta 1,5 y 60 cuadros. Se evitan cuadros adicionales en pantallas de 120 Hz. La pausa al ocultar la pestaña se conserva. El indicador «Rendering…» pertenece al servidor de desarrollo de Next; para revisar la experiencia sin compilaciones, se puede ejecutar `npm run build` y luego `npm run start -- --hostname 127.0.0.1 --port 3001`.
 
 El reproductor de la intro espera la carga del iframe en su origen de YouTube antes de conectar la API, y cancela una carga pendiente si se abandona la secuencia. La animación de la rebelión no usa YouTube ni iframes.
+
+
+### Recorridos con botones e interiores
+
+En `/escena/12`, `/escena/11` y `/escena/4`, los destinos vuelven a tener botones permanentes y atajos numéricos. Cada interior tiene un botón visible «Salir al distrito» y una salida en la barra inferior. Las luces de navegación se retiraron; los objetos conservan un brillo sutil. Arrastrar permite mirar alrededor.
+
+Los juegos de carbón en el túnel, cosecha/silbido en el huerto y pesca en el muelle conservan sus reglas. Los botones de destino nombran el juego y, fuera de la jornada correspondiente, se ofrece practicar sin cambiar los papeles ni adelantar la historia.
+
+Las casas de Ash, Oliva y Marin y el granero contienen ocho nuevas pistas, además de la libreta y el cuenco existentes. Papeles, cajas y símbolos conectan las cuotas de trabajo, la comida y los mensajes de resistencia. «Examinar» aparece en el lugar del objeto; lo encontrado se guarda y puede volver a leerse. Los relatos nuevos permanecen abiertos hasta cerrarlos. Escape sale primero de la tarjeta, luego del interior y finalmente al mapa.
+
+Los cuartos usan el mismo renderer y cámara, se cargan al cruzar la puerta y liberan sus recursos al salir. El exterior queda sin actualizar mientras se está adentro. Los exteriores y cada interior tienen presupuesto independiente de 25 MB, verificado incluyendo modelos compartidos (sin sumar copias). Con movimiento reducido no se balancea la cámara durante los recorridos.
+
+Modelos nuevos, fuentes, licencias y adaptaciones en `public/models/CREDITS.md`; optimización en `scripts/optimize-scene-upgrade.sh`. Pruebas de navegación, paredes, liberación de recursos, transparencia y presupuesto en `tests/location-interiors.test.mjs`.

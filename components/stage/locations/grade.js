@@ -6,6 +6,7 @@ const GradeShader = {
   uniforms: {
     tDiffuse: { value: null },
     time: { value: 0 },
+    splitTone: { value: 1 },
     vignette: { value: 0.42 },
     grain: { value: 0.03 },
   },
@@ -14,13 +15,13 @@ const GradeShader = {
     void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */`
     uniform sampler2D tDiffuse;
-    uniform float time, vignette, grain;
+    uniform float time, vignette, grain, splitTone;
     varying vec2 vUv;
     float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
     void main() {
       vec3 color = texture2D(tDiffuse, vUv).rgb;
       float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-      color *= mix(vec3(0.9, 0.97, 1.1), vec3(1.08, 1.0, 0.88), smoothstep(0.02, 0.6, luma));
+      color *= mix(vec3(1.0), mix(vec3(0.9, 0.97, 1.1), vec3(1.08, 1.0, 0.88), smoothstep(0.02, 0.6, luma)), splitTone);
       float d = distance(vUv, vec2(0.5));
       color *= mix(1.0, smoothstep(0.82, 0.22, d), vignette);
       color += (hash(vUv * 1024.0 + time) - 0.5) * grain * (0.25 + luma);

@@ -104,3 +104,27 @@ Descargados mediante la API oficial para uso local, sin consultas a Poly Haven d
 - Boulder 01 (modelo fotogramétrico): https://polyhaven.com/a/boulder_01
 
 Mapas de color, normal OpenGL y rugosidad en JPG 1K. El modelo conserva su conjunto PBR 1K. Se aplican a la mesa y el suelo de la urna, la plaza de la Cosecha, el suelo de los minijuegos y objetos de la arena. La iluminación usa también los entornos HDRI de Poly Haven que ya estaban en public/models/districts (ver sus créditos). La urna y los papeles son geometría original de esta experiencia; Poly Haven aporta sus materiales y la iluminación. Licencia CC0: https://polyhaven.com/license
+
+
+## Escenas explorables e interiores · octubre 2026
+
+Modelos aprobados del catálogo visual. Descargados desde los controles oficiales de Sketchfab (GLB 1K) y la API pública de Poly Haven (glTF 1K). Optimizados con glTF Transform a GLB cuantizado y WebP, sin decodificadores externos. Los edificios exteriores Wooden Log Cabin y Old Wooden Barn usan texturas de 512 px; los interiores y utilería, hasta 1024 px. Originales en `assets-src/scene-upgrade/` (ignorados por Git); reproducir con `scripts/optimize-scene-upgrade.sh`.
+
+| Modelo | Autor y fuente | Licencia | Adaptación / uso |
+| --- | --- | --- | --- |
+| Log Cabin Interior | [ollimoisio](https://sketchfab.com/3d-models/log-cabin-interior-b53e349e8e0e4714b4a40c02e9a411c9) | [CC Attribution](http://creativecommons.org/licenses/by/4.0/) | Casas de Ash, Oliva y Marin. Se conservan estructura, hogar, leña y cómoda; se ocultan sofá, mesa y decoraciones originales. Escala y mobiliario nuevos; se completan las paredes abiertas. |
+| Wooden Log Cabin | [donnichols](https://sketchfab.com/3d-models/wooden-log-cabin-21bf3df011b147598cdb43fea839cef7) | [CC Attribution](http://creativecommons.org/licenses/by/4.0/) | Casa de Oliva. Texturas reducidas a 512 px, escala y orientación adaptadas. |
+| Old Wooden Barn (House 4) | [Blenderust](https://sketchfab.com/3d-models/old-wooden-barn-house-4-3366ee69c2dd4908a99f386e07faa1d6) | [CC Attribution](http://creativecommons.org/licenses/by/4.0/) | Granero de Oliva, exterior e interior independiente; escala y orientación adaptadas. El archivo gratuito sí contiene vigas, altillo, escalera y utilería. |
+| Rustic Wooden Table Antique Farmhouse Style | [BigEmis](https://sketchfab.com/3d-models/rustic-wooden-table-antique-farmhouse-style-460dc99338f142609a5fca6887d39463) | [CC Attribution](http://creativecommons.org/licenses/by/4.0/) | Mesa familiar en las tres casas. Escala adaptada. |
+| Painted Wooden Chair 01 | [Poly Haven](https://polyhaven.com/a/painted_wooden_chair_01) | [CC0](https://polyhaven.com/license) | Sillas de las tres casas. |
+| Vintage Day Bed | [Poly Haven](https://polyhaven.com/a/vintage_day_bed) | [CC0](https://polyhaven.com/license) | Camas de Ash y Marin. |
+| Metal Toolbox | [Poly Haven](https://polyhaven.com/a/metal_toolbox) | [CC0](https://polyhaven.com/license) | Galpón y casa de Ash. |
+| Watering Can Metal 01 | [Poly Haven](https://polyhaven.com/a/watering_can_metal_01) | [CC0](https://polyhaven.com/license) | Huerto, granero y casa de Oliva. |
+| Fern 02 | [Poly Haven](https://polyhaven.com/a/fern_02) | [CC0](https://polyhaven.com/license) | Helechos en rincones del Distrito 11. |
+| Nettle Plant | [Poly Haven](https://polyhaven.com/a/nettle_plant) | [CC0](https://polyhaven.com/license) | Maleza de los distritos 11 y 12. |
+| Tree Stump 01 | [Poly Haven](https://polyhaven.com/a/tree_stump_01) | [CC0](https://polyhaven.com/license) | Tocón del Distrito 12, geometría reducida a 25%. |
+| Fish Knife | [Poly Haven](https://polyhaven.com/a/fish_knife) | [CC0](https://polyhaven.com/license) | Mesa de Marin. |
+
+El alambrado existente de Poly Haven (modular_chainlink_fence, CC0) ahora incorpora su [mapa de opacidad oficial](https://polyhaven.com/a/modular_chainlink_fence). Se mantiene la transformación UV original y se usa alpha MASK. Para reproducir después de optimizar el alambrado: `node scripts/fix-fence-alpha.mjs public/models/d11/alambrado.glb assets-src/scene-upgrade/fence-opacity.png`.
+
+Las auras, los recorridos y el cierre de las paredes del interior son geometría/código propio. Los modelos no se reclaman como obra propia.

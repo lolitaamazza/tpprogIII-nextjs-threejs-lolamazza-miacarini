@@ -28,7 +28,7 @@ test('las piezas son del 11 y los textos son claros', () => {
   const ids = DISTRICT11.pieces.map((p) => p.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const piece of DISTRICT11.pieces) {
-    assert.match(piece.url, /^\/models\/d11\/.+\.glb$/, piece.id);
+    assert.match(piece.url, /^\/models\/(?:d11|scene-props)\/.+\.glb$/, piece.id);
     assert.ok(piece.height > 0 || piece.scale > 0, piece.id);
   }
   assert.equal(DISTRICT11.textures, '/models/d11/');

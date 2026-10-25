@@ -13,11 +13,11 @@ export const LIGHT_RANGE = 6;
 export const LIGHT_ANGLE = Math.PI / 6;
 const LID_OPEN = -1.9;
 
-const hitMaterial = new THREE.MeshBasicMaterial({ visible: false });
 const toArray = (v) => (Array.isArray(v) ? v : v?.toArray?.());
 
 export function createInteractable(def, { onFound = () => {}, onHoldProgress = () => {}, halo = null, texture = null } = {}) {
   const { id, kind, spot, position, size: [w, h, d], rotationY = 0, requires = null, reveals } = def;
+  const hitMaterial = new THREE.MeshBasicMaterial({ visible: false });
   const group = new THREE.Group();
   group.position.set(...position);
   group.rotation.y = rotationY;

@@ -72,5 +72,20 @@ const ART = {
 };
 
 export function clueArt(name) {
+  if (name && typeof name === 'object') return canvasTexture((ctx, s) => {
+    ctx.fillStyle = '#dfd1af'; ctx.fillRect(0, 0, s, s);
+    ctx.strokeStyle = '#8a7654'; ctx.strokeRect(8, 8, s - 16, s - 16);
+    ctx.fillStyle = '#322b24'; ctx.textAlign = 'center';
+    ctx.font = `bold ${s * 0.055}px Georgia`;
+    ctx.fillText(name.title, s / 2, s * 0.2, s * 0.88);
+    ctx.font = `${s * 0.06}px Georgia`;
+    name.lines.forEach((line, i) => ctx.fillText(line, s / 2, s * (0.4 + i * 0.13), s * 0.88));
+    if (name.symbol) {
+      ctx.strokeStyle = '#51452f'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(s * 0.3, s * 0.8); ctx.quadraticCurveTo(s * 0.35, s * 0.62, s * 0.5, s * 0.78);
+      ctx.quadraticCurveTo(s * 0.65, s * 0.62, s * 0.7, s * 0.8); ctx.stroke();
+    }
+  }, 256);
+
   return ART[name]?.() ?? null;
 }

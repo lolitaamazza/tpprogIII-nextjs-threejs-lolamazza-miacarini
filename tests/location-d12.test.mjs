@@ -27,7 +27,7 @@ test('las piezas tienen id único, archivo y tamaño (alto si viene de Sketchfab
   const ids = DISTRICT12.pieces.map((p) => p.id);
   assert.equal(new Set(ids).size, ids.length);
   for (const piece of DISTRICT12.pieces) {
-    assert.match(piece.url, /^\/models\/d12\/.+\.glb$/, piece.id);
+    assert.match(piece.url, /^\/models\/(?:d12|scene-props)\/.+\.glb$/, piece.id);
     assert.ok(piece.height > 0 || piece.scale > 0, piece.id);
   }
 });

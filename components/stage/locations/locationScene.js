@@ -1,4 +1,8 @@
 import * as THREE from 'three';
+import { ROOMS, interiorPath } from '../../../lib/locations/interiors.js';
+import { disposeTree, placeModel } from './resources.js';
+import { opaqueMeshes, auraInSight } from './navigationAuras.js';
+import { createInterior } from './roomScene.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { HDRLoader } from 'three/addons/loaders/HDRLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -34,7 +38,7 @@ const vigaTexture = () => canvasTexture((ctx, s) => {
 
 export function createLocationScene(mount, data, { reducedMotion = false, onProgress = () => {}, onReady = () => {}, onError = () => {}, onSpot = () => {}, onWalk = () => {}, onFragment = () => {},
   jobMode = 'idle', onJobMatch = () => {}, onJobComplete = () => {}, sfx = { play() {} },
-  tools = [], clues = [], onClue = () => {}, onHoldProgress = () => {}, onHoldHint = () => {} } = {}) {
+  tools = [], clues = [], onClue = () => {}, onHoldProgress = () => {}, onHoldHint = () => {}, onZone = () => {}, onTransition = () => {}, onRoomError = () => {} } = {}) {
   const budget = renderBudget(mount.clientWidth, 'auto', window.devicePixelRatio);
   const renderer = new THREE.WebGLRenderer({ antialias: !budget.low, powerPreference: 'high-performance' });
   renderer.setPixelRatio(budget.pixelRatio);
@@ -45,6 +49,7 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
   renderer.shadowMap.enabled = !budget.low;
   renderer.shadowMap.type = THREE.PCFShadowMap;
   renderer.domElement.className = 'location-canvas';
+  renderer.domElement.setAttribute('role', 'img');
   mount.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -58,9 +63,11 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
   const state = {
     disposed: false, frame: 0, last: -Infinity, reducedMotion, elapsed: 0, updaters: [],
     current: startSpot.id, walk: null, look: { yaw: 0, pitch: 0 }, target: [...startSpot.look], drag: null, found: [],
-    tools: [...tools], holding: null,
+    tools: [...tools], holding: null, zone: null, room: null, transition: false, generation: 0, clues: [...clues],
   };
-  const spotById = (id) => data.spots.find((s) => s.id === id);
+  const rooms = ROOMS[data.id] ?? {};
+  const activeSpots = () => state.zone ? state.room.definition.spots : data.spots;
+  const spotById = (id) => { const spot = activeSpots().find((s) => s.id === id); return spot && { ...spot, panoramic: true }; };
   // Un lugar con `requires` aparece recién cuando se tiene esa herramienta.
   const spotOpen = (spot) => !spot.requires || state.tools.includes(spot.requires);
   const textures = new THREE.TextureLoader();
@@ -69,7 +76,9 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
   new HDRLoader().loadAsync(data.sky.url).then((hdr) => {
     if (state.disposed) { hdr.dispose(); return; }
     const pmrem = new THREE.PMREMGenerator(renderer);
-    const env = pmrem.fromEquirectangular(hdr).texture;
+    const envTarget = pmrem.fromEquirectangular(hdr);
+    const env = envTarget.texture;
+    state.envTarget = envTarget;
     hdr.dispose(); pmrem.dispose();
     scene.environment = env;
     scene.environmentIntensity = data.sky.intensity;
@@ -120,34 +129,8 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
   let loaded = 0;
   const pieces = new Map();
   const loads = data.pieces.map((piece) => loader.loadAsync(piece.url).then((gltf) => {
-    if (state.disposed) return;
-    const model = gltf.scene;
-    const box = new THREE.Box3().setFromObject(model);
-    const size = box.getSize(new THREE.Vector3());
-    const scale = piece.height ? piece.height / Math.max(size.y, 1e-6) : piece.scale ?? 1;
-    model.scale.setScalar(scale);
-    if (piece.origin) model.position.set(...piece.origin.map((v) => -v * scale));
-    else {
-      const center = box.getCenter(new THREE.Vector3()).multiplyScalar(scale);
-      model.position.set(-center.x, -box.min.y * scale, -center.z);
-    }
-    const holder = new THREE.Group();
-    holder.add(model);
-    holder.position.set(...piece.position);
-    holder.rotation.set(piece.rotationX ?? 0, piece.rotationY ?? 0, piece.rotationZ ?? 0);
-    holder.traverse((n) => {
-      if (!n.isMesh) return;
-      // `only`: de un kit modular, solo las piezas con esos nombres.
-      if (piece.only && !piece.only.some((name) => n.name.includes(name) || n.parent?.name.includes(name))) { n.visible = false; return; }
-      // `cutout`: hojas recortadas en vez de transparentes (no se ordenan mal entre árboles).
-      if (piece.cutout) for (const m of [n.material].flat()) if (m.transparent) { m.transparent = false; m.alphaTest = 0.5; m.depthWrite = true; }
-      n.castShadow = !budget.low;
-      n.receiveShadow = true;
-      if (piece.hide?.some((name) => n.name.includes(name) || n.parent?.name.includes(name))) n.visible = false;
-      if (piece.matte) for (const m of [n.material].flat()) { m.roughness = Math.max(m.roughness ?? 1, 0.8); m.metalness = 0; }
-      // `glass`: los materiales con esos nombres son vidrio (las ventanas del tren se ven opacas en el modelo).
-      if (piece.glass) for (const m of [n.material].flat()) if (piece.glass.includes(m.name)) Object.assign(m, { transparent: true, opacity: 0.12, roughness: 0.05, depthWrite: false });
-    });
+    if (state.disposed) { disposeTree(gltf.scene); return; }
+    const holder = placeModel(gltf.scene, piece, budget.low);
     scene.add(holder);
     pieces.set(piece.id, holder);
     for (const item of items) if (item.def.piece === piece.id) item.attach(holder);
@@ -162,25 +145,19 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
     if (state.disposed) return;
     const failed = results.filter((r) => r.status === 'rejected');
     if (failed.length === results.length) onError(failed[0].reason);
-    else { if (failed.length) console.warn('Piezas que no cargaron:', failed.map((r) => r.reason?.message)); onReady(); }
+    else { obstacles = opaqueMeshes(scene); if (failed.length) console.warn('Piezas que no cargaron:', failed.map((r) => r.reason?.message)); onReady(); }
   });
 
-  // Lugares: un punto dorado muy sutil donde se mira desde cada lugar (no el actual) y una zona invisible para tocarlo.
-  const pinMaterial = new THREE.SpriteMaterial({ map: halo, color: 0xe8c66a, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false });
+  // Auras ancladas a puertas y caminos. Las casas llevan a un interior al terminar el acercamiento.
   const hitMaterial = new THREE.MeshBasicMaterial({ visible: false });
-  const markers = data.spots.map((spot) => {
-    const pin = new THREE.Sprite(pinMaterial);
-    pin.scale.setScalar(0.28);
-    pin.position.set(spot.look[0], spot.look[1] + 0.6, spot.look[2]);
-    const hit = new THREE.Mesh(new THREE.SphereGeometry(1.8, 10, 8), hitMaterial);
-    hit.position.set(...spot.look);
-    hit.userData.spot = spot.id;
-    scene.add(pin, hit);
-    return { spot, pin, hit };
-  });
+  const markers = [];
+  let obstacles = [];
+  const sightRay = new THREE.Raycaster();
+  const activeMarkers = () => state.zone ? state.room.markers : markers;
+  const activeItems = () => state.zone ? state.room.items : items;
 
   // Lo que se encuentra (interactables.js): agarrar, abrir, mantener presionado o alumbrar con el farol.
-  const items = (data.interactables ?? []).map((def) => {
+  const items = (data.interactables ?? []).filter((def) => !Object.values(rooms).some((room) => room.items.some((i) => i.id === def.id))).map((def) => {
     const item = createInteractable(def, { onFound: (id) => onClue(id), onHoldProgress: (p) => onHoldProgress(def.id, p), halo, texture: clueArt(def.art) });
     item.setDone(clues.includes(def.reveals));
     scene.add(item.group, item.hit);
@@ -206,7 +183,7 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
   // El frente de carbón (la jornada de Ash), al fondo del túnel.
   const job = data.job ? JOBS[data.job.type](data.job, { mode: jobMode, onMatch: (m) => onJobMatch(m), onComplete: (m) => onJobComplete(m), sfx, halo }) : null;
   if (job) { scene.add(job.group); state.updaters.push((dt, t) => job.update(dt, t)); }
-  const atJob = () => job && !state.walk && state.current === data.job.spot;
+  const atJob = () => job && !state.zone && !state.transition && !state.walk && state.current === data.job.spot;
 
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
@@ -216,22 +193,28 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
     raycaster.setFromCamera(pointer, camera);
     return raycaster;
   }
-  const canTouchFragment = () => fragment && !state.walk && state.current === fragment.spot && !state.found.includes(fragment.id);
+  const canTouchFragment = () => fragment && !state.zone && !state.walk && state.current === fragment.spot && !state.found.includes(fragment.id);
   function pick(event) {
+    if (state.transition || state.walk) return null;
     const r = ray(event);
     if (canTouchFragment() && r.intersectObject(vigaHit, false).length) return { fragment: fragment.id };
-    const here = state.walk ? [] : items.filter((i) => i.spot === state.current && i.available(state.tools) && i.pickable());
+    const here = state.walk ? [] : activeItems().filter((i) => i.spot === state.current && i.available(state.tools) && i.pickable());
     const touched = r.intersectObjects(here.map((i) => i.hit), false)[0];
     if (touched) return { item: here.find((i) => i.hit === touched.object) };
-    const hit = r.intersectObjects(markers.filter((m) => m.spot.id !== state.current && spotOpen(m.spot)).map((m) => m.hit), false)[0];
-    return hit ? { spot: hit.object.userData.spot } : null;
+    const hit = r.intersectObjects(activeMarkers().filter((m) => m.available).map((m) => m.hit), false)[0];
+    if (!hit) return null;
+    const obstacle = r.intersectObjects(state.zone ? state.room.obstacles : obstacles, false)[0];
+    if (obstacle && obstacle.distance < hit.distance - 0.1) return null;
+    return { spot: hit.object.userData.spot };
   }
 
   function goTo(id) {
     const to = spotById(id);
-    if (!to || !spotOpen(to) || (!state.walk && state.current === id)) return;
+    if (!to || state.transition || !spotOpen(to)) return;
+    if (to.exit) { exitInterior(); return; }
+    if (!state.walk && state.current === id) { if (!state.zone && rooms[id]) enterInterior(); return; }
     const from = camera.position.toArray();
-    const path = pathBetween(from, to);
+    const path = state.zone ? interiorPath(from, to) : pathBetween(from, to);
     const duration = walkDuration(path, { reducedMotion: state.reducedMotion });
     state.look = { yaw: 0, pitch: 0 };
     onWalk(id);
@@ -241,6 +224,7 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
       state.walk = null;
       state.current = id;
       onSpot(id);
+      if (!state.zone && rooms[id]) enterInterior();
       return;
     }
     state.walk = { path, fromTarget: [...state.target], toTarget: [...to.look], duration, t: 0, to: id };
@@ -248,14 +232,14 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
 
   const lookNow = new THREE.Vector3();
   const lightDir = new THREE.Vector3();
-  state.updaters.push((dt, t) => {
+  const navigationUpdate = (dt, t) => {
     if (state.walk) {
       const walk = state.walk;
       walk.t = Math.min(1, walk.t + dt / walk.duration);
       const pose = poseAlong(walk.path, walk.fromTarget, walk.toTarget, walk.t);
       camera.position.set(...pose.position);
       state.target = pose.target;
-      if (walk.t >= 1) { state.walk = null; state.current = walk.to; onSpot(walk.to); }
+      if (walk.t >= 1) { state.walk = null; state.current = walk.to; onSpot(walk.to); if (!state.zone && rooms[walk.to]) enterInterior(); }
     } else {
       // Mirar alrededor: la mirada sigue al arrastre con un poco de inercia.
       const wanted = lookTarget(spotById(state.current), state.look.yaw, state.look.pitch);
@@ -263,14 +247,27 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
       state.target = state.target.map((v, i) => v + (wanted[i] - v) * k);
     }
     camera.lookAt(lookNow.set(...state.target));
-    for (const m of markers) m.pin.visible = m.spot.id !== state.current && !state.walk && spotOpen(m.spot);
+    const checkSight = !state.auraCheckAt || t - state.auraCheckAt > 0.18;
+    if (checkSight) {
+      (state.zone ? state.room.scene : scene).updateMatrixWorld(true);
+      state.auraCheckAt = t;
+    }
+    const activeObstacles = state.zone ? state.room.obstacles : obstacles;
+    for (const m of activeMarkers()) {
+      if (checkSight) m.inSight = auraInSight(m, camera, activeObstacles, sightRay);
+      m.available = Boolean((m.spot.id !== state.current || (!state.zone && rooms[m.spot.id])) && !state.walk && !state.transition && spotOpen(m.spot) && m.inSight);
+      m.pin.visible = m.available;
+      m.pin.material.opacity = state.reducedMotion ? 0.68 : 0.55 + Math.sin(t * 1.7 + m.pin.position.z) * 0.16;
+    }
+    const label = `Vista 3D de ${state.zone ? state.room.definition.title : data.title}. Arrastrá para mirar. Usá los botones de lugares para moverte.`;
+    if (canvas.getAttribute('aria-label') !== label) canvas.setAttribute('aria-label', label);
     const lit = state.tools.includes('farol') ? { lightFrom: camera.position, lightDir: camera.getWorldDirection(lightDir) } : {};
-    for (const item of items) item.update(dt, t, { ...lit, reducedMotion: state.reducedMotion });
-    pinMaterial.opacity = state.reducedMotion ? 0.45 : 0.35 + Math.sin(t * 2) * 0.15;
+    for (const item of activeItems()) item.update(dt, t, { ...lit, reducedMotion: state.reducedMotion });
     if (glint) glint.visible = !state.found.includes(fragment.id);
     if (glint) glint.material.opacity = state.reducedMotion ? 0.25 : 0.16 + (Math.sin(t * 1.6) * 0.5 + 0.5) * 0.18;
     if (bokeh) bokeh.uniforms.focus.value = camera.position.distanceTo(lookNow);
-  });
+  };
+  state.updaters.push(navigationUpdate);
 
   // Arrastrar mira alrededor; un toque sin arrastrar va al lugar tocado o toca la viga.
   const canvas = renderer.domElement;
@@ -299,7 +296,7 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
     if (state.drag) {
       const dx = event.clientX - state.drag.x, dy = event.clientY - state.drag.y;
       if (Math.hypot(dx, dy) > 6) state.drag.moved = true;
-      if (state.drag.moved && !state.walk) state.look = clampLook(state.drag.yaw - dx * 0.004, state.drag.pitch + dy * 0.003);
+      if (state.drag.moved && !state.walk) state.look = clampLook(state.drag.yaw - dx * 0.004, state.drag.pitch + dy * 0.003, { panoramic: true });
       canvas.style.cursor = 'grabbing';
       return;
     }
@@ -332,12 +329,60 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
 
   // Acabado de cámara: desenfoque del fondo (solo escritorio), color, viñeta y grano. Sin bloom.
   const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
   const bokeh = budget.low ? null : new BokehPass(scene, camera, { focus: 9, aperture: 0.00012, maxblur: 0.005 });
   if (bokeh && !reducedMotion) composer.addPass(bokeh);
   const grade = createGradePass();
+  if (data.neutralGrade) grade.uniforms.splitTone.value = 0;
   composer.addPass(grade);
   composer.addPass(new OutputPass());
+
+  function setRenderScene(next) {
+    renderPass.scene = next;
+    if (bokeh) bokeh.scene = next;
+  }
+  async function enterInterior() {
+    const roomDef = rooms[state.current];
+    if (!roomDef || state.zone || state.transition || state.disposed) return;
+    state.transition = true;
+    state.walk = null;
+    const token = ++state.generation;
+    state.returnPose = { position: camera.position.toArray(), target: [...state.target], current: state.current };
+    onTransition('loading');
+    try {
+      const room = await createInterior(data, roomDef, { loader, halo, budget, tools: state.tools, clues: state.clues, environment: state.env,
+        onClue, onHoldProgress, onHoldHint, isCancelled: () => state.disposed || token !== state.generation });
+      if (state.disposed || token !== state.generation) { room?.dispose(); return; }
+      state.room = room; state.zone = roomDef.id; state.auraCheckAt = 0;
+      room.items.forEach((item) => item.setDone(state.clues.includes(item.reveals)));
+      const entry = roomDef.spots.find((s) => s.id === roomDef.start);
+      camera.position.set(...entry.position); state.target = [...entry.look]; state.look = { yaw: 0, pitch: 0 };
+      state.current = entry.id;
+      room.scene.add(camera); setRenderScene(room.scene);
+      state.transition = false;
+      onZone(roomDef); onSpot(entry.id); onTransition(null);
+    } catch (error) {
+      if (state.disposed || token !== state.generation) return;
+      state.transition = false; onTransition(null);
+      onRoomError('No se pudo abrir este lugar. Usá el botón del lugar para reintentar.');
+      console.warn('Interior no disponible:', error);
+    }
+  }
+  function exitInterior() {
+    if (!state.zone && !state.transition) return false;
+    ++state.generation;
+    state.transition = false; state.walk = null; state.drag = null;
+    if (state.holding) endHold();
+    state.zone = null; state.auraCheckAt = 0;
+    scene.add(camera); setRenderScene(scene);
+    state.room?.dispose(); state.room = null;
+    const pose = state.returnPose;
+    camera.position.set(...pose.position); state.target = [...pose.target]; state.current = pose.current;
+    state.look = { yaw: 0, pitch: 0 };
+    onZone(null); onSpot(pose.current); onTransition(null);
+    return true;
+  }
 
   function resize() {
     const width = mount.clientWidth, height = Math.max(mount.clientHeight, 1);
@@ -357,7 +402,7 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
     clock.update(timestamp);
     const dt = Math.min(clock.getDelta(), 0.05);
     state.elapsed += dt;
-    for (const update of state.updaters) update(dt, state.elapsed);
+    for (const update of state.updaters) { if (!state.zone || update === navigationUpdate) update(dt, state.elapsed); }
     grade.uniforms.time.value = state.reducedMotion ? 0 : state.elapsed;
     composer.render(dt);
   }
@@ -367,6 +412,9 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
     scene, camera, renderer, pieces, data, state, job,
     addUpdater(fn) { state.updaters.push(fn); },
     goTo,
+    exitInterior,
+    getZone: () => state.zone,
+    interact(id) { if (state.transition || state.walk) return; const item = activeItems().find((i) => i.id === id && i.spot === state.current && i.available(state.tools) && i.pickable()); item?.tap(); },
     getCurrent: () => state.current,
     setJobMode: (mode) => job?.setMode(mode),
     jobAction: () => (atJob() ? job.performAction() ?? false : false),
@@ -375,9 +423,9 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
     isWalking: () => Boolean(state.walk),
     setFound(ids) { state.found = [...ids]; },
     // Lo que ya está en la historia (herramientas, marcas, pistas y fragmentos) queda hecho en la escena.
-    setClues(ids) { for (const item of items) if (item.isDone() !== ids.includes(item.reveals)) item.setDone(ids.includes(item.reveals)); },
+    setClues(ids) { state.clues = [...ids]; for (const item of [...items, ...(state.room?.items ?? [])]) if (item.isDone() !== ids.includes(item.reveals)) item.setDone(ids.includes(item.reveals)); },
     setTools(ids) { state.tools = [...ids]; syncLantern(); },
-    setReducedMotion(value) { state.reducedMotion = value; },
+    setReducedMotion(value) { state.reducedMotion = value; if (bokeh) bokeh.enabled = !value; if (value && state.walk) state.walk.t = 1; },
     resize,
     dispose() {
       state.disposed = true;
@@ -387,15 +435,10 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
       canvas.removeEventListener('pointermove', onMove);
       canvas.removeEventListener('pointerup', onUp);
       canvas.removeEventListener('pointercancel', onCancel);
-      scene.traverse((node) => {
-        node.geometry?.dispose();
-        const materials = Array.isArray(node.material) ? node.material : node.material ? [node.material] : [];
-        for (const material of materials) {
-          for (const value of Object.values(material)) if (value?.isTexture) value.dispose();
-          material.dispose();
-        }
-      });
-      state.env?.dispose();
+      scene.add(camera);
+      state.room?.dispose();
+      disposeTree(scene);
+      state.envTarget?.dispose();
       halo.dispose();
       composer.passes.forEach((pass) => pass.dispose?.());
       composer.dispose();

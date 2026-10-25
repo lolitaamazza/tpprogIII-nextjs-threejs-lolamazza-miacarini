@@ -19,7 +19,7 @@ test('nueve marcas del sinsajo, tres por herramienta, en los lugares que abre ca
 });
 
 test('las pistas del 12: la libreta, el cartel y el nicho', () => {
-  assert.deepEqual(HINTS.filter((h) => h.district === '12').map((h) => h.id), ['p-12-libreta', 'p-12-cartel', 'p-12-nicho']);
+  assert.deepEqual(HINTS.filter((h) => h.district === '12').map((h) => h.id), ['p-12-turno', 'p-12-costura', 'p-12-libreta', 'p-12-cartel', 'p-12-nicho']);
 });
 
 test('los ids no se repiten entre fragmentos, herramientas, marcas y pistas', () => {
