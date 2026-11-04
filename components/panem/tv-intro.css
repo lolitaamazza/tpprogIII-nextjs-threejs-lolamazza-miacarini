@@ -111,3 +111,10 @@
   background: repeating-linear-gradient(0deg, rgba(0, 0, 0, .2) 0 2px, transparent 2px 4px), radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0, 0, 0, .6) 100%); }
 /* El fragmento viene con franjas negras de cine: en la tele 3D se recortan. */
 .tv3d-clip .tv-clip-frame { transform: translate(-50%, -50%) scale(1.3); }
+
+/* El mensaje de la resistencia en el negro, antes de entrar al mapa: una línea por vez. */
+.tv-bridge { position: fixed; inset: 0; z-index: 20; display: grid; align-content: center; justify-items: center; gap: 14px; padding: 24px; background: #000; pointer-events: none; text-align: center; }
+.tv-bridge p { margin: 0; max-width: 640px; font: 500 18px/1.5 ui-monospace, 'SFMono-Regular', Menlo, monospace; letter-spacing: .04em; color: #9effc9; opacity: 0; animation: tv-bridge-in .9s ease-out forwards; }
+.tv-bridge p:last-child { color: #f4ecdc; font-size: 20px; }
+@keyframes tv-bridge-in { from { opacity: 0; transform: translateY(6px); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .tv-bridge p { animation: none; opacity: 1; } }

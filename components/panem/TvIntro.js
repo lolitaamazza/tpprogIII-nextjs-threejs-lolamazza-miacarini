@@ -26,6 +26,15 @@ const STATUS = {
   exit: 'Entrando al mapa de Panem.',
 };
 
+// Después del corte, en el negro, la resistencia toma la señal y presenta a quién vamos a acompañar.
+const BRIDGE = [
+  'Interrumpimos la transmisión del Capitolio.',
+  'Faltan tres días para la Cosecha. Tres chicos tienen su nombre en la urna.',
+  'Ash, Oliva y Marin. Esta vez vas a conocerlos.',
+];
+const BRIDGE_LINE_MS = 2300;
+const BRIDGE_MS = BRIDGE.length * BRIDGE_LINE_MS + 1400;
+
 const DUCK_LEVEL = 0.08; // la música del mapa baja mientras suena el clip
 
 function makeNoiseTile() {
@@ -340,7 +349,7 @@ export default function TvIntro() {
     const screen = getScreen();
     screen?.view('none');
     screen?.smallTvs('off');
-    const id = window.setTimeout(() => setPhase(forward('enter')), TIMING.blackMs);
+    const id = window.setTimeout(() => setPhase(forward('enter')), Math.max(TIMING.blackMs, BRIDGE_MS));
     return () => window.clearTimeout(id);
   }, [phase, getScreen]);
 
@@ -459,7 +468,12 @@ export default function TvIntro() {
       </div>
       <button type="button" className="tv-skip" onClick={skip} aria-label="Saltar la intro">saltar</button>
       <div ref={flashRef} className="tv-flash" aria-hidden="true" />
-      <p className="sr-only" role="status">{STATUS[phase] ?? ''}</p>
+      {phase === 'black' && (
+        <div className="tv-bridge" aria-hidden="true">
+          {BRIDGE.map((line, i) => <p key={line} style={{ animationDelay: `${i * BRIDGE_LINE_MS}ms` }}>{line}</p>)}
+        </div>
+      )}
+      <p className="sr-only" role="status">{phase === 'black' ? BRIDGE.join(' ') : STATUS[phase] ?? ''}</p>
     </section>
   );
 }

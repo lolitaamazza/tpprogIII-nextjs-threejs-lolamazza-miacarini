@@ -6,6 +6,7 @@ import { PLAZA_ORDER, plazaDraws } from '@/lib/plazas';
 import { plazaFor } from '@/lib/locations/plaza';
 import { PHASE_PATH } from '@/lib/games/simulation';
 import { useGames } from '@/components/games/GamesProvider';
+import { PROTAGONISTS } from '@/lib/story';
 import BackLink from './BackLink';
 import TrainRide from './TrainRide';
 import { usePanem } from './PanemProvider';
@@ -19,7 +20,7 @@ export default function PlazaJourney() {
   const { progress, story, storyReady, stageApiRef, reducedMotion, sfx } = usePanem();
   const gate = archiveGate({ ready: progress.ready && storyReady, synced: progress.synced, progress, story });
   const [index, setIndex] = useState(0);
-  const [stage, setStage] = useState('train'); // 'train' | 'plaza' | 'drawn'
+  const [stage, setStage] = useState('train'); // 'train' | 'plaza' | 'drawn' | 'farewell'
   const [status, setStatus] = useState('loading');
   const mountRef = useRef(null);
   const apiRef = useRef(null);
@@ -88,6 +89,17 @@ export default function PlazaJourney() {
           <p>Del Distrito {district} sale</p>
           <p className="plaza-name">{draw.name}</p>
           <p className="plaza-line">{draw.line}</p>
+          {/* Lo que siente quien vive en este distrito, se salve o no (su voz). */}
+          <p className="plaza-voice"><span>{PROTAGONISTS[district].name}</span>{draw.reaction}</p>
+          {draw.protagonist
+            ? <button type="button" className="primary" onClick={() => { sfx.play('click'); setStage('farewell'); }}>Despedirse de su familia</button>
+            : <button type="button" className="primary" onClick={next}>{last ? 'Ir a los Juegos' : `En tren al Distrito ${PLAZA_ORDER[index + 1]}`}</button>}
+        </div>
+      )}
+      {stage === 'farewell' && (
+        <div className="tesserae-card plaza-card" role="status">
+          <p>Antes de subir al tren del Capitolio</p>
+          <p className="plaza-voice"><span>{PROTAGONISTS[district].name}</span>{draw.farewell}</p>
           <button type="button" className="primary" onClick={next}>{last ? 'Ir a los Juegos' : `En tren al Distrito ${PLAZA_ORDER[index + 1]}`}</button>
         </div>
       )}

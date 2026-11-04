@@ -1,0 +1,53 @@
+/* El visor de las escenas: un solo celeste, líneas finas y casi sin texto (mockup "visor completo"). */
+.visor { --c: #8fe6ff; position: absolute; inset: 0; z-index: 1; pointer-events: none; color: var(--c); letter-spacing: .12em; font-weight: 500; }
+.visor::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 82% 72% at 50% 50%, transparent 62%, rgba(0, 18, 28, .5) 100%); }
+.visor-frame { position: absolute; inset: 0; width: 100%; height: 100%; }
+.visor .visor-line { fill: none; stroke: var(--c); stroke-width: 1.4; opacity: .7; vector-effect: non-scaling-stroke; }
+.visor .visor-faint { fill: none; stroke: var(--c); stroke-width: 1; opacity: .28; vector-effect: non-scaling-stroke; }
+.visor-icon { width: 26px; height: 26px; fill: none; stroke: var(--c); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.visor-icon.fill { fill: var(--c); stroke: none; }
+.visor b { font-size: 30px; font-weight: 500; letter-spacing: .04em; line-height: 1; display: block; }
+.visor small { display: block; font-size: 11px; opacity: .75; margin-top: 2px; text-transform: uppercase; white-space: pre; }
+
+.visor-food { position: absolute; left: 50%; top: 2.2%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; }
+.visor-seg { display: flex; gap: 4px; }
+.visor-seg i { width: 18px; height: 8px; background: var(--c); opacity: .14; transform: skewX(-20deg); }
+.visor-seg i.on { opacity: .85; }
+.visor-who { position: absolute; left: 24px; top: 128px; display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+.visor-count { position: absolute; right: 24px; top: 128px; display: flex; align-items: center; gap: 8px; text-align: right; }
+.visor-gap { width: 16px; }
+.visor-radar { position: absolute; left: 24px; bottom: 84px; width: 130px; height: 130px; }
+.visor-radar svg { width: 100%; height: 100%; }
+.visor-sweep { fill: rgba(143, 230, 255, .16); transform-origin: 100px 100px; animation: visor-sweep 4s linear infinite; }
+.visor-dot { fill: var(--c); } .visor-dot.dim { opacity: .5; }
+.visor-family { position: absolute; left: 170px; bottom: 96px; display: flex; align-items: flex-end; gap: 10px; }
+.visor-family .child { width: 20px; height: 20px; }
+.visor-pulse { position: absolute; right: 28px; bottom: 96px; display: flex; align-items: center; gap: 10px; }
+.visor-trace { width: 96px; height: 24px; }
+.visor-trace path { fill: none; stroke: var(--c); stroke-width: 1.5; stroke-dasharray: 200; stroke-dashoffset: 200; animation: visor-trace var(--beat, 1s) linear infinite; }
+.visor-heart { animation: visor-beat var(--beat, 1s) infinite; }
+
+@keyframes visor-sweep { to { transform: rotate(360deg); } }
+@keyframes visor-trace { to { stroke-dashoffset: 0; } }
+@keyframes visor-beat { 0%, 100% { transform: scale(1); } 12% { transform: scale(1.22); } 26% { transform: scale(1); } }
+
+/* En el celular: menos marco y todo más chico (la escena y los lugares mandan). */
+@media (max-width: 720px) {
+  .visor-frame { display: none; }
+  .visor b { font-size: 22px; }
+  .visor-who { display: none; } /* el nombre ya lo dice su voz al llegar */
+  .visor-food { top: 64px; left: 14px; transform: none; }
+  .visor-count { top: 58px; right: 14px; }
+  .visor-count b { font-size: 18px; }
+  .visor-count small { font-size: 9px; }
+  .visor-icon { width: 20px; height: 20px; }
+  .visor-radar { width: 92px; height: 92px; bottom: 96px; }
+  .visor-family { left: 120px; bottom: 104px; }
+  .visor-pulse { right: 14px; bottom: 104px; }
+  .visor-trace { display: none; }
+  .visor-seg i { width: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .visor-sweep, .visor-trace path, .visor-heart { animation: none; }
+  .visor-trace path { stroke-dashoffset: 0; }
+}

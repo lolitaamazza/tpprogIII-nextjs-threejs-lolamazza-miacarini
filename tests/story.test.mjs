@@ -130,10 +130,11 @@ test('el cierre dice quién fue a la arena, con cuántos papeles, y cuántos fra
   const story = { ...createStory(), papers: { 12: 9, 11: 4, 4: 3 }, fragments: ['12-viga', '4-cuenco', '7-tronco', '13-signal'] };
   assert.deepEqual(endingLines(story, '11'), [
     'Oliva fue a la arena. Su nombre estaba cuatro veces en la urna, el de Ash nueve y el de Marin tres.',
+    'Su mamá, Lila y Brisa siguen esperando en el Distrito 11.',
     'Salieron al aire 4 de 13 fragmentos.',
   ]);
   assert.deepEqual(endingLines({ ...story, fragments: ['12-viga'] }, null), ['Los fragmentos no alcanzaron para una transmisión. Quedan en el archivo.']);
-  assert.equal(endingLines({ ...story, fragments: [] }, '12')[1], 'Ningún fragmento salió al aire.');
+  assert.equal(endingLines({ ...story, fragments: [] }, '12')[2], 'Ningún fragmento salió al aire.');
 });
 
 test('con seis marcas del sinsajo o más, el final suma la voz de la resistencia', async () => {
@@ -142,8 +143,8 @@ test('con seis marcas del sinsajo o más, el final suma la voz de la resistencia
   const base = { ...createStory(), fragments: ['12-viga', '4-cuenco', '7-tronco', '13-signal'] };
   const six = endingLines({ ...base, marks: MARKS.slice(0, 6).map((m) => m.id) }, '12');
   assert.equal(six.at(-1), 'La resistencia habló en la transmisión. Se encontraron 6 de 9 marcas del sinsajo.');
-  assert.equal(six.length, 3);
+  assert.equal(six.length, 4, 'quién fue, su familia, los fragmentos y la resistencia');
   const five = endingLines({ ...base, marks: MARKS.slice(0, 5).map((m) => m.id) }, '12');
-  assert.equal(five.length, 2);
+  assert.equal(five.length, 3);
   assert.ok(!five.some((line) => line.includes('resistencia')));
 });

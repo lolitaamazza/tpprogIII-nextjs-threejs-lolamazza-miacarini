@@ -11,6 +11,10 @@ import { getDistrict } from '@/data/districts';
 import BackLink from './BackLink';
 import { DecisionCard, Lives, Score } from './DistrictHud';
 import { usePanem } from './PanemProvider';
+import Visor from './Visor';
+import ArrivalVoice from './ArrivalVoice';
+import { visorState } from '@/lib/visor';
+import { PROTAGONISTS } from '@/lib/story';
 
 const FAREWELL_MS = 2600;
 const HOLD_HINT_MS = 2600;
@@ -117,6 +121,9 @@ export default function LocationExperience({ id }) {
   // La partida vale solo mientras hay jornada (al ganar, el frente queda picado y la partida termina).
   const hud = districtHud({ district, match: jobMode === 'play' ? jobMatch : null, lit: lit && !practicing, story, day, practice: practicing });
   const deciding = atJob && (hud.kind === 'decision' || Boolean(farewell));
+  // El visor: lo que ve el personaje (el pulso sube en la jornada y al decidir si pide comida).
+  const moment = atJob && hud.kind === 'play' && jobMode === 'play' && jobMatch ? 'job' : deciding ? 'decision' : 'calm';
+  const visor = visorState({ id, story, moment });
 
   // Decidido si pide comida: una línea con lo que pasa esa noche, la tele del Capitolio y el mapa.
   const decide = (accept) => {
@@ -183,6 +190,8 @@ export default function LocationExperience({ id }) {
   return (
     <section className="location" aria-label={`Distrito ${id}`} onPointerDown={(event) => setPressAt([event.clientX, event.clientY])}>
       <div ref={mountRef} className="location-mount" />
+      {status.phase === 'ready' && <Visor state={visor} />}
+      {status.phase === 'ready' && !zone && PROTAGONISTS[id] && <ArrivalVoice key={id} lines={PROTAGONISTS[id].voice} reducedMotion={reducedMotion} paused={atJob && (hud.kind === 'play' || hud.kind === 'decision')} />}
       <header className="district-hud-top location-top">
         <div className="district-hud-title">
           {zone || roomLoading ? <button type="button" className="back location-exit" aria-label={zone?.id === 'galpon' ? 'Salir del granero' : 'Salir de la casa'} onClick={() => apiRef.current?.exitInterior()}><PiArrowLeft aria-hidden="true" /> Salir al distrito</button> : <BackLink />}

@@ -323,3 +323,15 @@ body.is-burning .overlay, body.is-burning .site-header { opacity: 0.12; filter: 
 /* Mantener presionado: una barra fina justo debajo de donde se apoyó el dedo (o el puntero). */
 .hold-meter { position: absolute; left: 50%; top: calc(50% + 34px); width: 96px; height: 3px; transform: translateX(-50%); background: #ffffff26; pointer-events: none; }
 .hold-meter span { position: absolute; inset: 0; background: var(--gold); transform-origin: left; transition: transform .08s linear; }
+
+/* Su voz al llegar: una línea por vez, centrada sobre la escena, arriba de los lugares. */
+.arrival-voice { position: absolute; left: 50%; bottom: calc(max(20px, env(safe-area-inset-bottom, 0px)) + 150px); transform: translateX(-50%); z-index: 2; width: min(640px, calc(100vw - 32px)); display: grid; justify-items: center; gap: 6px; text-align: center; pointer-events: auto; }
+.arrival-voice p { margin: 0; font: italic 400 19px/1.45 Georgia, serif; color: #f4ecdc; text-shadow: 0 1px 14px #000, 0 0 2px #000; }
+.arrival-line { animation: arrival-in .7s ease-out both; }
+.arrival-skip { border: 0; background: none; color: #f4ecdc99; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; padding: 4px 8px; }
+.arrival-skip:hover, .arrival-skip:focus-visible { color: #f4ecdc; }
+@keyframes arrival-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .arrival-line { animation: none; } }
+@media (max-width: 720px) { .arrival-voice { bottom: 200px; } .arrival-voice p { font-size: 16px; } }
+.plaza-voice { max-width: 420px; font: italic 400 16px/1.5 Georgia, serif; color: #f4ecdc; }
+.plaza-voice span { display: block; font: 600 11px/1 var(--font-display); font-style: normal; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }

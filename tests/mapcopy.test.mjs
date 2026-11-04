@@ -5,7 +5,7 @@ import { mapIntroCopy } from '../lib/mapCopy.js';
 test('cada día cuenta cuánto falta para la Cosecha y a quién le toca', () => {
   const one = mapIntroCopy({ phase: 'day', day: { index: 0, district: '12' } });
   assert.equal(one.title, 'Faltan tres días para la Cosecha.');
-  assert.equal(one.text, 'Día 1 · Ash trabaja en la mina del Distrito 12.');
+  assert.equal(one.text, 'Día 1. Ash hace dos turnos en la mina del Distrito 12 porque su mamá ya no puede.');
   assert.equal(mapIntroCopy({ phase: 'day', day: { index: 1, district: '11' } }).title, 'Faltan dos días.');
   assert.match(mapIntroCopy({ phase: 'day', day: { index: 2, district: '4' } }).text, /Marin/);
   assert.equal(one.action, null);
