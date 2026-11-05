@@ -25,17 +25,18 @@ const Icon = ({ d, fill = false, className = '' }) => (
 
 // Lo que ve el personaje sobre su distrito (ver lib/visor.js): el marco de casco, la comida que queda en su casa,
 // quién es, los papeles en la urna y los días que faltan, su familia, el radar y el pulso. No se toca: es solo mirar.
-export default function Visor({ state }) {
+// `tone`: 'day' en las escenas claras (el 4 al amanecer), con el visor en un azul oscuro.
+export default function Visor({ state, tone = 'night' }) {
   if (!state) return null;
   const { name, age, district, portions, papers, days, family, pulse } = state;
   const beat = `${(60 / pulse).toFixed(2)}s`;
   return (
-    <div className={`visor ${rajdhani.className}`} style={{ '--beat': beat }} aria-label={`${name}, ${age} años. ${portions.left === 1 ? 'Queda una porción' : `Quedan ${portions.left} porciones`} de comida. Su nombre está ${papers === 1 ? 'una vez' : `${papers} veces`} en la urna. ${days === 1 ? 'Mañana es la Cosecha' : `Faltan ${days} días para la Cosecha`}. Pulso ${pulse}.`} role="img">
+    <div className={`visor visor-${tone} ${rajdhani.className}`} style={{ '--beat': beat }} aria-label={`${name}, ${age} años. ${portions.left === 1 ? 'Queda una porción' : `Quedan ${portions.left} porciones`} de comida. Su nombre está ${papers === 1 ? 'una vez' : `${papers} veces`} en la urna. ${days === 1 ? 'Mañana es la Cosecha' : `Faltan ${days} días para la Cosecha`}. Pulso ${pulse}.`} role="img">
       <svg className="visor-frame" viewBox="0 0 1600 1000" preserveAspectRatio="none" aria-hidden="true">
         <path className="visor-line" d="M0 64 H190 L232 108 H560 L600 64 H1000 L1040 108 H1368 L1410 64 H1600" />
         <path className="visor-faint" d="M20 132 H300 L340 168 H520 M1580 132 H1300 L1260 168 H1080" />
         <path className="visor-line" d="M640 26 H960 L980 44 L960 62 H640 L620 44 Z" />
-        <path className="visor-line" d="M0 880 H300 L370 940 H1230 L1300 880 H1600" />
+        <path className="visor-line visor-low" d="M0 880 H300 L370 940 H1230 L1300 880 H1600" />
         <path className="visor-faint" d="M60 480 H120 M1480 480 H1540 M560 905 H1040" />
         <circle className="visor-line" cx="800" cy="500" r="14" />
         <path className="visor-faint" d="M772 500 H786 M814 500 H828 M800 472 V486 M800 514 V528" />

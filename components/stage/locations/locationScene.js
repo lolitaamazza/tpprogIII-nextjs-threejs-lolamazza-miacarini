@@ -198,9 +198,14 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
     if (state.transition || state.walk) return null;
     const r = ray(event);
     if (canTouchFragment() && r.intersectObject(vigaHit, false).length) return { fragment: fragment.id };
-    const here = state.walk ? [] : activeItems().filter((i) => i.spot === state.current && i.available(state.tools) && i.pickable());
+    // En una habitación se toca cualquier objeto desde donde se esté; afuera, solo los del lugar donde se está.
+    // Lo ya encontrado (una nota, una caja) se vuelve a abrir tocándolo otra vez.
+    const here = activeItems().filter((i) => (state.zone || i.spot === state.current) && i.available(state.tools) && (i.pickable() || (i.isDone() && i.kind !== 'take')));
     const touched = r.intersectObjects(here.map((i) => i.hit), false)[0];
-    if (touched) return { item: here.find((i) => i.hit === touched.object) };
+    if (touched) {
+      const item = here.find((i) => i.hit === touched.object);
+      return item.isDone() ? { reread: item.reveals } : { item };
+    }
     const hit = r.intersectObjects(activeMarkers().filter((m) => m.available).map((m) => m.hit), false)[0];
     if (!hit) return null;
     const obstacle = r.intersectObjects(state.zone ? state.room.obstacles : obstacles, false)[0];
@@ -319,6 +324,7 @@ export function createLocationScene(mount, data, { reducedMotion = false, onProg
     const picked = pick(event);
     if (picked?.fragment) onFragment(picked.fragment);
     else if (picked?.item) picked.item.tap();
+    else if (picked?.reread) onClue(picked.reread);
     else if (picked?.spot) goTo(picked.spot);
   }
   canvas.addEventListener('pointerdown', onDown);

@@ -50,11 +50,11 @@ test('clueById dice qué tipo de pista es cada id', () => {
 test('la tarjeta dice qué se encontró: fragmento, herramienta, marca n/9 o pista', async () => {
   const { clueMeta } = await import('../lib/clues.js');
   const story = { fragments: ['12-viga', '4-cuenco'], tools: ['farol'], marks: ['m-2-cueva', 'm-7-bosque', 'm-3-sotano'], hints: ['p-12-cartel'] };
-  assert.equal(clueMeta(clueById('12-viga'), story), 'Fragmento 2/13 · Distrito 12');
-  assert.equal(clueMeta(clueById('farol'), story), 'Herramienta · Distrito 12');
-  assert.equal(clueMeta(clueById('m-7-bosque'), story), 'Marca del sinsajo 3/9 · Distrito 7');
-  assert.equal(clueMeta(clueById('p-12-cartel'), story), 'Pista · Distrito 12');
-  assert.equal(clueMeta(clueById('13-signal'), story), 'Fragmento 2/13 · Distrito 13');
+  assert.equal(clueMeta(clueById('12-viga'), story), 'Fragmento 2/13 / Distrito 12');
+  assert.equal(clueMeta(clueById('farol'), story), 'Herramienta / Distrito 12');
+  assert.equal(clueMeta(clueById('m-7-bosque'), story), 'Marca del sinsajo 3/9 / Distrito 7');
+  assert.equal(clueMeta(clueById('p-12-cartel'), story), 'Pista / Distrito 12');
+  assert.equal(clueMeta(clueById('13-signal'), story), 'Fragmento 2/13 / Distrito 13');
 });
 
 test('la botella del 4 es una pista que manda al Distrito 3', () => {

@@ -125,5 +125,5 @@ test('cada interior cuenta algo mediante objetos alcanzables y pistas persistent
       }
     }
   }
-  assert.equal(story.hints.length, 8);
+  assert.equal(story.hints.length, 7); // el pájaro cosido quedó afuera (2026-11-05)
 });

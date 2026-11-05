@@ -12,8 +12,8 @@ const SCREEN_H = 768;
 const TILE = 256;
 const ATLAS_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', 'c', 'logo', 'bars'];
 const COLORS = {
-  walnut: 0x3a2617, bakelite: 0x231912, brass: 0xc8a961, cream: 0xe6d9bb, uniform: 0x5e1d12, hair: 0x140d09,
-  suit: 0x15110e, floor: 0x2a1610, wall: 0x5a4a37, ceiling: 0x2d241b, lamp: 0xc8621c, glass: 0x8fd0d8,
+  walnut: 0x1f2830, bakelite: 0x141a20, brass: 0x9db8c6, cream: 0xd7e1e6, uniform: 0x5e1d12, hair: 0x140d09,
+  suit: 0x15110e, floor: 0x141a20, wall: 0x34414c, ceiling: 0x1a2128, lamp: 0x5fb6d6, glass: 0x8fd0d8,
 };
 
 function fontFamily(variable, fallback) {
@@ -286,7 +286,7 @@ function paintWallColor() {
   const c = canvas(4096, 512);
   const ctx = c.getContext('2d');
   const g = ctx.createLinearGradient(0, 0, 0, 512);
-  g.addColorStop(0, '#3b3126'); g.addColorStop(0.15, '#6a5a43'); g.addColorStop(0.9, '#5a4a37'); g.addColorStop(1, '#2a2118');
+  g.addColorStop(0, '#1f2731'); g.addColorStop(0.15, '#3e4c58'); g.addColorStop(0.9, '#34414c'); g.addColorStop(1, '#161c22');
   ctx.fillStyle = g; ctx.fillRect(0, 0, c.width, c.height);
   return c;
 }
@@ -300,7 +300,7 @@ function paintSunburst() {
   ctx.lineTo(1780, 820); ctx.lineTo(268, 820); ctx.closePath();
   ctx.save(); ctx.clip();
   const bg = ctx.createRadialGradient(1024, 460, 60, 1024, 460, 1100);
-  bg.addColorStop(0, '#6b5534'); bg.addColorStop(1, '#2b1f13');
+  bg.addColorStop(0, '#2f4552'); bg.addColorStop(1, '#0f171d');
   ctx.fillStyle = bg; ctx.fillRect(0, 0, c.width, c.height);
   for (let i = 0; i < 140; i++) {
     const a = (i / 140) * Math.PI * 2;
@@ -309,7 +309,7 @@ function paintSunburst() {
     ctx.beginPath(); ctx.moveTo(1024, 460); ctx.lineTo(1024 + Math.cos(a) * 1400, 460 + Math.sin(a) * 1400); ctx.stroke();
   }
   ctx.restore();
-  ctx.strokeStyle = '#c8a961'; ctx.lineWidth = 10;
+  ctx.strokeStyle = '#8fc8dc'; ctx.lineWidth = 10;
   ctx.beginPath(); ctx.moveTo(140, 120); ctx.quadraticCurveTo(1024, 40, 1908, 120); ctx.lineTo(1780, 820); ctx.lineTo(268, 820); ctx.closePath(); ctx.stroke();
   return c;
 }
@@ -415,9 +415,9 @@ export async function createBroadcastHall() {
   const std = (color, extra = {}) => keep(new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.1, ...extra }));
 
   // Luces propias: viven en el grupo, así que se apagan cuando la sala no se ve.
-  const hemi = new THREE.HemisphereLight(0x9fb7cf, 0x2b1a12, 0.9);
+  const hemi = new THREE.HemisphereLight(0x9fb7cf, 0x121a22, 0.9);
   group.add(hemi);
-  const key = new THREE.SpotLight(0xffe2b0, 60, 40, 0.55, 0.6, 1.4);
+  const key = new THREE.SpotLight(0xd6ecff, 60, 40, 0.55, 0.6, 1.4);
   key.position.set(0, 11, 12);
   key.target.position.set(0, 3.5, 0);
   group.add(key, key.target);
@@ -425,7 +425,7 @@ export async function createBroadcastHall() {
   screenGlow.position.set(0, HALL.screen.y, 3);
   group.add(screenGlow);
   const lampLights = [-1, 1].map((side) => {
-    const light = new THREE.PointLight(0xff9a3c, 14, 16, 1.6);
+    const light = new THREE.PointLight(0x7fd2f0, 14, 16, 1.6);
     light.position.set(side * 10, 3.8, 2.2);
     group.add(light);
     return light;
@@ -454,7 +454,7 @@ export async function createBroadcastHall() {
     position: [Math.sin(a) * (HALL.radius - 0.8), HALL.height / 2, HALL.wallCenterZ - Math.cos(a) * (HALL.radius - 0.8)],
     rotationY: -a,
   }));
-  group.add(instanced(columnGeo, std(0x4a3d2e, { roughness: 0.7 }), columns));
+  group.add(instanced(columnGeo, std(0x2c3740, { roughness: 0.7 }), columns));
 
   // Panel de rayos y tarima
   const sunburst = keep(canvasTexture(paintSunburst()));
@@ -462,7 +462,7 @@ export async function createBroadcastHall() {
   panel.position.set(0, 4.6, -1.1);
   group.add(panel);
   const stage = keep(mergeGeometries([box(9, 0.35, 3, 0, 0.18, 0.2), box(7.5, 0.35, 2.4, 0, 0.53, 0), box(3, 0.35, 1.2, 0, 0.18, 2.1)]));
-  group.add(new THREE.Mesh(stage, std(0x2b1d13, { roughness: 0.5 })));
+  group.add(new THREE.Mesh(stage, std(0x141b21, { roughness: 0.5 })));
 
   // Tele central
   const cabinet = new THREE.Mesh(keep(new RoundedBoxGeometry(7.9, 6.2, 1.3, 5, 0.55)), std(COLORS.bakelite, { roughness: 0.35, metalness: 0.2 }));
@@ -506,7 +506,7 @@ export async function createBroadcastHall() {
   const lampHead = keep(new THREE.CylinderGeometry(0.75, 0.75, 0.22, 32));
   lampHead.rotateX(Math.PI / 2);
   const lampSpots = [[-9.9, 3.7, 1.6, 0.8], [9.9, 3.7, 1.6, 0.8], [-12.6, 4.4, 4.4, 1], [12.6, 4.4, 4.4, 1]];
-  const lampMaterial = std(COLORS.lamp, { emissive: 0xff8a2a, emissiveIntensity: 0.75, roughness: 0.4 });
+  const lampMaterial = std(COLORS.lamp, { emissive: 0x5fc4ea, emissiveIntensity: 0.75, roughness: 0.4 });
   group.add(instanced(lampHead, lampMaterial, lampSpots.map(([x, y, z, s]) => ({ position: [x, y, z], rotationY: -x * 0.03, scale: s }))));
   // Los pies llegan al piso: el cilindro de 1 de alto se estira a la altura de cada lámpara.
   const poleGeo = keep(new THREE.CylinderGeometry(0.05, 0.05, 1, 8));
@@ -517,7 +517,7 @@ export async function createBroadcastHall() {
   const chairs = instanced(keep(chairGeometry()), std(COLORS.walnut, { roughness: 0.5 }), seats.map((s) => ({ position: [s.x, 0, s.z], rotationY: s.turn * 0.3 })));
   group.add(chairs);
   const deskGeo = keep(mergeGeometries([box(1.05, 0.06, 0.5, 0, 0.76, -0.62), box(1.0, 0.7, 0.04, 0, 0.4, -0.85)]));
-  group.add(instanced(deskGeo, std(0x4b3220, { roughness: 0.45 }), seats.map((s) => ({ position: [s.x, 0, s.z] }))));
+  group.add(instanced(deskGeo, std(0x26313a, { roughness: 0.45 }), seats.map((s) => ({ position: [s.x, 0, s.z] }))));
   const monitorGeo = keep(new RoundedBoxGeometry(0.42, 0.34, 0.32, 2, 0.06));
   monitorGeo.translate(0, 0.96, -0.7);
   group.add(instanced(monitorGeo, std(0xd9d2bf, { roughness: 0.4 }), seats.filter((s, i) => i % 2 === 0).map((s) => ({ position: [s.x, 0, s.z] }))));

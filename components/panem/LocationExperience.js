@@ -190,7 +190,7 @@ export default function LocationExperience({ id }) {
   return (
     <section className="location" aria-label={`Distrito ${id}`} onPointerDown={(event) => setPressAt([event.clientX, event.clientY])}>
       <div ref={mountRef} className="location-mount" />
-      {status.phase === 'ready' && <Visor state={visor} />}
+      {status.phase === 'ready' && <Visor state={visor} tone={data.visorTone} />}
       {status.phase === 'ready' && !zone && PROTAGONISTS[id] && <ArrivalVoice key={id} lines={PROTAGONISTS[id].voice} reducedMotion={reducedMotion} paused={atJob && (hud.kind === 'play' || hud.kind === 'decision')} />}
       <header className="district-hud-top location-top">
         <div className="district-hud-title">
@@ -234,22 +234,22 @@ export default function LocationExperience({ id }) {
               ) : <button type="button" className="hud-action" onClick={pick}>{hud.action}</button>}
             </div>
           )}
-          {atJob && (hud.kind === 'done' || jobMode === 'idle') && !farewell && (
-            <div className="district-hud-bottom location-hud"><button type="button" onClick={() => replayDay(id)}>{lit ? 'Jugar de nuevo' : `Practicar: ${gameName}`}</button></div>
+          {atJob && hud.kind !== 'decision' && (hud.kind === 'done' || jobMode === 'idle') && !farewell && (
+            <div className="district-hud-bottom location-hud"><button type="button" onClick={() => replayDay(id)}>{lit ? 'Jugar de nuevo' : `Practicar ${gameName.toLowerCase()}`}</button></div>
           )}
           {atJob && hud.kind === 'decision' && !farewell && <DecisionCard hud={hud} onDecide={decide} />}
           {atJob && farewell && <p className="tesserae-card tesserae-farewell" role="status">{farewell}</p>}
           {zone && !heading && roomItems.some((item) => item.spot === spot) && <aside className="location-discoveries" aria-label="Objetos para investigar">
             <span>En este lugar</span>
             {roomItems.filter((item) => item.spot === spot).map((item) => <button key={item.id} type="button" onClick={() => clues.includes(item.reveals) ? handleClue(item.reveals) : apiRef.current?.interact(item.id)}>
-              {clues.includes(item.reveals) ? 'Volver a leer: ' : 'Examinar: '}{item.label ?? clueById(item.reveals)?.title ?? item.id}
+              <small>{clues.includes(item.reveals) ? 'Leer de nuevo' : 'Examinar'}</small>{item.label ?? clueById(item.reveals)?.title ?? item.id}
             </button>)}
           </aside>}
           {!deciding && <nav className="location-keyboard-nav" aria-label="Lugares del distrito">
             {spots.map((s, i) => (
               <button key={s.id} type="button" aria-current={s.id === spot && !heading ? 'location' : undefined}
                 className={s.id === (heading ?? spot) ? 'active' : ''} onClick={() => go(s.id)}>
-                <span aria-hidden="true">{i + 1} · </span>{!zone && s.id === data.job?.spot ? `${s.label} · ${gameName}` : s.label}
+                <span aria-hidden="true">{i + 1}</span> {!zone && s.id === data.job?.spot ? `${s.label} / ${gameName}` : s.label}
               </button>
             ))}
 

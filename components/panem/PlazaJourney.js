@@ -76,7 +76,7 @@ export default function PlazaJourney() {
   return (
     <section className="location plaza" aria-label={`La plaza del Distrito ${district}`}>
       <div ref={mountRef} className="location-mount" />
-      <header className="district-hud-top location-top"><div className="district-hud-title"><BackLink /><h1>La Cosecha · Distrito {district}</h1></div></header>
+      <header className="district-hud-top location-top"><div className="district-hud-title"><BackLink /><h1>La Cosecha, Distrito {district}</h1></div></header>
       {status === 'loading' && <p className="location-loading" role="status">Llegando a la plaza…</p>}
       {status === 'ready' && stage === 'plaza' && (
         <div className="tesserae-card plaza-card">

@@ -1,4 +1,4 @@
-.games-experience { position: absolute; inset: 0; overflow: hidden; pointer-events: none !important; --archive-gold: #dfc381; --holo: #5fd3e0; }
+.games-experience { position: absolute; inset: 0; overflow: hidden; pointer-events: none !important; --archive-gold: #8fe6ff; /* antes #dfc381, enfriado al celeste del visor (2026-11-05) */ --holo: #5fd3e0; }
 .games-experience > * { pointer-events: auto; }
 .games-experience .games-vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 55%, #05080acc); }
 
@@ -9,7 +9,7 @@
 .games-top { position: fixed; top: 76px; left: 24px; display: grid; justify-items: start; gap: 6px; max-width: min(520px, calc(100vw - 220px)); pointer-events: none !important; text-shadow: 0 1px 10px #000; }
 .games-top > * { pointer-events: auto; margin: 0; }
 .games-status { display: flex; gap: 14px; font: 600 12px/1.4 ui-monospace, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; color: #ffffffaa; }
-.games-status .live { color: #8fe0a0; }
+.games-status .live { color: var(--archive-gold); }
 .games-step { font: 12px var(--font-display); letter-spacing: .2em; color: #ffffff80; }
 .games-title { font-size: clamp(30px, 4vw, 44px); font-weight: 500; letter-spacing: .02em; }
 .games-hint { font-size: 14px; color: #cfd3cf; }
@@ -67,12 +67,12 @@
 .games-card { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); width: min(460px, calc(100vw - 32px)); padding: 18px 20px; background: #070b0de6; border: 1px solid #ffffff22; border-top: 2px solid var(--archive-gold); backdrop-filter: blur(10px); }
 .games-card h2 { margin: 0 0 8px; font-size: 26px; font-weight: 400; }
 .games-card p { margin: 0 0 12px; font-size: 14px; color: #c5c7c5; }
-.games-card .primary { width: 100%; text-align: center; margin-top: 4px; background: var(--archive-gold); border-color: var(--archive-gold); }
+.games-card .primary { width: 100%; text-align: center; margin-top: 4px; background: #8fe6ff10; color: var(--archive-gold); }
 .games-prep { width: min(560px, calc(100vw - 32px)); }
 .prep-row { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 12px; color: var(--archive-gold); }
 .prep-row button { padding: 7px 8px; text-transform: none; letter-spacing: 0; font: 13px var(--font-body); border-color: #ffffff22; }
 .prep-row button small { display: block; font-size: 10px; color: #9fb0b4; }
-.prep-row button[aria-checked=true] { border-color: var(--archive-gold); background: #dfc38114; }
+.prep-row button[aria-checked=true] { border-color: var(--archive-gold); background: #8fe6ff14; }
 
 /* Desenlace: el sobreviviente, abajo a la izquierda */
 .games-winner { position: fixed; left: 24px; bottom: 24px; width: min(420px, calc(100vw - 48px)); text-shadow: 0 1px 10px #000; }
@@ -80,7 +80,7 @@
 .winner-kicker { color: var(--archive-gold) !important; font-size: 11px !important; letter-spacing: .14em; text-transform: uppercase; }
 .winner-name { margin: 0 0 6px; font-size: 64px; font-weight: 400; line-height: 1; color: var(--archive-gold); }
 .winner-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.winner-actions .primary { background: var(--archive-gold); border-color: var(--archive-gold); }
+.winner-actions .primary { background: #8fe6ff10; color: var(--archive-gold); }
 .restart-confirm { margin-top: 10px; padding: 10px; background: #070b0de6; border: 1px solid #ffffff22; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .restart-confirm p { flex-basis: 100%; }
 
@@ -130,7 +130,7 @@
 
 /* Archivo interceptado: la resistencia entra al archivo del Capitolio por la frecuencia del 13. */
 .games-vignette::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(#0000 0 2px, #00000038 2px 3px); }
-.pirate-tag { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 3px 8px; font: 600 11px/1.3 ui-monospace, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; background: #8fe0a0; color: #06140a; }
+.pirate-tag { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 3px 8px; font: 600 11px/1.3 ui-monospace, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; background: transparent; color: var(--archive-gold); border: 1px solid #8fe6ff55; }
 .pirate-tag span { animation: flicker 1s steps(2) infinite; }
 .games-arena .pirate-tag { margin: 0; }
 .capitol-stamp { position: relative; display: inline-block; margin-left: 10px; padding: 1px 6px; border: 1px solid #c8282899; color: #e07a6e; font: 600 9px/1.4 ui-monospace, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; transform: rotate(-3deg); }

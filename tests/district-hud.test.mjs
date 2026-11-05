@@ -10,7 +10,7 @@ const start = () => createMatch({ goal: 6, lives: 3 });
 test('jugable recién entrado: título, pista, avance, vidas y botón alternativo', () => {
   const hud = districtHud({ district: coal, match: start() });
   assert.equal(hud.kind, 'play');
-  assert.equal(hud.title, '12 · Carbón');
+  assert.equal(hud.title, '12 / Carbón');
   assert.equal(hud.hint, coal.instruction);
   assert.deepEqual(hud.score, { label: 'Bloques', value: 0, total: 6 });
   assert.deepEqual(hud.lives, { label: 'Canario', left: 3, total: 3 });
@@ -101,7 +101,7 @@ test('los otros distritos se exploran: sin contadores ni jornada', () => {
   const wood = getDistrict('7');
   const hud = districtHud({ district: wood });
   assert.equal(hud.kind, 'explore');
-  assert.equal(hud.title, '7 · Madera');
+  assert.equal(hud.title, '7 / Madera');
   assert.equal(hud.score, null);
   assert.equal(hud.action, null);
 });

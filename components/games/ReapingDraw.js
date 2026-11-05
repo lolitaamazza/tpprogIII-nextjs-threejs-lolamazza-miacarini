@@ -36,10 +36,10 @@ export default function ReapingDraw({run,onDraw,onContinue,onSkip,disabled}){
   <header className="reaping-intro"><p className="eyebrow">EL CAPITOLIO EXIGE VEINTICUATRO NOMBRES</p><h1>La Cosecha<span>.</span></h1><p>Agarrá un papel de la urna y sacalo.<br/>{run.protagonist?'Los papeles de Ash, Oliva y Marin ya están adentro.':'Cada nombre pertenece a una historia.'}</p></header>
   <aside className="reaping-control"><p className="reaping-count">{count}<span>/24</span></p>
    {last&&<div className="drawn-name" key={count} aria-live="polite" aria-atomic="true">{last?<><small>DISTRITO {last.district}</small><strong>{last.name}</strong><span>{mine?papersLine(mine,story.papers):'Su nombre ya está en el registro.'}</span></>:null}</div>}
-   {count<24?<><button className="primary" disabled={busy||disabled} onClick={()=>request.current?.()}>{busy?'Abriendo el papel…':'Sacar un papel'}</button><button className="reaping-skip" disabled={busy||disabled} onClick={()=>{setBusy(true);onSkip();}}>Saltear la Cosecha</button></>:<button className="primary" disabled={busy||disabled} onClick={finish}>{run.protagonist?'Ir al escenario':'Ir al escenario · elegir tributo'}</button>}
+   {count<24?<><button className="primary" disabled={busy||disabled} onClick={()=>request.current?.()}>{busy?'Abriendo el papel…':'Sacar un papel'}</button><button className="reaping-skip" disabled={busy||disabled} onClick={()=>{setBusy(true);onSkip();}}>Saltear la Cosecha</button></>:<button className="primary" disabled={busy||disabled} onClick={finish}>{run.protagonist?'Ir al escenario':'Elegir tributo e ir al escenario'}</button>}
    <p className="reaping-help">{failed?'Podés extraer los nombres con el botón.':'Arrastrá un papel o usá el botón.'}</p>
    {count>0&&<details className="reaping-register"><summary>Ver los {count} nombres extraídos</summary><ol>{order.slice(0,count).map(id=>{const t=run.tributes.find(t=>t.id===id);return <li key={id}><span>D{t.district}</span> {t.name}</li>;})}</ol></details>}
-   <a className="reaping-credit" href="https://polyhaven.com" target="_blank" rel="noreferrer">Materiales e iluminación · Poly Haven</a>
+   <a className="reaping-credit" href="https://polyhaven.com" target="_blank" rel="noreferrer">Materiales e iluminación de Poly Haven</a>
   </aside>
  </section>;
 }

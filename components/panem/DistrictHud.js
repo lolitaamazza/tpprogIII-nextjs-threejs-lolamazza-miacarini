@@ -39,9 +39,13 @@ const FAREWELL_MS = 2600;
 export function DecisionCard({ hud, onDecide }) {
   return (
     <section className="tesserae-card" aria-labelledby="tesserae-question">
-      <p>{hud.line}</p>
+      <p className="tesserae-line">{hud.line}</p>
       <p id="tesserae-question" className="tesserae-question">¿{hud.who} pide comida al Capitolio?</p>
       <p className="tesserae-papers">Hoy su nombre está {hud.papers.from} veces en la urna. Si pide comida, va a estar <b>{hud.papers.to}</b>.</p>
+      {/* Los papeles en la urna como celdas del visor: los que ya están y, encendidos, los que sumaría la comida. */}
+      <div className="tesserae-cells" aria-hidden="true">
+        {Array.from({ length: hud.papers.to }, (_, i) => <i key={i} className={i < hud.papers.from ? 'on' : 'extra'} />)}
+      </div>
       <div className="tesserae-actions">
         <button type="button" className="primary" onClick={() => onDecide(true)}>Pedir comida</button>
         <button type="button" onClick={() => onDecide(false)}>No pedir</button>

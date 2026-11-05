@@ -32,7 +32,7 @@ export default function ArenaHud({ run, encounter, onDecide, onAdvance, autoDela
     <>
       {selected && (
         <section className="arena-tribute" aria-label={`Tu tributo: ${selected.name}`}>
-          <p><strong>{selected.name}</strong> <span>D{selected.district}</span>{!selected.alive && <em> · cayó en el turno {selected.eliminatedTurn}</em>}</p>
+          <p><strong>{selected.name}</strong> <span>D{selected.district}</span>{!selected.alive && <em>, cayó en el turno {selected.eliminatedTurn}</em>}</p>
           {vitals.map((v) => (
             <div key={v.key} className={`arena-vital${v.warning ? ' warning' : ''}`}>
               <span>{v.label}</span>

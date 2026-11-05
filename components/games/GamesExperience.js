@@ -137,18 +137,18 @@ export default function GamesExperience({ chapter: requestedChapter }) {
       <div className="games-vignette" aria-hidden="true" />
       <header className="games-top">
         {status ? (
-          <p className="games-status"><span className="live">● En vivo · {status.label}</span> <span>{status.alive} en pie</span></p>
+          <p className="games-status"><span className="live">● En vivo / {status.label}</span> <span>{status.alive} en pie</span></p>
         ) : (
           <>
             <p className="games-step">0{CHAPTERS.indexOf(chapter) + 1} / 04</p>
             <h1 className="games-title">{TITLES[chapter]}</h1>
           </>
         )}
-        <p className="pirate-tag"><span aria-hidden="true">●</span> Señal pirata · FREQ 13</p>
+        <p className="pirate-tag"><span aria-hidden="true">●</span> Señal pirata / FREQ 13</p>
         {chapter === 'reaping' && run && <p className="games-hint">Tocá un tributo en el escenario para conocerlo, <button type="button" className="link" onClick={() => setDrawer('tributes')}>o elegí de la lista</button>.</p>}
         {games.conflict && (
           <div className="save-conflict" role="alert">
-            <p>Hay dos versiones de esta edición (actual: turno {run?.turn ?? 0}; la otra: turno {games.conflict.turn}). Elegí cuál seguir.</p>
+            <p>Hay dos versiones de esta edición (una en el turno {run?.turn ?? 0} y otra en el turno {games.conflict.turn}). Elegí cuál seguir.</p>
             <button type="button" onClick={() => games.resolveConflict(false)}>Esta</button>
             <button type="button" onClick={() => games.resolveConflict(true)}>La otra</button>
           </div>
@@ -194,7 +194,7 @@ export default function GamesExperience({ chapter: requestedChapter }) {
 
       {chapter === 'ended' && winner && (
         <section className="games-winner">
-          <p className="winner-kicker">Sobreviviente · Distrito {winner.district}</p>
+          <p className="winner-kicker">Sobreviviente, Distrito {winner.district}</p>
           <h2 className="winner-name">{winner.name}</h2>
           <p>{winner.id === selected?.id ? 'Tu tributo sobrevivió. Su historia ya no le pertenece al Capitolio.' : `${selected?.name} forma parte de la memoria de esta edición.`}</p>
           <div className="winner-actions">

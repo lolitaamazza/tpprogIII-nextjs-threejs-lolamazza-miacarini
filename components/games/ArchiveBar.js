@@ -39,7 +39,7 @@ export default function ArchiveBar({ chapter, run, view, onView, paused, onPause
                 <li key={t.id}>
                   <button type="button" className={`${t.alive ? '' : 'fallen'}${t.id === run.selectedId ? ' mine' : ''}`} onClick={() => onInspect(t.id)}>
                     <span>{String(t.district).padStart(2, '0')}</span> {t.name}
-                    <small>{t.alive ? (t.id === run.selectedId ? 'Tu tributo' : 'En pie') : `Cayó · T${t.eliminatedTurn}`}</small>
+                    <small>{t.alive ? (t.id === run.selectedId ? 'Tu tributo' : 'En pie') : `Cayó en T${t.eliminatedTurn}`}</small>
                   </button>
                 </li>
               ))}

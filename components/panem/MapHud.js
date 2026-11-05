@@ -5,9 +5,9 @@ import { PROTAGONISTS } from '@/lib/story';
 import { usePanem } from './PanemProvider';
 
 function statusOf(district, { visibleLit, progress, story, day }) {
-  if (district.id === 'c') return capitolGate({ ready: true, synced: true, progress, story }) === 'allowed' ? 'Abierto · la señal está lista' : 'Blindado';
+  if (district.id === 'c') return capitolGate({ ready: true, synced: true, progress, story }) === 'allowed' ? 'Abierto, la señal está lista' : 'Blindado';
   if (story.pending?.district === district.id) return `${PROTAGONISTS[district.id].name} tiene que decidir`;
-  if (day?.district === district.id && !story.pending) return `Hoy · ${PROTAGONISTS[district.id].name}`;
+  if (day?.district === district.id && !story.pending) return `Hoy, ${PROTAGONISTS[district.id].name}`;
   if (visibleLit.includes(district.id)) return 'Encendido';
   if (district.classified) return 'SEÑAL NO ENCONTRADA';
   if (district.playable) return 'Todavía no';

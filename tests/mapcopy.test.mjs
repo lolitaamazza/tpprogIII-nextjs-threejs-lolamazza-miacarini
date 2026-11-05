@@ -28,7 +28,7 @@ test('hecho el tercer día: a la plaza; terminados los Juegos: al Capitolio; ter
 
 test('todas llevan el mismo antetítulo del mapa', () => {
   for (const args of [{ phase: 'day', day: { index: 0, district: '12' } }, { phase: 'cosecha' }, { phase: 'games-ended', completed: true }]) {
-    assert.equal(mapIntroCopy(args).eyebrow, 'MAPA DE PANEM · 13 DISTRITOS');
+    assert.equal(mapIntroCopy(args).eyebrow, 'MAPA DE PANEM / 13 DISTRITOS');
   }
 });
 

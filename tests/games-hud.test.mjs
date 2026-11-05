@@ -49,7 +49,7 @@ test('el estado dice la jornada y cuántos quedan', () => {
   const run = ready(9);
   assert.deepEqual(statusLine(run), { label: 'Apertura', alive: 24 });
   const day = decide(run);
-  assert.equal(statusLine(day).label, 'Jornada 1 · día');
-  assert.equal(statusLine(decide(day)).label, 'Jornada 1 · noche');
+  assert.equal(statusLine(day).label, 'Jornada 1 / día');
+  assert.equal(statusLine(decide(day)).label, 'Jornada 1 / noche');
   assert.equal(statusLine(day).alive, day.tributes.filter((t) => t.alive).length);
 });

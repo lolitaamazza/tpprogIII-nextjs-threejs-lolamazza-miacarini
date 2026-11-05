@@ -23,14 +23,14 @@ export default function EmblemsDialog({ onClose }) {
             return (
               <li key={id} className={lit ? 'lit' : ''}>
                 <Image src={`/assets/seals/${id}.png`} alt="" width={56} height={56} />
-                <span>{d.name} · {d.industry}</span>
+                <span>{d.name} / {d.industry}</span>
                 <small>{lit ? 'Encendido' : 'Pendiente'}</small>
               </li>
             );
           })}
         </ul>
-        {progress.finalMessage && <p>Mensaje transmitido: <strong>{MESSAGE_LABELS[progress.finalMessage]}</strong></p>}
-        <p className="hint">Distritos explorados: {progress.visited.length}/13</p>
+        {progress.finalMessage && <p>Mensaje transmitido <strong>{MESSAGE_LABELS[progress.finalMessage]}</strong></p>}
+        <p className="hint">{progress.visited.length} de 13 distritos explorados</p>
         {canEnterCapitol(progress) && (
           <p><button type="button" onClick={() => { onClose(); setBurning(true); }}>Ver Panem arder otra vez</button></p>
         )}

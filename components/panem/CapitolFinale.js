@@ -35,7 +35,7 @@ function Montage({ fragments, onDone }) {
   return (
     <section className="crt broadcast montage" role="status" aria-live="polite">
       <div className="crt-inner" key={fragment.id}>
-        <p className="eyebrow">SEÑAL PIRATA · {index + 1}/{fragments.length} · DISTRITO {fragment.district}</p>
+        <p className="eyebrow">SEÑAL PIRATA / {index + 1} DE {fragments.length} / DISTRITO {fragment.district}</p>
         <h1>{fragment.title}</h1>
         <p className="montage-line">{fragment.line}</p>
       </div>
@@ -86,8 +86,17 @@ export default function CapitolFinale() {
   const aired = foundFragments(story.fragments);
   const reaped = STORY_DAYS.find((d) => PROTAGONISTS[d].tributeId === run?.protagonist) ?? null;
 
-  // Toma de la señal → (si hay con qué) los fragmentos al aire → el fuego → Panem encendido.
-  function burn() { setPhase('burn'); setBurning(true); }
+  // Toma de la señal → (si hay con qué) los fragmentos al aire → Panem se enciende y responde el 13.
+  // El fuego ("If we burn", BurnSequence) quedó afuera del final (Mia, 2026-11-05: no cerraba con la historia de los tres);
+  // el código sigue en BurnSequence y en `burnInstead` por si se quiere volver a usar.
+  const burnInstead = () => { setPhase('burn'); setBurning(true); };
+  void burnInstead;
+  function burn() {
+    setPhase('lighting');
+    const finish = () => { setFinalePlaying(false); setPhase('end'); };
+    const api = stageApiRef.current;
+    if (api) api.playFinale(finish); else finish();
+  }
   function choose(message) {
     progress.chooseFinalMessage(message);
     setFinalePlaying(true);
@@ -99,7 +108,7 @@ export default function CapitolFinale() {
   if (shownPhase === 'choose') {
     return (
       <section className="panel capitol-panel crt-lite" aria-labelledby="capitol-title">
-        <p className="eyebrow">CAPITOLIO · SALA DE TRANSMISIÓN</p>
+        <p className="eyebrow">CAPITOLIO / SALA DE TRANSMISIÓN</p>
         <h1 id="capitol-title">La señal está lista.</h1>
         <p>Los Juegos terminaron. Por unos minutos podés cortar la transmisión del Capitolio. ¿Qué querés decirle a Panem?</p>
         <div className="choices">
@@ -133,7 +142,7 @@ export default function CapitolFinale() {
   const message = MESSAGES[progress.finalMessage];
   return (
     <section className="panel capitol-panel end" aria-labelledby="end-title">
-      <p className="eyebrow">FIN DE LA TRANSMISIÓN · {message.label.toUpperCase()}</p>
+      <p className="eyebrow">FIN DE LA TRANSMISIÓN / {message.label.toUpperCase()}</p>
       <h1 id="end-title">{message.title}</h1>
       <p>{message.body}</p>
       <p>Y en el noreste, donde el mapa oficial decía que no quedaba nada, una luz respondió. Era el Distrito 13.{classified.revealed ? ' Era la misma señal que encontraste debajo de la estática.' : ''}</p>
