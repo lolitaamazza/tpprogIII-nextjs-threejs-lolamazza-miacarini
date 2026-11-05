@@ -1,76 +1,83 @@
-# Panem
+# Panem. Tres días antes de la Cosecha
 
-> Panem está a oscuras: llevá la chispa de distrito en distrito hasta que el Capitolio no pueda apagarla.
+> **Declaración de uso de IA:** en este proyecto usamos Claude (Anthropic), a través de Claude Code, como asistente de programación. Qué hizo, qué decidimos nosotras y cómo trabajamos con esa herramienta está en [`docs/declaracion-ia.md`](docs/declaracion-ia.md).
 
-Experiencia web transmedia (TP6 · Programación Multimedial III · UMAI) inspirada en *The Hunger Games*.
-Next.js 16 + Three.js + GSAP + Firebase · JavaScript · App Router.
+> Faltan tres días para la Cosecha. Tres chicos tienen su nombre en la urna, y lo que encontrás en sus distritos es lo que el Capitolio no quiere que se vea.
+
+Experiencia web transmedia (TP6, Programación Multimedial III, UMAI) inspirada en *The Hunger Games*.
+Next.js 16 + Three.js + GSAP + Firebase. JavaScript, App Router.
 
 **Deploy:** _pendiente: completar con la URL pública (Vercel)_
 
 ## Sinopsis
 
-En la sala de transmisión del Capitolio, una tele gigante rodeada de teles chicas y de un público de espaldas emite el anuncio oficial: Panem vive en paz. Al "encender la señal" la transmisión se corta (se ve el fragmento del video oficial en el que se rompe la señal) y la cámara entra en la pantalla hasta un mapa 3D de Panem, gris y apagado. Faltan tres días para la Cosecha. La historia sigue a tres chicos cuyos nombres están en la urna: **Ash** (16, Distrito 12), **Oliva** (15, Distrito 11) y **Marin** (14, Distrito 4). Cada día se juega la jornada de uno de ellos:
+En la sala de transmisión del Capitolio, una tele gigante emite el anuncio oficial: Panem vive en paz. Al encender la señal, la transmisión se corta y la cámara entra en la pantalla hasta un mapa 3D de Panem, gris y apagado. Faltan tres días para la Cosecha y la historia sigue a tres chicos cuyos nombres están en la urna. Cada día se juega la jornada de uno de ellos:
 
-- **Distrito 12 · Carbón:** una luz recorre la veta y hay que picar cuando pasa por la grieta. Tres capas hasta la brasa; cada error asusta al canario y, con tres, hay que salir a respirar.
-- **Distrito 11 · Agricultura:** cosechar el trigo sin que te alumbre el reflector de las torres (si te ve, se pierde lo cosechado en esa pasada) y después repetir el silbido que cantan los sinsajos.
-- **Distrito 4 · Pesca:** mantener apretado carga el alcance de la red y soltar la tira; la corriente la desvía un poco. Cinco redes para tres peces; el dorado vale por dos.
+- **Ash** (16, Distrito 12, carbón). Su mamá Nora está enferma y su hermano Tomi tiene 8 años. Baja a la mina y pica la veta cuando la luz pasa por la grieta.
+- **Oliva** (15, Distrito 11, agricultura). A su papá Teo lo mataron desde la torre. Cosecha sin que la vea el reflector y contesta el silbido de los sinsajos.
+- **Marin** (14, Distrito 4, pesca). Su mamá Perla fue tributo y no volvió, y vive con su abuela Inés, que casi no ve. Carga la red y la tira contra la corriente.
 
-Todos se pueden perder y reintentar, pero no son difíciles: después de perder dos veces el juego ayuda (grieta más ancha, reflector más chico, agua calma). Los distritos no tienen panel: arriba a la izquierda quedan la flecha, el distrito y una pista que se va al empezar a jugar; abajo, el avance, las vidas, el botón alternativo y el de reintentar. Todo se juega también con ese botón o la barra espaciadora.
+**Escenas:** cada distrito de los tres días es una escena 3D realista con cámara guiada en primera persona. Se toca un lugar (o su botón, o su número) y la cámara camina hasta ahí. Se llega en tren desde el mapa, se escucha la voz del personaje al llegar y se puede entrar a las casas (y al granero del 11). El HUD es un visor celeste con el distrito, el día, la familia y lo encontrado. Los minijuegos se pueden perder y reintentar y, después de perder dos veces, el juego ayuda. Fuera de su día se pueden practicar sin cambiar la historia.
 
-**Cómo se ven:** cada diorama usa piezas de los packs de **Kenney** (Nature, Survival, Pirate y Mini Characters, CC0) y un entorno de luz de **Poly Haven** (CC0): el carbón amanece y la pesca y el campo son de día. Hay una figurita que hace la acción (el minero pica, la pescadora tira la red, la cosechadora camina hasta las espigas), sombras suaves y un tilt-shift leve de maqueta. El entorno de luz ilumina solo la maqueta, no el mapa de alrededor. Vida: humo de la mina, polvo, brasas, agua con olas y espuma, peces que saltan, trigo y árboles con viento, polen y sinsajos que aletean. La paleta pastel del Nature Kit se pasa a tonos apagados al cargar. Los modelos se cargan al entrar a cada distrito (menos de 1,5 MB cada uno) y, si no llegan, el juego se juega igual con su geometría propia (`components/stage/dioramas/assets.js`, `lib/dioramaAssets.js`, `lib/dioramaLook.js`). Créditos en `public/models/CREDITS.md`.
+**Pedir comida:** al terminar cada jornada, en la casa no alcanza la comida. Si el personaje la pide, la familia come, pero su nombre entra más veces en la urna (dos papeles más, o uno si la jornada salió sin perder vidas). Si no la pide, esa noche no cenan. Ninguna opción es la correcta. Después, la tele del Capitolio muestra su versión feliz del distrito y el mapa pasa al día siguiente.
 
-**Pedir comida:** al terminar cada jornada, en la casa no alcanza la comida. La pregunta es simple: «¿Ash pide comida al Capitolio?». Si la pide, la familia come, pero su nombre entra más veces en la urna de la Cosecha (dos más, o una si la jornada salió sin perder vidas); si no la pide, esa noche no cena y su nombre queda igual. En el libro esto se llama «teselas»; en la interfaz no se usa la palabra. Ninguna opción es la correcta. Después, la tele del Capitolio muestra su versión feliz del distrito (4 s, se puede saltear) y el mapa pasa al día siguiente. Los días futuros se pueden visitar, pero muestran la maqueta quieta («Mañana.»).
+**Lo que se encuentra:** el archivo pirata del encabezado guarda todo en cuatro pestañas.
+- *Fragmentos:* 13, uno por distrito productivo más la señal del 13. Son notas escritas a mano por los personajes y documentos del Capitolio.
+- *Herramientas:* el farol, la llave y la radio. Cada una abre lugares en otros distritos.
+- *Marcas del sinsajo:* 9.
+- *Pistas:* llevan a otro lugar o cuentan algo de las familias.
 
-**Fragmentos:** en cada uno de los doce distritos productivos hay un objeto con un anillo dorado que late: lo que la tele corta (la viga de la mina con nombres tallados, el cuenco vacío de Marin, el afiche del Capitolio, el castigo en la plaza…). Tocarlo abre una tarjeta de documento del Capitolio tachado. Los otros nueve distritos se recorren como maquetas sin juego (los talleres de Lola, sin la pista). El **archivo pirata** del encabezado («Día 2/3 · Fragmentos 4/13») muestra los papeles de cada uno y lo encontrado (`lib/story.js`, `lib/fragments.js`).
+Los otros nueve distritos se recorren como maquetas, con los talleres de Lola (`lib/story.js`, `lib/fragments.js`, `lib/clues.js`, `lib/notes.js`).
 
-**Distrito 13 (secreto opcional):** al entrar, la imagen del mapa se rompe en fragmentos con señal corrupta y cajas de rastreo. Los pedazos se apartan del puntero y se pueden arrastrar; debajo transmite otra señal. Moviendo suficientes aparece el mensaje oculto, que queda guardado, cuenta como el fragmento número 13 y cambia una frase del final.
+**Distrito 13 (secreto opcional):** al entrar, la imagen del mapa se rompe en fragmentos con señal corrupta. Los pedazos se pueden arrastrar y debajo transmite otra señal. Moviendo suficientes aparece el mensaje oculto, que cuenta como el fragmento 13.
 
-Cada día jugado enciende su distrito en el mapa y suma una capa a la música. Hecho el tercer día, el mapa ofrece ir a la plaza: **la Cosecha**. La urna saca a uno de los tres según sus papeles (cuantas más veces pidió comida, más probable), y el archivo de los Juegos sigue a quien salió; los otros dos no van a la arena y su lugar lo ocupa otro nombre de su distrito. Terminados los Juegos se abre el Capitolio: se elige el mensaje (*Encender la rebelión* o *Recordar a los caídos*), se toma la transmisión y, si se encontraron cuatro fragmentos o más, salen al aire uno por uno. Después arde Panem («If we burn») y se enciende todo, incluido el Distrito 13, que el Capitolio declaraba inexistente. El cierre dice quién fue a la arena, con cuántos papeles, y cuántos fragmentos salieron al aire.
+**La Cosecha:** hechos los tres días, el tren pasa por las plazas del 12, el 11 y el 4 (`/plazas`). En cada una se saca un papel y cada familia reacciona. La urna elige a uno de los tres según sus papeles: cuantas más veces pidió comida, más probable. El archivo de los Juegos de Lola sigue a quien salió.
+
+**El final:** terminados los Juegos se abre el Capitolio. Se toma la transmisión y, con cuatro fragmentos o más, salen al aire uno por uno. Se enciende todo Panem, incluido el Distrito 13. El cierre trae la voz de la familia de quien fue a la arena. Con seis marcas o más, también suma la voz de la resistencia.
 
 ## Mapa de navegación
 
 ```text
-/  (Transmisión oficial: la tele del Capitolio)
- └─ "Encender la señal" → anuncio → corte de señal → /mapa   ("Saltar la intro" o Esc → /mapa)
-      ├─ /distrito/12  día 1 · Ash → pedir comida → Capitol TV → mapa
-      ├─ /distrito/11  día 2 · Oliva → pedir comida → Capitol TV → mapa
-      ├─ /distrito/4   día 3 · Marin → pedir comida → Capitol TV → mapa ("Ir a la plaza")
-      ├─ /distrito/13  la imagen se rompe: secreto opcional (fragmento 13)
-      ├─ /distrito/1…10 (resto)  maqueta para explorar y su fragmento
-      │   (tocar el mapa fuera del diorama vuelve al mapa; tocar otro distrito va a ese)
-      ├─ /cosecha  (hechos los tres días) urna → /capitolio/preparacion → /arena → /desenlace
-      └─ C → /capitolio  (terminados los Juegos; si no, aviso y vuelta al mapa)
-              └─ mensaje → toma de la señal → fragmentos al aire → If we burn → Panem encendido → cierre
+/  (la tele del Capitolio: "Encender la señal" → corte → mapa; "Saltar" o Esc)
+ └─ /mapa
+      ├─ /tren/12 → /escena/12   día 1, Ash (mina, casa) → pedir comida → Capitol TV → mapa
+      ├─ /tren/11 → /escena/11   día 2, Oliva (huerto, casa, granero) → pedir comida → Capitol TV → mapa
+      ├─ /tren/4  → /escena/4    día 3, Marin (muelle, casa) → pedir comida → Capitol TV → mapa
+      ├─ /distrito/1…10          maqueta para explorar con su fragmento
+      ├─ /distrito/13            la imagen se rompe: secreto opcional (fragmento 13)
+      ├─ /plazas                 (hechos los tres días) tren por las tres plazas, un papel en cada una
+      │    └─ /capitolio/preparacion → /arena → /desenlace   (archivo de los Juegos, de Lola)
+      │       (/cosecha: la urna de 24 papeles de Lola, desde "Los Juegos")
+      └─ /capitolio              (terminados los Juegos) transmisión → fragmentos al aire → Panem encendido → cierre
 ```
 
 ## Requisitos de la consigna y dónde se cumplen
 
 | Requisito | Implementación |
 | --- | --- |
-| Premisa, inicio, progresión y cierre | Intro de la tele → tres días (jornada + pedir comida) → Cosecha → Juegos → Capitolio |
-| ≥ 3 escenas | `/`, `/mapa`, `/distrito/[id]`, `/capitolio` + 3 dioramas |
-| ≥ 3 coleccionables | 13 fragmentos (uno por distrito productivo y la señal del 13), guardados en el archivo pirata |
-| Desbloqueo | Cada día abre el siguiente; los tres abren la Cosecha; los Juegos abren el Capitolio; 4 fragmentos o más salen al aire en el final |
-| Feedback visual y sonoro | Elevación de las piezas, chispas, partículas, temblor, efectos y capas musicales |
-| Ruta dinámica | `app/(panem)/distrito/[id]/page.js` (`generateStaticParams` + `dynamicParams = false`) |
+| Premisa, inicio, progresión y cierre | Intro de la tele → tres días (jornada y pedir comida) → Cosecha por plazas → Juegos → Capitolio |
+| ≥ 3 escenas | `/`, `/mapa`, `/escena/[id]` (12, 11 y 4 con sus interiores), `/distrito/[id]`, `/plazas`, `/arena`, `/capitolio` |
+| ≥ 3 coleccionables | 13 fragmentos, 3 herramientas, 9 marcas y las pistas, guardados en el archivo pirata |
+| Desbloqueo | Cada día abre el siguiente; los tres abren la Cosecha; los Juegos abren el Capitolio; los fragmentos y las marcas cambian el final |
+| Feedback visual y sonoro | Visor, partículas, temblor, voces de los personajes, efectos y capas musicales |
+| Ruta dinámica | `app/(panem)/escena/[id]`, `tren/[id]` y `distrito/[id]` (`generateStaticParams` + `dynamicParams = false`) |
 | Server / Client Components | Las páginas (server) validan y generan metadata; el escenario, el audio y los overlays son client |
 | Metadata, carga y error | `generateMetadata` por distrito, `loading.js`, `error.js`, `not-found.js` |
-| Escena Three.js | `components/stage/panemScene.js`: escena, cámara, renderer, luces, RAF, raycasting, resize, pixel ratio ≤ 2, `dispose()` |
-| Recurso propio | Mapa extruido desde un SVG vectorizado a partir de la imagen de referencia y sistema de partículas de la chispa (`effects.js`) |
-| Alternativas accesibles | Dial de distritos con teclado; cada minijuego se juega con el botón del HUD o la barra espaciadora (y las teclas 1 a 4 para los sinsajos) con las mismas reglas; `prefers-reduced-motion` (la intro no corta la señal ni usa el clip; el Distrito 13 no tiembla); Esc para salir de la intro y del Distrito 13; las flechas de volver tienen `aria-label` |
-| Firebase | Auth anónima, Google y email; `progress/{uid}`; reglas por usuario; indicador NUBE/LOCAL |
-| Responsive | Cámara más alejada y dial horizontal en celular; el HUD de los distritos y del archivo se apila abajo; touch en todos los dioramas y en la arena |
+| Escena Three.js | `components/stage/panemScene.js`: escena, cámara, renderer, luces, RAF, raycasting, resize, pixel ratio limitado, `dispose()`; escenas en `components/stage/locations/` |
+| Recurso propio | Mapa extruido desde un SVG vectorizado a partir de la imagen de referencia; sala de transmisión con geometría propia y shader de tubo |
+| Alternativas accesibles | Botones y teclas numéricas para todos los lugares de las escenas; cada minijuego se juega con el botón del HUD o la barra espaciadora; dial de distritos con teclado; `prefers-reduced-motion`; Esc sale de tarjetas, interiores, intro y Distrito 13; botón de sonido en la intro y el encabezado |
+| Firebase | Auth anónima, Google y email; `progress/{uid}` y `users/{uid}/runs/active`; reglas por usuario; indicador NUBE/LOCAL |
+| Responsive | Cámara y HUD adaptados a celular; touch en las escenas, los dioramas y la arena |
 
 ## Decisiones técnicas
 
 - **Canvas persistente:** la escena y el audio viven en `app/(panem)/layout.js`. Los layouts no se re-renderizan al navegar, así que la cámara *vuela* entre rutas en lugar de recargar la escena. `usePathname()` traduce la URL a una pose de cámara (`lib/routes.js` + `components/stage/cameraPoses.js`).
-- **Mapa desde SVG:** `scripts/extract_map.py` extrae las piezas de la imagen de referencia (flood fill + contornos con OpenCV) y genera `public/assets/panem.svg`, ajustable en Figma. En el navegador, `SVGLoader` y `ExtrudeGeometry` convierten cada `path#district-{id}` en una pieza 3D seleccionable por raycasting.
-- **Audio procedural:** `lib/audio/` sintetiza todo con Web Audio: ambiente de viento y drone, un secuenciador a 80 BPM en re menor con tres capas (percusión, silbido y pad) sincronizadas por un único reloj, y los efectos. El ambiente y los efectos no requieren archivos de audio. La secuencia «Panem arde» usa audio nativo sin interfaz, configurado para `/audio/the-hanging-tree.mp3`. El archivo debe proporcionarlo la usuaria: todavía no está incluido. Respeta el silencio global, reintenta con el siguiente gesto si el navegador bloquea el inicio y libera el sonido al salir. El motivo de 4 notas es original.
-- **Intro de la sala de transmisión:** una escena 3D en el mismo canvas que el mapa, apartada 60 unidades (`components/stage/broadcastHall.js`, medidas y poses en `lib/broadcastHall.js`). Referencia: la sala de teles de los 10.º Juegos; estética años 50 y, dentro del mundo, textos en inglés. Todo es geometría propia (`InstancedMesh` para sillas, público, gabinetes y monitores) y texturas pintadas en canvas; la pantalla usa un shader de tubo (curvatura, corrimiento, aberración, ruido, línea de encendido). Al final la pantalla muestra el mapa como un portal (render a textura muestreado en coordenadas de pantalla) y, cuando la llena, la cámara corta a esa misma vista. El clip de YouTube va en un iframe ubicado sobre la pantalla proyectada; sin WebGL queda la tele dibujada con CSS (`components/panem/TvIntro.js` + `tv-intro.css`). El guion, el clip y la regla de destellos del corte propio son lógica pura en `lib/introTimeline.js`; el reproductor, en `lib/youtubeClip.js`. YouTube muestra su interfaz unos segundos al empezar, así que el clip arranca 7 s antes del corte, oculto y con volumen 0, y se muestra al llegar al segundo 29. Si no carga, una señal pirata propia ocupa su lugar.
-- **Dioramas desmontables:** cada distrito jugable se construye al entrar y se libera al salir (`components/stage/dioramas/`), con un contrato común (`build → { update, pointer*, performAction, retry, getState, dispose }`). La partida (objetivo, vidas, ganar, perder, reintentar y ayuda) es común a los doce: `lib/minigame.js`.
-- **Distrito 13:** la vista del mapa se congela en un render target y se parte en fragmentos dibujados con un solo `InstancedBufferGeometry` y un shader de señal rota (separación RGB, pixelado, barrido). Los resortes, el arrastre y cuánto se descubrió están en `lib/glitchShards.js`; la escena, en `components/stage/classifiedGlitch.js`. Se guarda en `panem-d13-v1`.
-- **Íconos:** las flechas de volver son de `react-icons` (Phosphor), sin texto al lado.
-- **Lógica testeable:** datos, progreso, rutas, poses, partitura, reglas de los minijuegos y los fragmentos del Distrito 13 son módulos puros, probados con `node --test` (`npm test`).
+- **Escenas desde datos:** cada distrito de los tres días se describe en `lib/locations/` (lugares, objetos, interacciones e interiores) y se construye al entrar con el mismo renderer (`components/stage/locations/`). La cámara guiada está en `lib/guidedCamera.js`. Cada exterior e interior tiene un presupuesto de 25 MB y libera sus recursos al salir.
+- **Mapa desde SVG:** `scripts/extract_map.py` extrae las piezas de la imagen de referencia (flood fill + contornos con OpenCV) y genera `public/assets/panem.svg`. En el navegador, `SVGLoader` y `ExtrudeGeometry` convierten cada `path#district-{id}` en una pieza 3D seleccionable por raycasting.
+- **Audio procedural:** `lib/audio/` sintetiza el ambiente, la música en capas y los efectos con Web Audio. Respeta el silencio global (guardado en `localStorage`), reintenta con el siguiente gesto si el navegador bloquea el inicio y libera el sonido al salir.
+- **Intro de la sala de transmisión:** una escena 3D en el mismo canvas que el mapa (`components/stage/broadcastHall.js`), con geometría propia, `InstancedMesh` y un shader de tubo. El clip oficial de YouTube va en un iframe sobre la pantalla proyectada. Si no carga, una señal pirata propia ocupa su lugar. Sin WebGL queda una tele dibujada con CSS (`components/panem/TvIntro.js`). El guion es lógica pura en `lib/introTimeline.js`.
+- **Distrito 13:** la vista del mapa se congela en un render target y se parte en fragmentos con un solo `InstancedBufferGeometry` y un shader de señal rota (`lib/glitchShards.js`, `components/stage/classifiedGlitch.js`).
+- **Lógica testeable:** datos, progreso, rutas, poses, historia, pistas, plazas, reglas de los minijuegos y de los Juegos son módulos puros, probados con `node --test` (`npm test`).
 
 ## Puesta en marcha
 
@@ -104,7 +111,9 @@ Modelo de datos:
 ```js
 // progress/{uid}
 { userId, authProvider, litDistricts: ['12','11','4'], visited: ['7','13'],
-  finalMessage: null | 'rebelion' | 'memoria', completedAt: null | number, updatedAt }
+  finalMessage: null | 'memoria', completedAt: null | number, updatedAt }
+// users/{uid}/runs/active  (partida de los Juegos)
+{ userId, snapshot, updatedAt }
 ```
 
 ## Regenerar el mapa y el sello
@@ -132,6 +141,9 @@ npm run build   # build de producción
 - Consigna original del TP6: [`docs/consigna-tp6.md`](docs/consigna-tp6.md).
 - Diseño (concepto, rutas, escena, audio, datos): [`docs/superpowers/specs/panem-design.md`](docs/superpowers/specs/panem-design.md).
 - Plan de implementación por tareas: [`docs/superpowers/plans/panem-plan-implementacion.md`](docs/superpowers/plans/panem-plan-implementacion.md).
+- La historia de los tres días, las escenas, las pistas y el visor: [`docs/superpowers/specs/`](docs/superpowers/specs/) y [`docs/superpowers/plans/`](docs/superpowers/plans/).
+- Capturas para la presentación: `docs/presentacion/capturas/`.
+- Declaración de uso de IA: [`docs/declaracion-ia.md`](docs/declaracion-ia.md).
 - Imagen de referencia del mapa y su extracción: `docs/reference/`.
 
 ## Créditos
@@ -141,9 +153,10 @@ npm run build   # build de producción
 - Intro: el fragmento (0:29 a 0:51) del video oficial *President Snow's Panem Address #2 – "Unity"* del canal de *The Hunger Games* (Lionsgate) se **incrusta desde YouTube** con su reproductor oficial; no se descarga, no se copia y no se modifica. La tele y la sala se inspiran en una captura de la sala de teles de los Juegos aportada por el equipo. _Pendiente: completar la fuente de la captura._
 - Marca: el sello dorado de Panem y el rojo/dorado de la interfaz salen de una imagen de la bandera de Panem aportada por el equipo (`docs/reference/panem-flag.webp`). _Pendiente: completar autoría y fuente._
 - Referencias visuales: Hunger Games: The Exhibition (Nueva York), "Antique map to 3D model" (awwwards) y el board "interactive web" del equipo.
-- Tipografías: Oswald (Vernon Adams) e Inter (Rasmus Andersson), SIL Open Font License, vía Google Fonts.
+- Tipografías: Oswald, Inter y Rajdhani (visor); Special Elite (documentos del Capitolio); Caveat, Kalam, Patrick Hand, Homemade Apple, La Belle Aurore, Nothing You Could Do, Reenie Beanie y Shadows Into Light (notas escritas a mano). Todas con SIL Open Font License o Apache 2.0, vía Google Fonts.
+- Modelos, texturas y entornos: Kenney, Quaternius, Poly Haven y Sketchfab, con autores y licencias en `public/models/CREDITS.md`.
 - Música y efectos: sintetizados por código con Web Audio API.
-- Desarrollo: Mia y Lola · Programación Multimedial III · UMAI · 2026.
+- Desarrollo: Mia y Lola, Programación Multimedial III, UMAI, 2026. Con asistencia de Claude (ver [`docs/declaracion-ia.md`](docs/declaracion-ia.md)).
 
 
 ## Archivo interactivo de los Juegos
@@ -158,7 +171,7 @@ Hechos los tres días (y decidido si Marin pide comida), el enlace **Los Juegos*
 - Cada uno de los tres días (Carbón, Agricultura, Pesca) permite una elección de preparación (+8 a un atributo). El entrenamiento se aplica una sola vez y funciona igual con botones o interacción 3D.
 - Una pregunta cada dos turnos (la apertura incluida): en los turnos del medio la transmisión sigue sola a los 6 s, o a los 3,5 s si el tributo ya cayó. «Pausar escena» o abrir una ficha frena el avance y «Seguir la transmisión» lo adelanta. Cada pregunta presenta una situación con opciones propias: Cornucopia, niebla tóxica, incendio, señales, río, patrocinadores o necesidades del personaje. Los atributos y recursos modifican riesgos y consecuencias; los demás tributos actúan mediante reglas y azar reproducible.
 - Salud, energía, hambre, sed, recursos, zonas y alianzas determinan los eventos. Si cae el tributo elegido se puede seguir como observadora.
-- La partida termina con un sobreviviente, como máximo en 24 turnos (12 jornadas), y conserva la crónica completa. El epílogo de rebelión/memoria permanece disponible.
+- La partida termina con un sobreviviente, como máximo en 24 turnos (12 jornadas), y conserva la crónica completa. Después sigue el final en el Capitolio.
 - Las rutas validan el capítulo de la partida: abrir una URL futura redirige al estado actual.
 
 ### Escenas y animación
@@ -197,6 +210,8 @@ La primera verificación local incluyó completar los tres minijuegos, crear una
 El análisis de dependencias reporta cinco alertas altas en la cadena de desarrollo `eslint-config-next → fast-glob → micromatch → braces`. La corrección sugerida por npm retrocede a Next ESLint 14; no se aplica ese cambio incompatible automáticamente. No hay alertas de producción en ese reporte.
 
 ### «If we burn, you burn with us»
+
+> Ya no forma parte del recorrido: el 5 de noviembre se sacó el fuego del final y quedó la transmisión con los fragmentos y Panem encendido. El código se conserva en `components/panem/BurnSequence.js` y `components/stage/fire.js`.
 
 Al final de la transmisión del Capitolio (después de los fragmentos), la cámara se aleja al mapa entero, con los doce distritos encendidos, y desde abajo sube un fuego procedural WebGL (turbulencia, humo y brasas; transparente donde no hay llamas, para que se vea el mapa). Encima, la frase animada con GSAP, una línea («Doce distritos encendidos. Falta uno.») y «Seguir →»; «saltar» (chico, abajo a la derecha, como en la intro) y Escape también siguen. Después se enciende todo Panem y responde el 13. Se puede volver a ver desde el archivo pirata. Movimiento reducido omite el fuego y las entradas animadas.
 
