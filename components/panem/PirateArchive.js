@@ -95,7 +95,7 @@ export default function PirateArchive({ onClose }) {
         </div>
         {sections.filter((sec) => sec.id === tab).map((sec) => <ArchiveSlider key={sec.id} items={sec.items} empty={sec.empty} />)}
 
-        {progress.finalMessage && <p>Mensaje transmitido / <strong>{MESSAGE_LABELS[progress.finalMessage]}</strong></p>}
+        {progress.finalMessage && <p>La transmisión pirata ya salió al aire.</p>}
         {/* «Ver Panem arder otra vez» quedó afuera junto con el fuego del final (2026-11-05). */}
         {confirming === 'all' && (
           <div className="confirm">

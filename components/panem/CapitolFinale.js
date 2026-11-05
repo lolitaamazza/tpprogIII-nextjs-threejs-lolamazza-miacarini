@@ -4,16 +4,17 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { capitolGate } from '@/lib/progress';
 import { MONTAGE_MIN, foundFragments } from '@/lib/fragments';
-import { PROTAGONISTS, STORY_DAYS, endingLines } from '@/lib/story';
+import { PROTAGONISTS, STORY_DAYS, endingLines, familyBroadcast } from '@/lib/story';
 import { useGames } from '@/components/games/GamesProvider';
 import { usePanem } from './PanemProvider';
 import BackLink from './BackLink';
 
+// Los dos mensajes de antes, que ya no se eligen (quedan por si se quiere volver a usar la elección).
 const MESSAGES = {
   rebelion: {
     label: 'Encender la rebelión',
     title: 'Panem ya no está a oscuras.',
-    body: 'La señal recorrió los distritos uno por uno. Ningún Agente de la Paz puede apagar trece fuegos al mismo tiempo.',
+    body: 'La señal recorrió los distritos uno por uno. Ningún Agente de la Paz puede apagar trece luces al mismo tiempo.',
   },
   memoria: {
     label: 'Recordar a los caídos',
@@ -91,6 +92,7 @@ export default function CapitolFinale() {
   // el código sigue en BurnSequence y en `burnInstead` por si se quiere volver a usar.
   const burnInstead = () => { setPhase('burn'); setBurning(true); };
   void burnInstead;
+  void MESSAGES;
   function burn() {
     setPhase('lighting');
     const finish = () => { setFinalePlaying(false); setPhase('end'); };
@@ -110,11 +112,11 @@ export default function CapitolFinale() {
       <section className="panel capitol-panel crt-lite" aria-labelledby="capitol-title">
         <p className="eyebrow">CAPITOLIO / SALA DE TRANSMISIÓN</p>
         <h1 id="capitol-title">La señal está lista.</h1>
-        <p>Los Juegos terminaron. Por unos minutos podés cortar la transmisión del Capitolio. ¿Qué querés decirle a Panem?</p>
+        <p>Los Juegos terminaron. Por unos minutos podés cortar la transmisión del Capitolio y mostrarle a Panem lo que encontraste.</p>
+        {/* Antes había que elegir entre «Encender la rebelión» y «Recordar a los caídos», pero solo cambiaba un párrafo
+            (Mia, 2026-11-05: sacar la elección). Se guarda 'memoria' para que el progreso y la sincronización sigan igual. */}
         <div className="choices">
-          {Object.entries(MESSAGES).map(([key, m]) => (
-            <button key={key} type="button" className="primary" onClick={() => choose(key)}>{m.label}</button>
-          ))}
+          <button type="button" className="primary" onClick={() => choose('memoria')}>Tomar la transmisión</button>
         </div>
         <BackLink label="Volver al mapa" />
       </section>
@@ -139,12 +141,13 @@ export default function CapitolFinale() {
     return <p className="lighting-caption" role="status">Panem se enciende…</p>;
   }
 
-  const message = MESSAGES[progress.finalMessage];
+  const family = familyBroadcast(reaped);
   return (
     <section className="panel capitol-panel end" aria-labelledby="end-title">
-      <p className="eyebrow">FIN DE LA TRANSMISIÓN / {message.label.toUpperCase()}</p>
-      <h1 id="end-title">{message.title}</h1>
-      <p>{message.body}</p>
+      <p className="eyebrow">FIN DE LA TRANSMISIÓN</p>
+      <h1 id="end-title">Panem se enciende.</h1>
+      <p>La señal pirata recorrió los trece distritos con lo que encontraste. Esta vez el Capitolio no pudo taparla.</p>
+      {family && <blockquote className="ending-family"><p>«{family.line}»</p><cite>{family.who}, en la transmisión</cite></blockquote>}
       <p>Y en el noreste, donde el mapa oficial decía que no quedaba nada, una luz respondió. Era el Distrito 13.{classified.revealed ? ' Era la misma señal que encontraste debajo de la estática.' : ''}</p>
       {endingLines(story, reaped).map((line) => <p key={line} className="ending-line">{line}</p>)}
       <div className="choices">

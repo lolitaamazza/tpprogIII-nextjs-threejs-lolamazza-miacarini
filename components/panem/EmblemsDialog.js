@@ -29,7 +29,7 @@ export default function EmblemsDialog({ onClose }) {
             );
           })}
         </ul>
-        {progress.finalMessage && <p>Mensaje transmitido <strong>{MESSAGE_LABELS[progress.finalMessage]}</strong></p>}
+        {progress.finalMessage && <p>La transmisión pirata ya salió al aire.</p>}
         <p className="hint">{progress.visited.length} de 13 distritos explorados</p>
         {canEnterCapitol(progress) && (
           <p><button type="button" onClick={() => { onClose(); setBurning(true); }}>Ver Panem arder otra vez</button></p>

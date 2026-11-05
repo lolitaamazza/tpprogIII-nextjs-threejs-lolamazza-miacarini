@@ -462,3 +462,7 @@ body.is-burning .overlay, body.is-burning .site-header { opacity: 0.12; filter: 
 .doc-rows tr.head td { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #5a4a38; border-bottom: 1.5px solid #5a4a38; }
 .doc-stamp { display: inline-block; margin-top: 6px !important; padding: 3px 10px; border: 2px solid #7b0001b0; color: #7b0001b0; font: 700 14px/1 var(--font-hud), var(--font-display); letter-spacing: .22em; text-transform: uppercase; transform: rotate(-6deg); }
 .doc-scrawl { font-size: 26px; line-height: 1.1; color: #1f2b45; transform: rotate(-3deg); margin-top: 8px !important; }
+/* El final: la voz de la familia en la transmisión pirata (2026-11-05). */
+.ending-family { margin: 18px 0; padding: 12px 16px; border-left: 2px solid var(--hud); background: #8fe6ff0d; }
+.ending-family p { margin: 0 0 6px; font-size: 17px; line-height: 1.5; color: var(--ink); }
+.ending-family cite { font: 600 11px/1 var(--font-hud, var(--font-display)); letter-spacing: .14em; text-transform: uppercase; font-style: normal; color: var(--hud); }
