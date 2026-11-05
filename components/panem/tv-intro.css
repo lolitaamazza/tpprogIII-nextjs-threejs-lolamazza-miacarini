@@ -118,3 +118,7 @@
 .tv-bridge p:last-child { color: #f4ecdc; font-size: 20px; }
 @keyframes tv-bridge-in { from { opacity: 0; transform: translateY(6px); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
 @media (prefers-reduced-motion: reduce) { .tv-bridge p { animation: none; opacity: 1; } }
+
+/* Sonido en la intro, arriba a la derecha como en el encabezado (2026-11-05). */
+.tv-room .tv-sound { position: absolute; z-index: 9; top: max(16px, env(safe-area-inset-top, 0px)); right: 16px; }
+.tv-room[data-phase="enter"] .tv-sound, .tv-room[data-phase="exit"] .tv-sound { opacity: 0; pointer-events: none; }

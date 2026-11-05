@@ -139,7 +139,24 @@ function startGlitch(screen, ms) {
 
 export default function TvIntro() {
   const router = useRouter();
-  const { startAudio, sfx, progress, reducedMotion, stageApiRef, webglFailed } = usePanem();
+  const { startAudio, sfx, progress, reducedMotion, stageApiRef, webglFailed, audioState, toggleSound } = usePanem();
+  // Antes de encender la tele el audio no arrancó: el botón solo cambia la preferencia (la misma que usa el resto de la web).
+  const [soundPref, setSoundPref] = useState('on');
+  useEffect(() => {
+    // Se lee después de montar (en el servidor no hay localStorage) para no desfasar el HTML prerenderizado.
+    const id = window.setTimeout(() => { try { setSoundPref(window.localStorage.getItem('panem-sound') || 'on'); } catch { /* sin storage */ } }, 0);
+    return () => window.clearTimeout(id);
+  }, []);
+  const introSoundOn = audioState === 'off' ? soundPref !== 'off' : audioState === 'on';
+  function flipSound() {
+    if (audioState === 'off') {
+      const next = soundPref === 'off' ? 'on' : 'off';
+      setSoundPref(next);
+      try { window.localStorage.setItem('panem-sound', next); } catch { /* sin storage */ }
+      return;
+    }
+    toggleSound();
+  }
   const litDistricts = progress?.litDistricts ?? [];
   const [phase, setPhase] = useState('off');
   const [plan, setPlan] = useState(null);
@@ -224,6 +241,13 @@ export default function TvIntro() {
       return ctl;
     }, () => null);
   }
+
+  // Si se cambia el sonido mientras se ve el clip, el clip también se calla o vuelve a sonar.
+  useEffect(() => {
+    if (audioState === 'off') return;
+    soundOn.current = audioState === 'on';
+    if (phase === 'clip') clip.current.ctl?.setSound(soundOn.current ? 'on' : 'muted');
+  }, [audioState, phase]);
 
   async function power() {
     if (powered.current || !mode) return;
@@ -467,6 +491,9 @@ export default function TvIntro() {
         </button>
       </div>
       <button type="button" className="tv-skip" onClick={skip} aria-label="Saltar la intro">saltar</button>
+      <button type="button" className={`chip hud-sound tv-sound${introSoundOn ? ' on' : ''}`} onClick={flipSound} aria-pressed={introSoundOn} disabled={audioState === 'unsupported'}>
+        <span className="hud-eq" aria-hidden="true"><i /><i /><i /><i /></span>{introSoundOn ? 'Sonido' : 'Silencio'}
+      </button>
       <div ref={flashRef} className="tv-flash" aria-hidden="true" />
       {phase === 'black' && (
         <div className="tv-bridge" aria-hidden="true">

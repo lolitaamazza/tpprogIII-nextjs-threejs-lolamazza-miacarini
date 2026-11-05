@@ -412,11 +412,11 @@ body.is-burning .overlay, body.is-burning .site-header { opacity: 0.12; filter: 
 .location:has(.visor-day) .location-place span { color: #16303d; text-shadow: 0 0 8px rgba(255, 255, 255, .6); }
 
 /* El encabezado como parte del visor: sin cajas, corchetes finos, letra del visor y celdas. */
-.header-actions .chip { position: relative; display: inline-flex; align-items: center; gap: 8px; border: 0; background: rgba(4, 16, 22, .35); color: #8fe6ff; font: 600 12px/1 var(--font-hud), var(--font-display); letter-spacing: .16em; text-transform: uppercase; padding: 8px 14px; }
-.header-actions .chip::before, .header-actions .chip::after { content: ''; position: absolute; top: 0; bottom: 0; width: 7px; border: 1.3px solid currentColor; opacity: .7; pointer-events: none; }
-.header-actions .chip::before { left: 0; border-right: 0; }
-.header-actions .chip::after { right: 0; border-left: 0; }
-.header-actions .chip:hover { color: #e4fbff; background: rgba(143, 230, 255, .12); }
+.header-actions .chip, .tv-sound { position: relative; display: inline-flex; align-items: center; gap: 8px; border: 0; background: rgba(4, 16, 22, .35); color: #8fe6ff; font: 600 12px/1 var(--font-hud), var(--font-display); letter-spacing: .16em; text-transform: uppercase; padding: 8px 14px; }
+.header-actions .chip::before, .header-actions .chip::after, .tv-sound::before, .tv-sound::after { content: ''; position: absolute; top: 0; bottom: 0; width: 7px; border: 1.3px solid currentColor; opacity: .7; pointer-events: none; }
+.header-actions .chip::before, .tv-sound::before { left: 0; border-right: 0; }
+.header-actions .chip::after, .tv-sound::after { right: 0; border-left: 0; }
+.header-actions .chip:hover, .tv-sound:hover { color: #e4fbff; background: rgba(143, 230, 255, .12); }
 .hud-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
 .hud-eq i { width: 2px; height: 4px; background: currentColor; opacity: .6; }
 .hud-sound.on .hud-eq i { opacity: 1; animation: hud-eq .9s ease-in-out infinite alternate; }
